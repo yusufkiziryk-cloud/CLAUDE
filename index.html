@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hesap Makinası</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .calculator {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 24px;
+      width: 320px;
+      box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
+    }
+
+    .display {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      text-align: right;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .expression {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 14px;
+      min-height: 20px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-bottom: 8px;
+    }
+
+    .result {
+      color: #ffffff;
+      font-size: 40px;
+      font-weight: 300;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: font-size 0.1s;
+    }
+
+    .result.small {
+      font-size: 26px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      font-size: 20px;
+      font-weight: 500;
+      height: 64px;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      user-select: none;
+      outline: none;
+    }
+
+    button:active {
+      transform: scale(0.93);
+    }
+
+    .btn-number {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-number:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .btn-operator {
+      background: rgba(83, 144, 255, 0.25);
+      color: #7ab3ff;
+      border: 1px solid rgba(83, 144, 255, 0.2);
+    }
+
+    .btn-operator:hover {
+      background: rgba(83, 144, 255, 0.4);
+    }
+
+    .btn-equals {
+      background: linear-gradient(135deg, #5390ff, #3b6fd4);
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 4px 20px rgba(83, 144, 255, 0.4);
+    }
+
+    .btn-equals:hover {
+      background: linear-gradient(135deg, #6ba0ff, #4a7fe3);
+      box-shadow: 0 6px 24px rgba(83, 144, 255, 0.5);
+    }
+
+    .btn-clear {
+      background: rgba(255, 80, 80, 0.2);
+      color: #ff7070;
+      border: 1px solid rgba(255, 80, 80, 0.15);
+    }
+
+    .btn-clear:hover {
+      background: rgba(255, 80, 80, 0.35);
+    }
+
+    .btn-action {
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .span-two {
+      grid-column: span 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="buttons">
+      <button class="btn-clear" onclick="clearAll()">AC</button>
+      <button class="btn-action" onclick="toggleSign()">+/-</button>
+      <button class="btn-action" onclick="percentage()">%</button>
+      <button class="btn-operator" onclick="setOperator('/')">÷</button>
+
+      <button class="btn-number" onclick="appendNumber('7')">7</button>
+      <button class="btn-number" onclick="appendNumber('8')">8</button>
+      <button class="btn-number" onclick="appendNumber('9')">9</button>
+      <button class="btn-operator" onclick="setOperator('*')">×</button>
+
+      <button class="btn-number" onclick="appendNumber('4')">4</button>
+      <button class="btn-number" onclick="appendNumber('5')">5</button>
+      <button class="btn-number" onclick="appendNumber('6')">6</button>
+      <button class="btn-operator" onclick="setOperator('-')">−</button>
+
+      <button class="btn-number" onclick="appendNumber('1')">1</button>
+      <button class="btn-number" onclick="appendNumber('2')">2</button>
+      <button class="btn-number" onclick="appendNumber('3')">3</button>
+      <button class="btn-operator" onclick="setOperator('+')">+</button>
+
+      <button class="btn-number span-two" onclick="appendNumber('0')">0</button>
+      <button class="btn-number" onclick="appendDecimal()">.</button>
+      <button class="btn-equals" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <script>
+    let current = '0';
+    let previous = null;
+    let operator = null;
+    let shouldResetScreen = false;
+    let expressionText = '';
+
+    const resultEl = document.getElementById('result');
+    const expressionEl = document.getElementById('expression');
+
+    function updateDisplay() {
+      resultEl.textContent = current;
+      resultEl.className = 'result' + (current.length > 9 ? ' small' : '');
+      expressionEl.textContent = expressionText;
+    }
+
+    function appendNumber(num) {
+      if (shouldResetScreen) {
+        current = num;
+        shouldResetScreen = false;
+      } else {
+        if (current === '0' && num !== '.') {
+          current = num;
+        } else if (current.length < 12) {
+          current += num;
+        }
+      }
+      updateDisplay();
+    }
+
+    function appendDecimal() {
+      if (shouldResetScreen) {
+        current = '0.';
+        shouldResetScreen = false;
+        updateDisplay();
+        return;
+      }
+      if (!current.includes('.')) {
+        current += '.';
+        updateDisplay();
+      }
+    }
+
+    function setOperator(op) {
+      if (operator && !shouldResetScreen) {
+        calculate(true);
+      }
+      previous = current;
+      operator = op;
+      shouldResetScreen = true;
+
+      const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+      expressionText = previous + ' ' + symbols[op];
+      updateDisplay();
+    }
+
+    function calculate(chain = false) {
+      if (!operator || previous === null) return;
+
+      const a = parseFloat(previous);
+      const b = parseFloat(current);
+      let res;
+
+      switch (operator) {
+        case '+': res = a + b; break;
+        case '-': res = a - b; break;
+        case '*': res = a * b; break;
+        case '/':
+          if (b === 0) {
+            current = 'Hata';
+            expressionText = '';
+            operator = null;
+            previous = null;
+            updateDisplay();
+            return;
+          }
+          res = a / b;
+          break;
+      }
+
+      const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+      if (!chain) {
+        expressionText = previous + ' ' + symbols[operator] + ' ' + current + ' =';
+      }
+
+      current = parseFloat(res.toFixed(10)).toString();
+      operator = chain ? operator : null;
+      previous = chain ? current : null;
+      shouldResetScreen = true;
+      updateDisplay();
+    }
+
+    function clearAll() {
+      current = '0';
+      previous = null;
+      operator = null;
+      shouldResetScreen = false;
+      expressionText = '';
+      updateDisplay();
+    }
+
+    function toggleSign() {
+      if (current !== '0') {
+        current = current.startsWith('-') ? current.slice(1) : '-' + current;
+        updateDisplay();
+      }
+    }
+
+    function percentage() {
+      current = (parseFloat(current) / 100).toString();
+      updateDisplay();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key >= '0' && e.key <= '9') appendNumber(e.key);
+      else if (e.key === '.') appendDecimal();
+      else if (e.key === '+') setOperator('+');
+      else if (e.key === '-') setOperator('-');
+      else if (e.key === '*') setOperator('*');
+      else if (e.key === '/') { e.preventDefault(); setOperator('/'); }
+      else if (e.key === 'Enter' || e.key === '=') calculate();
+      else if (e.key === 'Escape') clearAll();
+      else if (e.key === 'Backspace') {
+        if (current.length > 1) current = current.slice(0, -1);
+        else current = '0';
+        updateDisplay();
+      }
+      else if (e.key === '%') percentage();
+    });
+  </script>
+</body>
+</html>
