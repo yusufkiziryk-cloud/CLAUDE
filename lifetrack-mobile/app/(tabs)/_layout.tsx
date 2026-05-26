@@ -16,9 +16,7 @@ export default function TabLayout() {
       tabBarStyle: {
         backgroundColor: isDark ? '#0f172a' : '#ffffff',
         borderTopColor: isDark ? '#1e293b' : '#e2e8f0',
-        paddingBottom: 8,
-        paddingTop: 8,
-        height: 65,
+        paddingBottom: 8, paddingTop: 8, height: 65,
       },
       tabBarLabelStyle: { fontSize: 11, fontWeight: '500', marginTop: 2 },
       headerStyle: { backgroundColor: isDark ? '#0f172a' : '#ffffff' },
@@ -27,30 +25,21 @@ export default function TabLayout() {
       headerShadowVisible: false,
     }}>
       <Tabs.Screen name="index" options={{
-        title: 'Bugün',
-        tabBarIcon: ({ color }) => <Feather name="sun" size={22} color={color} />,
-        headerTitle: 'LifeTrack',
+        title: 'Bugün', tabBarIcon: ({ color }) => <Feather name="sun" size={22} color={color} />, headerTitle: 'LifeTrack',
       }} />
-      <Tabs.Screen name="capture" options={{
-        title: 'Ekle',
-        tabBarIcon: ({ color }) => <Feather name="plus-circle" size={22} color={color} />,
-        headerTitle: 'Hızlı Ekle',
+      <Tabs.Screen name="notes" options={{
+        title: 'Notlar', tabBarIcon: ({ color }) => <Feather name="file-text" size={22} color={color} />, headerTitle: 'Notlar',
       }} />
       <Tabs.Screen name="journal" options={{
-        title: 'Günlük',
-        tabBarIcon: ({ color }) => <Feather name="book-open" size={22} color={color} />,
-        headerTitle: "Bugünün Günlüğü",
+        title: 'Günlük', tabBarIcon: ({ color }) => <Feather name="book-open" size={22} color={color} />, headerTitle: "Günlük",
       }} />
       <Tabs.Screen name="habits" options={{
-        title: 'Alışkanlık',
-        tabBarIcon: ({ color }) => <Feather name="zap" size={22} color={color} />,
-        headerTitle: 'Alışkanlıklar',
+        title: 'Alışkanlık', tabBarIcon: ({ color }) => <Feather name="zap" size={22} color={color} />, headerTitle: 'Alışkanlıklar',
       }} />
       <Tabs.Screen name="insights" options={{
-        title: 'Zeka',
-        tabBarIcon: ({ color }) => <Feather name="cpu" size={22} color={color} />,
-        headerTitle: 'AI Hafıza',
+        title: 'Zeka', tabBarIcon: ({ color }) => <Feather name="cpu" size={22} color={color} />, headerTitle: 'AI Hafıza',
       }} />
+      <Tabs.Screen name="capture" options={{ href: null }} />
     </Tabs>
   )
 }
