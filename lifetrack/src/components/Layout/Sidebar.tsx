@@ -26,7 +26,7 @@ export default function Sidebar({ open, onClose }: Props) {
       )}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">LT</div>
+            <div className="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-sm">LT</div>
             <span className="font-semibold text-white">LifeTrack</span>
           </div>
           <button onClick={onClose} className="md:hidden text-slate-400 hover:text-white p-1"><X size={16} /></button>
@@ -37,7 +37,7 @@ export default function Sidebar({ open, onClose }: Props) {
             <NavLink key={to} to={to} className={({ isActive }) => clsx(
               'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
               isActive
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-primary-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             )}>
               <Icon size={17} />

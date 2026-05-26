@@ -72,7 +72,7 @@ export default function YearlyPage() {
       onChange={(e) => setter(key, e.target.value)}
       placeholder={placeholder}
       rows={4}
-      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
     />
   )
   const strVal = (source: Record<string, unknown> | undefined, key: string) => typeof source?.[key] === 'string' ? source[key] as string : ''
@@ -84,14 +84,14 @@ export default function YearlyPage() {
         <div className="flex items-center gap-2">
           <div className="text-sm text-slate-500">Yıl: %{progress} tamamlandı</div>
           <div className="w-24 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-primary-500 rounded-full" style={{ width: `${progress}%` }} />
           </div>
         </div>
       </div>
 
       <div className="flex gap-2 mb-6">
         {(['overview', 'monthly', 'yearly'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={clsx('px-4 py-2 rounded-lg text-sm font-medium transition-colors', activeTab === tab ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-400')}>
+          <button key={tab} onClick={() => setActiveTab(tab)} className={clsx('px-4 py-2 rounded-lg text-sm font-medium transition-colors', activeTab === tab ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary-400')}>
             {tab === 'overview' ? '12 Aylık Görünüm' : tab === 'monthly' ? 'Aylık Değerlendirme' : 'Yıllık Değerlendirme'}
           </button>
         ))}
@@ -108,9 +108,9 @@ export default function YearlyPage() {
                   const isPast = mi < new Date().getMonth() || year < new Date().getFullYear()
                   const isCurrent = mi === new Date().getMonth() && year === new Date().getFullYear()
                   return (
-                    <div key={mi} onClick={() => { setSelectedMonth(mi); setActiveTab('monthly') }} className={clsx('p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors', isCurrent && 'bg-indigo-50/50 dark:bg-indigo-950/30')}>
+                    <div key={mi} onClick={() => { setSelectedMonth(mi); setActiveTab('monthly') }} className={clsx('p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors', isCurrent && 'bg-primary-50/50 dark:bg-primary-950/30')}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className={clsx('font-medium text-sm', isCurrent && 'text-indigo-600')}>{monthNames[mi]}</span>
+                        <span className={clsx('font-medium text-sm', isCurrent && 'text-primary-600')}>{monthNames[mi]}</span>
                         {stats.review && <span className="text-sm">{ratingEmoji(stats.review.rating)}</span>}
                       </div>
                       <div className="grid grid-cols-2 gap-1 text-xs text-slate-500">
@@ -136,7 +136,7 @@ export default function YearlyPage() {
           <div className="flex gap-2 flex-wrap">
             {monthNames.map((m, i) => (
               <button key={i} onClick={() => { setSelectedMonth(i); setMonthForm({}); setMonthRating(getMonthlyReview(year, i + 1)?.rating ?? 3) }}
-                className={clsx('px-3 py-1.5 rounded-lg text-sm transition-colors', selectedMonth === i ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-indigo-400')}>
+                className={clsx('px-3 py-1.5 rounded-lg text-sm transition-colors', selectedMonth === i ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-primary-400')}>
                 {m}
               </button>
             ))}
@@ -159,10 +159,10 @@ export default function YearlyPage() {
             <div className="mb-4">
               <label className="block text-xs font-medium text-slate-500 mb-2">Bu Ayın Puanı</label>
               <div className="flex gap-2">
-                {RATINGS.map(r => <button key={r} onClick={() => setMonthRating(r)} className={clsx('flex flex-col items-center gap-1 p-2 rounded-lg transition-colors', monthRating === r ? 'bg-indigo-100 dark:bg-indigo-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-800')}><span className="text-xl">{ratingEmoji(r)}</span><span className="text-xs">{r}</span></button>)}
+                {RATINGS.map(r => <button key={r} onClick={() => setMonthRating(r)} className={clsx('flex flex-col items-center gap-1 p-2 rounded-lg transition-colors', monthRating === r ? 'bg-primary-100 dark:bg-primary-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-800')}><span className="text-xl">{ratingEmoji(r)}</span><span className="text-xs">{r}</span></button>)}
               </div>
             </div>
-            <button onClick={handleSaveMonthly} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors"><Save size={14} /> Değerlendirmeyi Kaydet</button>
+            <button onClick={handleSaveMonthly} className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors"><Save size={14} /> Değerlendirmeyi Kaydet</button>
           </div>
         </div>
       )}
@@ -180,10 +180,10 @@ export default function YearlyPage() {
             <div>
               <label className="block text-xs font-medium text-slate-500 mb-2">Bu Yılın Puanı</label>
               <div className="flex gap-2">
-                {RATINGS.map(r => <button key={r} onClick={() => setYearRating(r)} className={clsx('flex flex-col items-center gap-1 p-2 rounded-lg transition-colors', yearRating === r ? 'bg-indigo-100 dark:bg-indigo-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-800')}><span className="text-xl">{ratingEmoji(r)}</span><span className="text-xs">{r}</span></button>)}
+                {RATINGS.map(r => <button key={r} onClick={() => setYearRating(r)} className={clsx('flex flex-col items-center gap-1 p-2 rounded-lg transition-colors', yearRating === r ? 'bg-primary-100 dark:bg-primary-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-800')}><span className="text-xl">{ratingEmoji(r)}</span><span className="text-xs">{r}</span></button>)}
               </div>
             </div>
-            <button onClick={handleSaveYearly} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors"><Save size={14} /> Yıllık Değerlendirmeyi Kaydet</button>
+            <button onClick={handleSaveYearly} className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors"><Save size={14} /> Yıllık Değerlendirmeyi Kaydet</button>
           </div>
         </div>
       )}

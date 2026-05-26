@@ -25,8 +25,8 @@ const defaultCategories: Category[] = [
 ]
 
 interface AppStore {
-  theme: Theme
-  toggleTheme: () => void
+  themeId: string
+  setTheme: (id: string) => void
 
   notes: Note[]
   addNote: (n: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => string
@@ -84,8 +84,8 @@ interface AppStore {
 export const useStore = create<AppStore>()(
   persist(
     (set, get) => ({
-      theme: 'dark',
-      toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
+      themeId: 'koyu',
+      setTheme: (id) => set({ themeId: id }),
 
       notes: [],
       addNote: (n) => {

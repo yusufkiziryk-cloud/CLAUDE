@@ -22,35 +22,35 @@ function TaskForm({ initial, onSave, onClose }: { initial?: Partial<Task>; onSav
 
   return (
     <div className="p-5 space-y-4">
-      <input value={form.title ?? ''} onChange={(e) => set('title', e.target.value)} placeholder="Görev başlığı..." className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-      <textarea value={form.description ?? ''} onChange={(e) => set('description', e.target.value)} placeholder="Açıklama..." rows={3} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      <input value={form.title ?? ''} onChange={(e) => set('title', e.target.value)} placeholder="Görev başlığı..." className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+      <textarea value={form.description ?? ''} onChange={(e) => set('description', e.target.value)} placeholder="Açıklama..." rows={3} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500" />
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs text-slate-500 mb-1">Öncelik</label>
-          <select value={form.priority} onChange={(e) => set('priority', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select value={form.priority} onChange={(e) => set('priority', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
             <option value="low">Düşük</option><option value="medium">Orta</option><option value="high">Yüksek</option><option value="critical">Kritik</option>
           </select>
         </div>
         <div>
           <label className="block text-xs text-slate-500 mb-1">Durum</label>
-          <select value={form.status} onChange={(e) => set('status', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select value={form.status} onChange={(e) => set('status', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
             <option value="todo">Yapılacak</option><option value="in-progress">Devam Ediyor</option><option value="done">Tamamlandı</option><option value="postponed">Ertelendi</option><option value="cancelled">İptal</option>
           </select>
         </div>
         <div>
           <label className="block text-xs text-slate-500 mb-1">Son Tarih</label>
-          <input type="date" value={form.dueDate ?? ''} onChange={(e) => set('dueDate', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input type="date" value={form.dueDate ?? ''} onChange={(e) => set('dueDate', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
         <div>
           <label className="block text-xs text-slate-500 mb-1">Kategori</label>
-          <select value={form.category} onChange={(e) => set('category', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select value={form.category} onChange={(e) => set('category', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
             {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
           </select>
         </div>
       </div>
       <div>
         <label className="block text-xs text-slate-500 mb-1">Tekrar</label>
-        <select value={form.recurring ?? ''} onChange={(e) => set('recurring', e.target.value || undefined)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <select value={form.recurring ?? ''} onChange={(e) => set('recurring', e.target.value || undefined)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
           <option value="">Tekrar yok</option><option value="daily">Günlük</option><option value="weekly">Haftalık</option><option value="monthly">Aylık</option>
         </select>
       </div>
@@ -59,12 +59,12 @@ function TaskForm({ initial, onSave, onClose }: { initial?: Partial<Task>; onSav
         <div className="flex flex-wrap gap-1 mb-1">{form.tags?.map(t => <Badge key={t} label={t} removable onRemove={() => set('tags', form.tags?.filter(x => x !== t))} />)}</div>
         <div className="flex gap-1">
           <input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())} placeholder="Etiket ekle..." className="flex-1 px-2 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs focus:outline-none" />
-          <button type="button" onClick={addTag} className="px-2 py-1 bg-indigo-600 text-white rounded text-xs">+</button>
+          <button type="button" onClick={addTag} className="px-2 py-1 bg-primary-600 text-white rounded text-xs">+</button>
         </div>
       </div>
       <div className="flex gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
         <button onClick={onClose} className="flex-1 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-800">İptal</button>
-        <button onClick={() => onSave(form)} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm">Kaydet</button>
+        <button onClick={() => onSave(form)} className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm">Kaydet</button>
       </div>
     </div>
   )
@@ -109,7 +109,7 @@ export default function TasksPage() {
     <div className="max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold">Görevler</h1>
-        <button onClick={() => { setEditingTask(null); setModalOpen(true) }} className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors">
+        <button onClick={() => { setEditingTask(null); setModalOpen(true) }} className="flex items-center gap-2 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors">
           <Plus size={15} /> Yeni Görev
         </button>
       </div>
@@ -126,14 +126,14 @@ export default function TasksPage() {
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Görev ara..." className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Görev ara..." className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
         <div className="flex gap-2">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
             <option value="all">Tüm Durumlar</option>
             {STATUSES.map(s => <option key={s} value={s}>{statusLabels[s]}</option>)}
           </select>
-          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
             <option value="all">Tüm Öncelikler</option>
             {PRIORITIES.map(p => <option key={p} value={p}>{p === 'low' ? 'Düşük' : p === 'medium' ? 'Orta' : p === 'high' ? 'Yüksek' : 'Kritik'}</option>)}
           </select>
@@ -141,12 +141,12 @@ export default function TasksPage() {
       </div>
 
       {filtered.length === 0
-        ? <Empty icon="✅" title="Görev bulunamadı" description="Yeni görev ekleyin." action={<button onClick={() => setModalOpen(true)} className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg">Yeni Görev</button>} />
+        ? <Empty icon="✅" title="Görev bulunamadı" description="Yeni görev ekleyin." action={<button onClick={() => setModalOpen(true)} className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg">Yeni Görev</button>} />
         : <div className="space-y-2">
             {filtered.map(t => {
               const isOverdue = t.dueDate && t.dueDate < new Date().toISOString().slice(0, 10) && t.status !== 'done'
               return (
-                <div key={t.id} className={clsx('bg-white dark:bg-slate-900 border rounded-xl p-4 flex items-start gap-3 group hover:border-indigo-400 dark:hover:border-indigo-500 transition-all', t.status === 'done' ? 'opacity-60 border-slate-200 dark:border-slate-800' : isOverdue ? 'border-orange-300 dark:border-orange-800' : 'border-slate-200 dark:border-slate-800')}>
+                <div key={t.id} className={clsx('bg-white dark:bg-slate-900 border rounded-xl p-4 flex items-start gap-3 group hover:border-primary-400 dark:hover:border-primary-500 transition-all', t.status === 'done' ? 'opacity-60 border-slate-200 dark:border-slate-800' : isOverdue ? 'border-orange-300 dark:border-orange-800' : 'border-slate-200 dark:border-slate-800')}>
                   <button onClick={() => toggleDone(t)} className="mt-0.5 shrink-0 text-slate-400 hover:text-green-500 transition-colors">
                     {t.status === 'done' ? <CheckCircle2 size={18} className="text-green-500" /> : t.priority === 'critical' ? <AlertTriangle size={18} className="text-red-500" /> : <Circle size={18} />}
                   </button>
@@ -154,7 +154,7 @@ export default function TasksPage() {
                     <div className="flex items-start justify-between gap-2">
                       <span className={clsx('font-medium text-sm', t.status === 'done' && 'line-through text-slate-400')}>{t.title}</span>
                       <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => { setEditingTask(t); setModalOpen(true) }} className="p-1 hover:text-indigo-500"><Edit3 size={13} /></button>
+                        <button onClick={() => { setEditingTask(t); setModalOpen(true) }} className="p-1 hover:text-primary-500"><Edit3 size={13} /></button>
                         <button onClick={() => { if (confirm('Silmek istediğinizden emin misiniz?')) { deleteTask(t.id); toast.success('Silindi') } }} className="p-1 hover:text-red-500"><Trash2 size={13} /></button>
                       </div>
                     </div>

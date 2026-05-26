@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom'
 import { Menu, Search, Sun, Moon, Plus } from 'lucide-react'
 import { useStore } from '../../lib/store'
+import { THEMES } from '../../types'
 import { fmtDate } from '../../utils/dates'
 import { useState } from 'react'
 
 interface Props { onMenuToggle: () => void; sidebarOpen: boolean }
 
 export default function Header({ onMenuToggle }: Props) {
-  const { theme, toggleTheme } = useStore()
+  const { themeId, setTheme } = useStore()
+  const theme = THEMES.find(t => t.id === themeId) ?? THEMES[0]
   const navigate = useNavigate()
   const [q, setQ] = useState('')
 
@@ -28,7 +30,7 @@ export default function Header({ onMenuToggle }: Props) {
           <input
             value={q} onChange={(e) => setQ(e.target.value)}
             placeholder="Tüm notlarda ara..."
-            className="w-full pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-400"
+            className="w-full pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder:text-slate-400"
           />
         </div>
       </form>
@@ -37,13 +39,13 @@ export default function Header({ onMenuToggle }: Props) {
         <span className="hidden sm:block text-xs text-slate-400">{fmtDate(new Date())}</span>
         <button
           onClick={() => navigate('/notes?new=1')}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors"
         >
           <Plus size={15} />
           <span className="hidden sm:block">Yeni Not</span>
         </button>
-        <button onClick={toggleTheme} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-          {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+        <button onClick={() => setTheme(theme.isDark ? 'aydinlik' : 'koyu')} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          {theme.isDark ? <Sun size={17} /> : <Moon size={17} />}
         </button>
       </div>
     </header>

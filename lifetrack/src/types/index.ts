@@ -2,6 +2,26 @@ export type Priority = 'low' | 'medium' | 'high' | 'critical'
 export type TaskStatus = 'todo' | 'in-progress' | 'done' | 'postponed' | 'cancelled'
 export type Emotion = 'great' | 'good' | 'neutral' | 'bad' | 'terrible'
 export type Theme = 'light' | 'dark'
+
+export interface ThemeConfig {
+  id: string
+  name: string
+  isDark: boolean
+  preview: string
+}
+
+export const THEMES: ThemeConfig[] = [
+  { id: 'koyu',      name: 'Koyu',       isDark: true,  preview: '#4f46e5' },
+  { id: 'aydinlik',  name: 'Aydınlık',   isDark: false, preview: '#4f46e5' },
+  { id: 'okyanus',   name: 'Okyanus',    isDark: true,  preview: '#0891b2' },
+  { id: 'orman',     name: 'Orman',      isDark: true,  preview: '#059669' },
+  { id: 'gunbatimi', name: 'Gün Batımı', isDark: true,  preview: '#ea580c' },
+  { id: 'mor',       name: 'Mor',        isDark: true,  preview: '#7c3aed' },
+  { id: 'pembe',     name: 'Pembe',      isDark: false, preview: '#db2777' },
+  { id: 'cimen',     name: 'Çimen',      isDark: false, preview: '#16a34a' },
+  { id: 'turkuaz',   name: 'Turkuaz',    isDark: true,  preview: '#0d9488' },
+  { id: 'kirmizi',   name: 'Kırmızı',   isDark: true,  preview: '#e11d48' },
+]
 export type EventType = 'event' | 'meeting' | 'reminder' | 'birthday' | 'deadline'
 export type GoalStatus = 'active' | 'completed' | 'paused' | 'cancelled'
 

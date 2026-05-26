@@ -69,7 +69,7 @@ export default function DashboardPage() {
           <p className="text-sm text-slate-500">{fmtDate(new Date())}</p>
         </div>
         {!hasDemoData && notes.length === 0 && (
-          <button onClick={loadDemoData} className="text-sm px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
+          <button onClick={loadDemoData} className="text-sm px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors">
             Demo veriyi yükle
           </button>
         )}
@@ -77,7 +77,7 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={BookOpen} label="Toplam Not" value={totalNotes} color="bg-indigo-500" sub={`Bu hafta +${weekNotes}`} />
+        <StatCard icon={BookOpen} label="Toplam Not" value={totalNotes} color="bg-primary-500" sub={`Bu hafta +${weekNotes}`} />
         <StatCard icon={CheckSquare} label="Görev Tamamlama" value={`%${completionRate}`} color="bg-green-500" sub={`${doneTasks}/${totalTasks} tamamlandı`} />
         <StatCard icon={CalendarDays} label="Bu Ay Görev" value={monthTasks} color="bg-blue-500" sub={`${todayEvents.length} bugün etkinlik`} />
         <StatCard icon={Target} label="Aktif Hedef" value={goals.filter(g => g.status === 'active').length} color="bg-purple-500" sub={`Toplam ${goals.length} hedef`} />
@@ -87,10 +87,10 @@ export default function DashboardPage() {
       <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium flex items-center gap-2"><TrendingUp size={15} /> Yıllık İlerleme</span>
-          <span className="text-sm font-bold text-indigo-500">%{progress}</span>
+          <span className="text-sm font-bold text-primary-500">%{progress}</span>
         </div>
         <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5">
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full transition-all" style={{ width: `${progress}%` }} />
+          <div className="bg-gradient-to-r from-primary-500 to-purple-500 h-2.5 rounded-full transition-all" style={{ width: `${progress}%` }} />
         </div>
         <div className="flex justify-between text-xs text-slate-400 mt-1">
           <span>1 Ocak</span><span>31 Aralık</span>
@@ -103,8 +103,8 @@ export default function DashboardPage() {
         <div className="flex gap-2">
           <input value={quickNote} onChange={(e) => setQuickNote(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleQuickNote()}
             placeholder="Düşünceni yaz, Enter ile kaydet..."
-            className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          <button onClick={handleQuickNote} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors">Kaydet</button>
+            className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          <button onClick={handleQuickNote} className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors">Kaydet</button>
         </div>
       </div>
 
@@ -114,7 +114,7 @@ export default function DashboardPage() {
           {pinnedNotes.length > 0 && (
             <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2 mb-3">
-                <Pin size={14} className="text-indigo-400" />
+                <Pin size={14} className="text-primary-400" />
                 <h3 className="text-sm font-medium">Sabitlenmiş Notlar</h3>
               </div>
               <div className="space-y-2">
@@ -131,10 +131,10 @@ export default function DashboardPage() {
           <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium">Son Notlar</h3>
-              <button onClick={() => navigate('/notes')} className="text-xs text-indigo-500 hover:text-indigo-400 flex items-center gap-1">Tümü <ArrowRight size={12} /></button>
+              <button onClick={() => navigate('/notes')} className="text-xs text-primary-500 hover:text-primary-400 flex items-center gap-1">Tümü <ArrowRight size={12} /></button>
             </div>
             {recentNotes.length === 0
-              ? <Empty icon="📝" title="Henüz not yok" description="İlk notunu ekle." action={<button onClick={() => navigate('/notes?new=1')} className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg">Not Ekle</button>} />
+              ? <Empty icon="📝" title="Henüz not yok" description="İlk notunu ekle." action={<button onClick={() => navigate('/notes?new=1')} className="px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg">Not Ekle</button>} />
               : <div className="space-y-2">
                   {recentNotes.map(n => (
                     <div key={n.id} onClick={() => navigate('/notes?id=' + n.id)} className="flex items-start justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group">
@@ -176,7 +176,7 @@ export default function DashboardPage() {
           <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium">Yaklaşan Etkinlikler</h3>
-              <button onClick={() => navigate('/calendar')} className="text-xs text-indigo-500 hover:text-indigo-400"><ArrowRight size={12} /></button>
+              <button onClick={() => navigate('/calendar')} className="text-xs text-primary-500 hover:text-primary-400"><ArrowRight size={12} /></button>
             </div>
             {upcomingEvents.length === 0
               ? <p className="text-xs text-slate-400">Yaklaşan etkinlik yok.</p>
@@ -223,7 +223,7 @@ export default function DashboardPage() {
               <h3 className="text-sm font-medium mb-3">Popüler Etiketler</h3>
               <div className="flex flex-wrap gap-1.5">
                 {topTags.map(t => (
-                  <button key={t.name} onClick={() => navigate(`/search?tag=${t.name}`)} className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-600 dark:hover:text-indigo-300 rounded-full text-xs transition-colors">
+                  <button key={t.name} onClick={() => navigate(`/search?tag=${t.name}`)} className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 hover:bg-primary-100 dark:hover:bg-primary-900/40 hover:text-primary-600 dark:hover:text-primary-300 rounded-full text-xs transition-colors">
                     #{t.name}<span className="text-slate-400">{t.count}</span>
                   </button>
                 ))}
@@ -236,14 +236,14 @@ export default function DashboardPage() {
             <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium">Aktif Hedefler</h3>
-                <button onClick={() => navigate('/goals')} className="text-xs text-indigo-500"><ArrowRight size={12} /></button>
+                <button onClick={() => navigate('/goals')} className="text-xs text-primary-500"><ArrowRight size={12} /></button>
               </div>
               <div className="space-y-3">
                 {goals.filter(g => g.status === 'active').slice(0, 3).map(g => (
                   <div key={g.id}>
                     <div className="flex justify-between text-xs mb-1"><span className="truncate font-medium">{g.title}</span><span className="text-slate-400 shrink-0 ml-2">%{g.progress}</span></div>
                     <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
-                      <div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${g.progress}%` }} />
+                      <div className="bg-primary-500 h-1.5 rounded-full" style={{ width: `${g.progress}%` }} />
                     </div>
                   </div>
                 ))}

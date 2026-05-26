@@ -11,7 +11,7 @@ import clsx from 'clsx'
 
 const TYPE_ICONS: Record<string, React.ElementType> = { note: FileText, task: CheckSquare, event: CalendarDays, goal: Target, daily: Notebook }
 const TYPE_LABELS: Record<string, string> = { note: 'Not', task: 'Görev', event: 'Etkinlik', goal: 'Hedef', daily: 'Günlük' }
-const TYPE_COLORS: Record<string, string> = { note: 'text-indigo-500 bg-indigo-100 dark:bg-indigo-900/40', task: 'text-green-500 bg-green-100 dark:bg-green-900/40', event: 'text-blue-500 bg-blue-100 dark:bg-blue-900/40', goal: 'text-purple-500 bg-purple-100 dark:bg-purple-900/40', daily: 'text-orange-500 bg-orange-100 dark:bg-orange-900/40' }
+const TYPE_COLORS: Record<string, string> = { note: 'text-primary-500 bg-primary-100 dark:bg-primary-900/40', task: 'text-green-500 bg-green-100 dark:bg-green-900/40', event: 'text-blue-500 bg-blue-100 dark:bg-blue-900/40', goal: 'text-purple-500 bg-purple-100 dark:bg-purple-900/40', daily: 'text-orange-500 bg-orange-100 dark:bg-orange-900/40' }
 
 const QUICK_FILTERS = [
   { label: 'Bugünkü notlar', filter: { query: '', types: ['note', 'daily'], categories: [], tags: [], dateFrom: new Date().toISOString().slice(0, 10), dateTo: new Date().toISOString().slice(0, 10), persons: [] } },
@@ -60,12 +60,12 @@ export default function SearchPage() {
             value={filters.query}
             onChange={(e) => setF('query', e.target.value)}
             placeholder="Tüm kayıtlarda ara: kişi, konu, etiket, tarih..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             autoFocus
           />
           {filters.query && <button onClick={() => setF('query', '')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X size={14} /></button>}
         </div>
-        <button onClick={() => setShowFilters(!showFilters)} className={clsx('px-3 py-2 rounded-xl border text-sm flex items-center gap-1.5 transition-colors', showFilters ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-400')}>
+        <button onClick={() => setShowFilters(!showFilters)} className={clsx('px-3 py-2 rounded-xl border text-sm flex items-center gap-1.5 transition-colors', showFilters ? 'bg-primary-600 text-white border-primary-600' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary-400')}>
           <Filter size={14} /> Filtreler
         </button>
         {hasActiveFilters && <button onClick={() => setFilters(defaultFilters)} className="px-3 py-2 text-xs text-red-500 hover:text-red-400 border border-red-200 dark:border-red-800 rounded-xl transition-colors">Temizle</button>}
@@ -74,7 +74,7 @@ export default function SearchPage() {
       {/* Quick filters */}
       <div className="flex flex-wrap gap-2 mb-4">
         {QUICK_FILTERS.map(qf => (
-          <button key={qf.label} onClick={() => setFilters({ ...defaultFilters, ...qf.filter })} className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full text-xs hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1">
+          <button key={qf.label} onClick={() => setFilters({ ...defaultFilters, ...qf.filter })} className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full text-xs hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
             <Clock size={11} /> {qf.label}
           </button>
         ))}
@@ -89,7 +89,7 @@ export default function SearchPage() {
               {Object.entries(TYPE_LABELS).map(([type, label]) => {
                 const Icon = TYPE_ICONS[type]
                 return (
-                  <button key={type} onClick={() => toggleType(type)} className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border', filters.types.includes(type) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-400')}>
+                  <button key={type} onClick={() => toggleType(type)} className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border', filters.types.includes(type) ? 'bg-primary-600 text-white border-primary-600' : 'border-slate-200 dark:border-slate-700 hover:border-primary-400')}>
                     <Icon size={12} /> {label}
                   </button>
                 )
@@ -99,21 +99,21 @@ export default function SearchPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs text-slate-500 mb-1">Başlangıç Tarihi</label>
-              <input type="date" value={filters.dateFrom ?? ''} onChange={(e) => setF('dateFrom', e.target.value || undefined)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+              <input type="date" value={filters.dateFrom ?? ''} onChange={(e) => setF('dateFrom', e.target.value || undefined)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500" />
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">Bitiş Tarihi</label>
-              <input type="date" value={filters.dateTo ?? ''} onChange={(e) => setF('dateTo', e.target.value || undefined)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+              <input type="date" value={filters.dateTo ?? ''} onChange={(e) => setF('dateTo', e.target.value || undefined)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500" />
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">Görev Durumu</label>
-              <select value={filters.taskStatus ?? ''} onChange={(e) => setF('taskStatus', e.target.value || undefined)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <select value={filters.taskStatus ?? ''} onChange={(e) => setF('taskStatus', e.target.value || undefined)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500">
                 <option value="">Tümü</option><option value="todo">Yapılacak</option><option value="in-progress">Devam</option><option value="done">Tamamlandı</option><option value="postponed">Ertelendi</option>
               </select>
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">Duygu Durumu</label>
-              <select value={filters.emotion ?? ''} onChange={(e) => setF('emotion', e.target.value || undefined)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <select value={filters.emotion ?? ''} onChange={(e) => setF('emotion', e.target.value || undefined)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500">
                 <option value="">Tümü</option><option value="great">😄 Harika</option><option value="good">🙂 İyi</option><option value="neutral">😐 Normal</option><option value="bad">😔 Kötü</option><option value="terrible">😢 Berbat</option>
               </select>
             </div>
@@ -122,7 +122,7 @@ export default function SearchPage() {
             <label className="block text-xs font-medium text-slate-500 mb-2 flex items-center gap-1"><Tag size={11} /> Etiketler</label>
             <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
               {tagCounts().slice(0, 30).map(t => (
-                <button key={t.name} onClick={() => toggleTag(t.name)} className={clsx('px-2 py-0.5 rounded-full text-xs transition-colors', filters.tags.includes(t.name) ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-600')}>
+                <button key={t.name} onClick={() => toggleTag(t.name)} className={clsx('px-2 py-0.5 rounded-full text-xs transition-colors', filters.tags.includes(t.name) ? 'bg-primary-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-primary-100 dark:hover:bg-primary-900/40 hover:text-primary-600')}>
                   #{t.name} <span className="opacity-60">{t.count}</span>
                 </button>
               ))}
@@ -145,7 +145,7 @@ export default function SearchPage() {
               {results.map(r => {
                 const Icon = TYPE_ICONS[r.type]
                 return (
-                  <div key={`${r.type}-${r.id}`} onClick={() => handleResultClick(r)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md transition-all group">
+                  <div key={`${r.type}-${r.id}`} onClick={() => handleResultClick(r)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-md transition-all group">
                     <div className="flex items-start gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${TYPE_COLORS[r.type]}`}>
                         <Icon size={15} />

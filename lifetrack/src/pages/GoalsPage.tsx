@@ -16,37 +16,37 @@ function GoalForm({ initial, onSave, onClose }: { initial?: Partial<Goal>; onSav
 
   return (
     <div className="p-5 space-y-4">
-      <input value={form.title ?? ''} onChange={(e) => set('title', e.target.value)} placeholder="Hedef adı..." className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-      <textarea value={form.description ?? ''} onChange={(e) => set('description', e.target.value)} placeholder="Hedefini detaylı açıkla..." rows={3} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      <input value={form.title ?? ''} onChange={(e) => set('title', e.target.value)} placeholder="Hedef adı..." className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+      <textarea value={form.description ?? ''} onChange={(e) => set('description', e.target.value)} placeholder="Hedefini detaylı açıkla..." rows={3} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500" />
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs text-slate-500 mb-1">Başlangıç</label>
-          <input type="date" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input type="date" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
         <div>
           <label className="block text-xs text-slate-500 mb-1">Bitiş</label>
-          <input type="date" value={form.endDate} onChange={(e) => set('endDate', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input type="date" value={form.endDate} onChange={(e) => set('endDate', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
         <div>
           <label className="block text-xs text-slate-500 mb-1">Kategori</label>
-          <select value={form.category} onChange={(e) => set('category', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select value={form.category} onChange={(e) => set('category', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
             {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-xs text-slate-500 mb-1">Durum</label>
-          <select value={form.status} onChange={(e) => set('status', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select value={form.status} onChange={(e) => set('status', e.target.value)} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
             <option value="active">Aktif</option><option value="completed">Tamamlandı</option><option value="paused">Durduruldu</option><option value="cancelled">İptal</option>
           </select>
         </div>
       </div>
       <div>
         <label className="block text-xs text-slate-500 mb-1">İlerleme: %{form.progress}</label>
-        <input type="range" min={0} max={100} value={form.progress} onChange={(e) => set('progress', Number(e.target.value))} className="w-full accent-indigo-600" />
+        <input type="range" min={0} max={100} value={form.progress} onChange={(e) => set('progress', Number(e.target.value))} className="w-full accent-primary-600" />
       </div>
       <div className="flex gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
         <button onClick={onClose} className="flex-1 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-800">İptal</button>
-        <button onClick={() => onSave(form)} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm">Kaydet</button>
+        <button onClick={() => onSave(form)} className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm">Kaydet</button>
       </div>
     </div>
   )
@@ -70,15 +70,15 @@ function ReviewModal({ goal, onClose }: { goal: Goal; onClose: () => void }) {
     <div className="p-5 space-y-4">
       <div>
         <label className="block text-xs text-slate-500 mb-1">Bu Ayki İlerleme: %{progress}</label>
-        <input type="range" min={0} max={100} value={progress} onChange={(e) => setProgress(Number(e.target.value))} className="w-full accent-indigo-600" />
+        <input type="range" min={0} max={100} value={progress} onChange={(e) => setProgress(Number(e.target.value))} className="w-full accent-primary-600" />
       </div>
       <div>
         <label className="block text-xs text-slate-500 mb-1">Aylık Değerlendirme Notu</label>
-        <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Bu ay ne yaptım? Engeller nelerdi?" rows={4} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Bu ay ne yaptım? Engeller nelerdi?" rows={4} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500" />
       </div>
       <div className="flex gap-2">
         <button onClick={onClose} className="flex-1 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm">İptal</button>
-        <button onClick={handleSave} className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm">Kaydet</button>
+        <button onClick={handleSave} className="flex-1 py-2 bg-primary-600 text-white rounded-lg text-sm">Kaydet</button>
       </div>
     </div>
   )
@@ -111,26 +111,26 @@ export default function GoalsPage() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold">Hedefler</h1>
-        <button onClick={() => { setEditingGoal(null); setModalOpen(true) }} className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors">
+        <button onClick={() => { setEditingGoal(null); setModalOpen(true) }} className="flex items-center gap-2 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors">
           <Plus size={15} /> Yeni Hedef
         </button>
       </div>
 
       <div className="flex gap-2 mb-5">
         {['all', 'active', 'completed', 'paused', 'cancelled'].map(s => (
-          <button key={s} onClick={() => setStatusFilter(s)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors', statusFilter === s ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-400')}>
+          <button key={s} onClick={() => setStatusFilter(s)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors', statusFilter === s ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary-400')}>
             {s === 'all' ? 'Tümü' : statusConfig[s as GoalStatus]?.label}
           </button>
         ))}
       </div>
 
       {filtered.length === 0
-        ? <Empty icon="🎯" title="Hedef yok" description="Yıllık hedeflerini belirle ve takip et." action={<button onClick={() => setModalOpen(true)} className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg">Hedef Ekle</button>} />
+        ? <Empty icon="🎯" title="Hedef yok" description="Yıllık hedeflerini belirle ve takip et." action={<button onClick={() => setModalOpen(true)} className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg">Hedef Ekle</button>} />
         : <div className="space-y-4">
             {filtered.map(g => {
               const cfg = statusConfig[g.status]
               return (
-                <div key={g.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
+                <div key={g.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 hover:border-primary-300 dark:hover:border-primary-700 transition-all">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
@@ -140,8 +140,8 @@ export default function GoalsPage() {
                       {g.description && <p className="text-sm text-slate-500 line-clamp-2">{g.description}</p>}
                     </div>
                     <div className="flex gap-1 ml-3 shrink-0">
-                      <button onClick={() => setReviewModal(g)} title="Aylık Değerlendirme" className="px-2 py-1 text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">Değerlendirme</button>
-                      <button onClick={() => { setEditingGoal(g); setModalOpen(true) }} className="p-1.5 hover:text-indigo-500"><Edit3 size={14} /></button>
+                      <button onClick={() => setReviewModal(g)} title="Aylık Değerlendirme" className="px-2 py-1 text-xs bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors">Değerlendirme</button>
+                      <button onClick={() => { setEditingGoal(g); setModalOpen(true) }} className="p-1.5 hover:text-primary-500"><Edit3 size={14} /></button>
                       <button onClick={() => { if (confirm('Silmek istediğinizden emin misiniz?')) { deleteGoal(g.id); toast.success('Silindi') } }} className="p-1.5 hover:text-red-500"><Trash2 size={14} /></button>
                     </div>
                   </div>
@@ -149,10 +149,10 @@ export default function GoalsPage() {
                   <div className="mb-3">
                     <div className="flex justify-between text-xs text-slate-500 mb-1.5">
                       <span>İlerleme</span>
-                      <span className="font-semibold text-indigo-500">%{g.progress}</span>
+                      <span className="font-semibold text-primary-500">%{g.progress}</span>
                     </div>
                     <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
-                      <div className={clsx('h-2 rounded-full transition-all', g.status === 'completed' ? 'bg-green-500' : 'bg-indigo-500')} style={{ width: `${g.progress}%` }} />
+                      <div className={clsx('h-2 rounded-full transition-all', g.status === 'completed' ? 'bg-green-500' : 'bg-primary-500')} style={{ width: `${g.progress}%` }} />
                     </div>
                   </div>
 

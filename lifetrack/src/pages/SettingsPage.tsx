@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react'
-import { Download, Upload, Trash2, Plus, Moon, Sun, Database, Folder, Lock, Unlock } from 'lucide-react'
+import { Download, Upload, Trash2, Plus, Database, Folder, Lock, Unlock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useStore } from '../lib/store'
 import { exportJSON, importJSON } from '../utils/export'
+import { THEMES } from '../types'
+import clsx from 'clsx'
 
 export default function SettingsPage() {
-  const { theme, toggleTheme, categories, addCategory, deleteCategory, exportAll, importAll, resetAll, notes, tasks, events, goals, dailyEntries, hasDemoData, loadDemoData, clearDemoData, password, setPassword, removePassword } = useStore()
+  const { themeId, setTheme, categories, addCategory, deleteCategory, exportAll, importAll, resetAll, notes, tasks, events, goals, dailyEntries, hasDemoData, loadDemoData, clearDemoData, password, setPassword, removePassword } = useStore()
   const [newCatName, setNewCatName] = useState('')
   const [newCatColor, setNewCatColor] = useState('#6366f1')
   const [newPass, setNewPass] = useState('')
@@ -71,6 +73,21 @@ export default function SettingsPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <h1 className="text-xl font-bold">Ayarlar</h1>
 
+      {/* Theme */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+        <h2 className="font-semibold mb-4">Tema</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          {THEMES.map(t => (
+            <button key={t.id} onClick={() => setTheme(t.id)}
+              className={clsx('flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all', themeId === t.id ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600')}>
+              <div className="w-8 h-8 rounded-full border-2 border-white shadow" style={{ backgroundColor: t.preview }} />
+              <span className="text-xs font-medium">{t.name}</span>
+              {!t.isDark && <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">Açık</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Password */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
         <h2 className="font-semibold mb-4 flex items-center gap-2"><Lock size={16} /> Şifre Koruması</h2>
@@ -124,18 +141,6 @@ export default function SettingsPage() {
         <div className="mt-3 text-sm text-slate-500">Toplam kayıt: <strong>{totalRecords}</strong></div>
       </div>
 
-      {/* Theme */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
-        <h2 className="font-semibold mb-4">Tema</h2>
-        <div className="flex gap-3">
-          <button onClick={() => theme === 'light' || toggleTheme()} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all ${theme === 'light' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
-            <Sun size={18} /> Aydınlık
-          </button>
-          <button onClick={() => theme === 'dark' || toggleTheme()} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all ${theme === 'dark' ? 'border-indigo-600 bg-indigo-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
-            <Moon size={18} /> Koyu
-          </button>
-        </div>
-      </div>
 
       {/* Data Management */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">

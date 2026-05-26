@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useStore } from './lib/store'
+import { THEMES } from './types'
 import Layout from './components/Layout/Layout'
 import LockScreen from './components/LockScreen'
 import DashboardPage from './pages/DashboardPage'
@@ -15,13 +16,16 @@ import YearlyPage from './pages/YearlyPage'
 import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
-  const theme = useStore((s) => s.theme)
+  const themeId = useStore((s) => s.themeId)
   const password = useStore((s) => s.password)
   const [unlocked, setUnlocked] = useState(() => !password || sessionStorage.getItem('lt_unlocked') === '1')
 
+  const theme = THEMES.find(t => t.id === themeId) ?? THEMES[0]
+
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
-  }, [theme])
+    document.documentElement.setAttribute('data-theme', themeId)
+    document.documentElement.classList.toggle('dark', theme.isDark)
+  }, [themeId, theme.isDark])
 
   useEffect(() => {
     if (!password) setUnlocked(true)
@@ -33,7 +37,7 @@ export default function App() {
   }
 
   return (
-    <div className={theme === 'dark' ? 'dark' : ''}>
+    <>
       {password && !unlocked && <LockScreen storedPassword={password} onUnlock={handleUnlock} />}
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
         <Toaster position="top-right" toastOptions={{ className: '!bg-slate-800 !text-white !border !border-slate-700', duration: 3000 }} />
@@ -52,6 +56,6 @@ export default function App() {
           </Route>
         </Routes>
       </div>
-    </div>
+    </>
   )
 }

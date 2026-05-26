@@ -17,7 +17,7 @@ export default function Badge({ label, color, onClick, size = 'sm', removable, o
         'inline-flex items-center gap-1 rounded-full font-medium',
         size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm',
         onClick && 'cursor-pointer',
-        color ? '' : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+        color ? '' : 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
       )}
       style={color ? { backgroundColor: color + '22', color } : undefined}
     >
