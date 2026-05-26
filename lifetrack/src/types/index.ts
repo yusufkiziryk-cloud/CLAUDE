@@ -17,6 +17,14 @@ export const THEMES: ThemeConfig[] = [
 export type EventType = 'event' | 'meeting' | 'reminder' | 'birthday' | 'deadline'
 export type GoalStatus = 'active' | 'completed' | 'paused' | 'cancelled'
 
+export interface NoteAttachment {
+  id: string
+  name: string
+  type: string
+  size: number
+  data: string
+}
+
 export interface Note {
   id: string
   title: string
@@ -32,6 +40,7 @@ export interface Note {
   archived: boolean
   linkedTaskIds: string[]
   linkedEventIds: string[]
+  attachments: NoteAttachment[]
 }
 
 export interface Task {

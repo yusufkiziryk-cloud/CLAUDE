@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, Search, Pin, Archive, Trash2, Edit3, Tag, User, Building2, X } from 'lucide-react'
+import { Plus, Search, Pin, Archive, Trash2, Edit3, Tag, User, Building2, X, Paperclip, FileText, Image, File, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useStore } from '../lib/store'
 import { fmtDateTime, fmtDateShort } from '../utils/dates'
@@ -8,18 +8,48 @@ import Modal from '../components/common/Modal'
 import Badge, { EmotionBadge } from '../components/common/Badge'
 import Empty from '../components/common/Empty'
 import LifeEditor from '../components/editor/LifeEditor'
-import { Note } from '../types'
+import { Note, NoteAttachment } from '../types'
 import clsx from 'clsx'
+
+function fileIcon(type: string) {
+  if (type.startsWith('image/')) return <Image size={14} />
+  if (type.includes('pdf')) return <FileText size={14} />
+  return <File size={14} />
+}
+
+function fmtSize(bytes: number) {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
 
 const EMOTIONS = ['great', 'good', 'neutral', 'bad', 'terrible'] as const
 const emojis: Record<string, string> = { great: '😄', good: '🙂', neutral: '😐', bad: '😔', terrible: '😢' }
 
 function NoteForm({ initial, onSave, onClose }: { initial?: Partial<Note>; onSave: (n: Partial<Note>) => void; onClose: () => void }) {
   const { categories, allTags, allPersons } = useStore()
-  const [form, setForm] = useState<Partial<Note>>({ title: '', content: '', category: 'Kişisel', tags: [], persons: [], organizations: [], pinned: false, archived: false, linkedTaskIds: [], linkedEventIds: [], ...initial })
+  const [form, setForm] = useState<Partial<Note>>({ title: '', content: '', category: 'Kişisel', tags: [], persons: [], organizations: [], pinned: false, archived: false, linkedTaskIds: [], linkedEventIds: [], attachments: [], ...initial })
   const [tagInput, setTagInput] = useState('')
   const [personInput, setPersonInput] = useState('')
   const [orgInput, setOrgInput] = useState('')
+  const [dragging, setDragging] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return
+    const MAX = 5 * 1024 * 1024
+    Array.from(files).forEach(file => {
+      if (file.size > MAX) { toast.error(`${file.name} çok büyük (max 5 MB)`); return }
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const att: NoteAttachment = { id: Math.random().toString(36).slice(2), name: file.name, type: file.type, size: file.size, data: e.target!.result as string }
+        set('attachments', [...(form.attachments ?? []), att])
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const removeAttachment = (id: string) => set('attachments', (form.attachments ?? []).filter(a => a.id !== id))
 
   const set = (k: keyof Note, v: unknown) => setForm(f => ({ ...f, [k]: v }))
   const addTag = () => { if (tagInput.trim() && !form.tags?.includes(tagInput.trim())) { set('tags', [...(form.tags ?? []), tagInput.trim()]); setTagInput('') } }
@@ -79,6 +109,35 @@ function NoteForm({ initial, onSave, onClose }: { initial?: Partial<Note>; onSav
         </div>
       </div>
 
+      {/* File upload area */}
+      <div>
+        <label className="block text-xs text-slate-500 mb-2 flex items-center gap-1"><Paperclip size={11} /> Belgeler & Dosyalar</label>
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files) }}
+          onClick={() => fileRef.current?.click()}
+          className={clsx('border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors', dragging ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-primary-400 dark:hover:border-primary-500')}
+        >
+          <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+          <Paperclip size={20} className="mx-auto mb-2 text-slate-400" />
+          <p className="text-xs text-slate-500">Dosyaları buraya sürükle veya tıkla</p>
+          <p className="text-xs text-slate-400 mt-1">PDF, Word, resim, vb. — max 5 MB</p>
+        </div>
+        {(form.attachments ?? []).length > 0 && (
+          <div className="mt-2 space-y-1.5">
+            {(form.attachments ?? []).map(att => (
+              <div key={att.id} className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs">
+                <span className="text-slate-500">{fileIcon(att.type)}</span>
+                <span className="flex-1 truncate font-medium">{att.name}</span>
+                <span className="text-slate-400">{fmtSize(att.size)}</span>
+                <button type="button" onClick={() => removeAttachment(att.id)} className="text-slate-400 hover:text-red-500 ml-1"><X size={12} /></button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input type="checkbox" checked={form.pinned} onChange={(e) => set('pinned', e.target.checked)} className="rounded" />
@@ -134,7 +193,7 @@ export default function NotesPage() {
       updateNote(editingNote.id, form)
       toast.success('Not güncellendi')
     } else {
-      addNote({ title: form.title!, content: form.content ?? '', category: form.category ?? 'Kişisel', tags: form.tags ?? [], persons: form.persons ?? [], organizations: form.organizations ?? [], emotion: form.emotion, pinned: form.pinned ?? false, archived: form.archived ?? false, linkedTaskIds: [], linkedEventIds: [] })
+      addNote({ title: form.title!, content: form.content ?? '', category: form.category ?? 'Kişisel', tags: form.tags ?? [], persons: form.persons ?? [], organizations: form.organizations ?? [], emotion: form.emotion, pinned: form.pinned ?? false, archived: form.archived ?? false, linkedTaskIds: [], linkedEventIds: [], attachments: form.attachments ?? [] })
       toast.success('Not eklendi')
     }
     setModalOpen(false)
@@ -214,7 +273,23 @@ export default function NotesPage() {
               dangerouslySetInnerHTML={{ __html: viewNote.content }} />
             <div className="flex flex-wrap gap-1 mb-3">{viewNote.tags.map(t => <Badge key={t} label={`#${t}`} />)}</div>
             {viewNote.persons.length > 0 && <div className="text-xs text-slate-400 mb-1"><User className="inline mr-1" size={11} />{viewNote.persons.join(', ')}</div>}
-            {viewNote.organizations.length > 0 && <div className="text-xs text-slate-400"><Building2 className="inline mr-1" size={11} />{viewNote.organizations.join(', ')}</div>}
+            {viewNote.organizations.length > 0 && <div className="text-xs text-slate-400 mb-3"><Building2 className="inline mr-1" size={11} />{viewNote.organizations.join(', ')}</div>}
+            {(viewNote.attachments ?? []).length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs text-slate-500 mb-2 flex items-center gap-1"><Paperclip size={11} /> Ekler ({viewNote.attachments!.length})</p>
+                <div className="space-y-1.5">
+                  {viewNote.attachments!.map(att => (
+                    <a key={att.id} href={att.data} download={att.name}
+                      className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors group">
+                      <span className="text-slate-500 group-hover:text-primary-500">{fileIcon(att.type)}</span>
+                      <span className="flex-1 truncate font-medium">{att.name}</span>
+                      <span className="text-slate-400">{fmtSize(att.size)}</span>
+                      <Download size={12} className="text-slate-400 group-hover:text-primary-500" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
               <button onClick={() => { setEditingNote(viewNote); setViewNote(null); setModalOpen(true) }} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg"><Edit3 size={13} /> Düzenle</button>
               <button onClick={() => handleDelete(viewNote.id)} className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 dark:border-red-800 text-red-600 text-sm rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 size={13} /> Sil</button>

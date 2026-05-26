@@ -8,32 +8,32 @@ export const demoNotes: Note[] = [
   {
     id: id(), title: 'Q1 Proje Planı', content: '## Çeyrek Hedefler\n\n- [ ] Yeni ürün lansmanı\n- [ ] Ekip genişletme\n- [x] Bütçe onayı\n\n### Notlar\nBu çeyrek için öncelik **kullanıcı deneyimini iyileştirmek**.',
     category: 'İş', tags: ['proje', 'planlama', 'Q1'], persons: ['Ahmet Bey', 'Ayşe Hanım'], organizations: ['TechCorp'],
-    emotion: 'good', createdAt: `${y}-01-10T09:00:00`, updatedAt: `${y}-01-10T09:00:00`, pinned: true, archived: false, linkedTaskIds: [], linkedEventIds: []
+    emotion: 'good', createdAt: `${y}-01-10T09:00:00`, updatedAt: `${y}-01-10T09:00:00`, pinned: true, archived: false, linkedTaskIds: [], linkedEventIds: [], attachments: []
   },
   {
     id: id(), title: 'Sağlık Rutini', content: '## Günlük Sağlık Planım\n\n- Sabah 7\'de kalk\n- 30 dk yürüyüş\n- Bol su iç\n- 22:30\'da uyu\n\n> Sağlık en büyük servet.',
     category: 'Sağlık', tags: ['sağlık', 'rutin', 'wellness'], persons: [], organizations: [],
-    emotion: 'great', createdAt: `${y}-02-05T08:00:00`, updatedAt: `${y}-02-05T08:00:00`, pinned: false, archived: false, linkedTaskIds: [], linkedEventIds: []
+    emotion: 'great', createdAt: `${y}-02-05T08:00:00`, updatedAt: `${y}-02-05T08:00:00`, pinned: false, archived: false, linkedTaskIds: [], linkedEventIds: [], attachments: []
   },
   {
     id: id(), title: 'Kitap Notları: Atomic Habits', content: '## Atomic Habits — James Clear\n\n**Anahtar Fikir:** Küçük alışkanlıklar büyük değişimlere yol açar.\n\n### Önemli Noktalar\n1. Sisteminiz hedeflerinizden daha önemlidir\n2. %1 gelişme her gün\n3. Kimlik odaklı alışkanlıklar\n\n`İpucu:` Her yeni alışkanlığı mevcut birine bağla.',
     category: 'Kitap', tags: ['kitap', 'alışkanlık', 'kişisel-gelişim'], persons: ['James Clear'], organizations: [],
-    emotion: 'great', createdAt: `${y}-02-20T19:00:00`, updatedAt: `${y}-02-20T19:00:00`, pinned: false, archived: false, linkedTaskIds: [], linkedEventIds: []
+    emotion: 'great', createdAt: `${y}-02-20T19:00:00`, updatedAt: `${y}-02-20T19:00:00`, pinned: false, archived: false, linkedTaskIds: [], linkedEventIds: [], attachments: []
   },
   {
     id: id(), title: 'Yıllık Bütçe Planı', content: '## 2026 Bütçe Hedefleri\n\n| Kategori | Hedef | Gerçek |\n|---|---|---|\n| Tasarruf | 20% | - |\n| Yatırım | 10% | - |\n| Eğitim | 5% | - |\n\n### Notlar\nEmergency fund: 6 aylık gider.',
     category: 'Finans', tags: ['bütçe', 'finans', 'tasarruf'], persons: [], organizations: ['Garanti BBVA'],
-    emotion: 'neutral', createdAt: `${y}-01-03T10:00:00`, updatedAt: `${y}-01-15T10:00:00`, pinned: true, archived: false, linkedTaskIds: [], linkedEventIds: []
+    emotion: 'neutral', createdAt: `${y}-01-03T10:00:00`, updatedAt: `${y}-01-15T10:00:00`, pinned: true, archived: false, linkedTaskIds: [], linkedEventIds: [], attachments: []
   },
   {
     id: id(), title: 'Toplantı Notları — Ürün Roadmap', content: '## 15 Mart Toplantısı\n\n**Katılımcılar:** Ahmet, Ayşe, Mehmet\n\n### Kararlar\n1. Mobil app Q2\'de\n2. API entegrasyonu öncelikli\n3. Haftalık sprint review devam\n\n**Sonraki adımlar:** Teknik spec hazırlama.',
     category: 'Toplantı', tags: ['toplantı', 'roadmap', 'ürün'], persons: ['Ahmet Bey', 'Ayşe Hanım', 'Mehmet Bey'], organizations: ['TechCorp'],
-    emotion: 'good', createdAt: `${y}-03-15T14:00:00`, updatedAt: `${y}-03-15T14:00:00`, pinned: false, archived: false, linkedTaskIds: [], linkedEventIds: []
+    emotion: 'good', createdAt: `${y}-03-15T14:00:00`, updatedAt: `${y}-03-15T14:00:00`, pinned: false, archived: false, linkedTaskIds: [], linkedEventIds: [], attachments: []
   },
   {
     id: id(), title: 'Fikir: Verimlilik Uygulaması', content: '## Fikir\n\nBir **kişisel verimlilik uygulaması** geliştirmek istiyorum.\n\n### Özellikler\n- Pomodoro timer\n- Alışkanlık takibi\n- Not alma\n- Raporlama\n\n**Hedef kitle:** Bilgi çalışanları',
     category: 'Fikir', tags: ['fikir', 'uygulama', 'verimlilik', 'startup'], persons: [], organizations: [],
-    emotion: 'great', createdAt: `${y}-04-02T21:00:00`, updatedAt: `${y}-04-02T21:00:00`, pinned: false, archived: false, linkedTaskIds: [], linkedEventIds: []
+    emotion: 'great', createdAt: `${y}-04-02T21:00:00`, updatedAt: `${y}-04-02T21:00:00`, pinned: false, archived: false, linkedTaskIds: [], linkedEventIds: [], attachments: []
   },
 ]
 
