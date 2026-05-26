@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useStore } from './lib/store'
 import Layout from './components/Layout/Layout'
+import LockScreen from './components/LockScreen'
 import DashboardPage from './pages/DashboardPage'
 import NotesPage from './pages/NotesPage'
 import DailyPage from './pages/DailyPage'
@@ -15,13 +16,25 @@ import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
   const theme = useStore((s) => s.theme)
+  const password = useStore((s) => s.password)
+  const [unlocked, setUnlocked] = useState(() => !password || sessionStorage.getItem('lt_unlocked') === '1')
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
   }, [theme])
 
+  useEffect(() => {
+    if (!password) setUnlocked(true)
+  }, [password])
+
+  const handleUnlock = () => {
+    sessionStorage.setItem('lt_unlocked', '1')
+    setUnlocked(true)
+  }
+
   return (
     <div className={theme === 'dark' ? 'dark' : ''}>
+      {password && !unlocked && <LockScreen storedPassword={password} onUnlock={handleUnlock} />}
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
         <Toaster position="top-right" toastOptions={{ className: '!bg-slate-800 !text-white !border !border-slate-700', duration: 3000 }} />
         <Routes>

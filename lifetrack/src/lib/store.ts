@@ -64,6 +64,10 @@ interface AppStore {
   addCategory: (c: Omit<Category, 'id'>) => void
   deleteCategory: (id: string) => void
 
+  password: string
+  setPassword: (p: string) => void
+  removePassword: () => void
+
   hasDemoData: boolean
   loadDemoData: () => void
   clearDemoData: () => void
@@ -155,6 +159,10 @@ export const useStore = create<AppStore>()(
       categories: defaultCategories,
       addCategory: (c) => set((s) => ({ categories: [...s.categories, { ...c, id: uid() }] })),
       deleteCategory: (id) => set((s) => ({ categories: s.categories.filter((c) => c.id !== id) })),
+
+      password: '',
+      setPassword: (p) => set({ password: p }),
+      removePassword: () => set({ password: '' }),
 
       hasDemoData: false,
       loadDemoData: () => {
