@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, BookOpen, CalendarDays, CheckSquare, Target, Search, BarChart3, Settings, Notebook, X } from 'lucide-react'
+import { LayoutDashboard, BookOpen, CalendarDays, CheckSquare, Target, Search, BarChart3, Settings, Notebook, X, GitBranch, Brain, Flame } from 'lucide-react'
 import clsx from 'clsx'
 
 const nav = [
@@ -7,10 +7,13 @@ const nav = [
   { to: '/notes', label: 'Notlar', icon: BookOpen },
   { to: '/daily', label: 'Günlük', icon: Notebook },
   { to: '/tasks', label: 'Görevler', icon: CheckSquare },
+  { to: '/habits', label: 'Alışkanlıklar', icon: Flame },
   { to: '/calendar', label: 'Takvim', icon: CalendarDays },
   { to: '/goals', label: 'Hedefler', icon: Target },
   { to: '/search', label: 'Arama', icon: Search },
   { to: '/yearly', label: 'Yıllık Plan', icon: BarChart3 },
+  { to: '/knowledge', label: 'Bilgi Grafiği', icon: GitBranch },
+  { to: '/ai', label: 'AI Hafıza', icon: Brain },
   { to: '/settings', label: 'Ayarlar', icon: Settings },
 ]
 

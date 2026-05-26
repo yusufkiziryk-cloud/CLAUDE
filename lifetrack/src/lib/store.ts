@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { Note, Task, CalendarEvent, Goal, DailyEntry, MonthlyReview, YearlyReview, Category, Theme } from '../types'
+import { Note, Task, CalendarEvent, Goal, DailyEntry, MonthlyReview, YearlyReview, Category, Habit, HabitLog, Theme } from '../types'
 import { nowISO } from '../utils/dates'
 import { demoNotes, demoTasks, demoEvents, demoGoals, demoDailyEntries } from '../utils/demo'
 
@@ -63,6 +63,18 @@ interface AppStore {
   categories: Category[]
   addCategory: (c: Omit<Category, 'id'>) => void
   deleteCategory: (id: string) => void
+
+  habits: Habit[]
+  habitLogs: HabitLog[]
+  addHabit: (h: Omit<Habit, 'id' | 'createdAt' | 'streak' | 'bestStreak'>) => void
+  updateHabit: (id: string, u: Partial<Habit>) => void
+  deleteHabit: (id: string) => void
+  toggleHabitLog: (habitId: string, date: string) => void
+  getHabitLogsForDate: (date: string) => HabitLog[]
+  getHabitLogs: (habitId: string) => HabitLog[]
+
+  claudeApiKey: string
+  setClaudeApiKey: (key: string) => void
 
   password: string
   setPassword: (p: string) => void
@@ -159,6 +171,37 @@ export const useStore = create<AppStore>()(
       categories: defaultCategories,
       addCategory: (c) => set((s) => ({ categories: [...s.categories, { ...c, id: uid() }] })),
       deleteCategory: (id) => set((s) => ({ categories: s.categories.filter((c) => c.id !== id) })),
+
+      habits: [],
+      habitLogs: [],
+      addHabit: (h) => set(s => ({ habits: [...s.habits, { ...h, id: uid(), streak: 0, bestStreak: 0, createdAt: nowISO() }] })),
+      updateHabit: (id, u) => set(s => ({ habits: s.habits.map(h => h.id === id ? { ...h, ...u } : h) })),
+      deleteHabit: (id) => set(s => ({ habits: s.habits.filter(h => h.id !== id), habitLogs: s.habitLogs.filter(l => l.habitId !== id) })),
+      toggleHabitLog: (habitId, date) => set(s => {
+        const existing = s.habitLogs.find(l => l.habitId === habitId && l.date === date)
+        let habitLogs: HabitLog[]
+        if (existing) {
+          habitLogs = s.habitLogs.filter(l => !(l.habitId === habitId && l.date === date))
+        } else {
+          habitLogs = [...s.habitLogs, { id: uid(), habitId, date, done: true, note: '', createdAt: nowISO() }]
+        }
+        // Recalculate streak for this habit
+        const logs = habitLogs.filter(l => l.habitId === habitId && l.done).map(l => l.date).sort().reverse()
+        let streak = 0
+        const today = new Date().toISOString().slice(0, 10)
+        let check = today
+        for (const d of logs) {
+          if (d === check) { streak++; const dt = new Date(check); dt.setDate(dt.getDate() - 1); check = dt.toISOString().slice(0, 10) }
+          else if (d < check) break
+        }
+        const habits = s.habits.map(h => h.id === habitId ? { ...h, streak, bestStreak: Math.max(h.bestStreak, streak) } : h)
+        return { habitLogs, habits }
+      }),
+      getHabitLogsForDate: (date) => get().habitLogs.filter(l => l.date === date && l.done),
+      getHabitLogs: (habitId) => get().habitLogs.filter(l => l.habitId === habitId),
+
+      claudeApiKey: '',
+      setClaudeApiKey: (key) => set({ claudeApiKey: key }),
 
       password: '',
       setPassword: (p) => set({ password: p }),

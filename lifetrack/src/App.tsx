@@ -13,6 +13,9 @@ import TasksPage from './pages/TasksPage'
 import GoalsPage from './pages/GoalsPage'
 import SearchPage from './pages/SearchPage'
 import YearlyPage from './pages/YearlyPage'
+import KnowledgePage from './pages/KnowledgePage'
+import AIPage from './pages/AIPage'
+import HabitsPage from './pages/HabitsPage'
 import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
@@ -52,6 +55,9 @@ export default function App() {
             <Route path="goals" element={<GoalsPage />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="yearly" element={<YearlyPage />} />
+            <Route path="knowledge" element={<KnowledgePage />} />
+            <Route path="ai" element={<AIPage />} />
+            <Route path="habits" element={<HabitsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>

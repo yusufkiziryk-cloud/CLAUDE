@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import { Plus, Search, Pin, Archive, Trash2, Edit3, Tag, User, Building2, X, Star } from 'lucide-react'
+import { Plus, Search, Pin, Archive, Trash2, Edit3, Tag, User, Building2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useStore } from '../lib/store'
 import { fmtDateTime, fmtDateShort } from '../utils/dates'
 import Modal from '../components/common/Modal'
 import Badge, { EmotionBadge } from '../components/common/Badge'
 import Empty from '../components/common/Empty'
-import MarkdownEditor from '../components/common/MarkdownEditor'
+import LifeEditor from '../components/editor/LifeEditor'
 import { Note } from '../types'
 import clsx from 'clsx'
 
@@ -47,7 +45,7 @@ function NoteForm({ initial, onSave, onClose }: { initial?: Partial<Note>; onSav
         </div>
       </div>
 
-      <MarkdownEditor value={form.content ?? ''} onChange={(v) => set('content', v)} placeholder="Notunu yaz... (Markdown desteklenir)" minHeight={250} />
+      <LifeEditor value={form.content ?? ''} onChange={(v) => set('content', v)} placeholder="Notunu yaz..." minHeight={280} />
 
       <div className="grid grid-cols-1 gap-3">
         <div>
@@ -188,7 +186,7 @@ export default function NotesPage() {
                     <button onClick={() => handleDelete(n.id)} className="p-1 hover:text-red-500"><Trash2 size={13} /></button>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 line-clamp-3 mb-3">{n.content.replace(/[#*`>\-\[\]]/g, '').trim()}</p>
+                <p className="text-xs text-slate-500 line-clamp-3 mb-3">{n.content.replace(/<[^>]*>/g, '').replace(/[#*`>\-\[\]]/g, '').trim()}</p>
                 <div className="flex items-center justify-between">
                   <div className="flex flex-wrap gap-1">{n.tags.slice(0, 2).map(t => <Badge key={t} label={`#${t}`} />)}</div>
                   <div className="flex items-center gap-1.5 text-xs text-slate-400">
@@ -212,9 +210,8 @@ export default function NotesPage() {
               <span>{viewNote.category}</span>
               {viewNote.emotion && <><span>•</span><EmotionBadge emotion={viewNote.emotion} /></>}
             </div>
-            <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{viewNote.content}</ReactMarkdown>
-            </div>
+            <div className="life-editor-content prose prose-sm dark:prose-invert max-w-none mb-4 px-0"
+              dangerouslySetInnerHTML={{ __html: viewNote.content }} />
             <div className="flex flex-wrap gap-1 mb-3">{viewNote.tags.map(t => <Badge key={t} label={`#${t}`} />)}</div>
             {viewNote.persons.length > 0 && <div className="text-xs text-slate-400 mb-1"><User className="inline mr-1" size={11} />{viewNote.persons.join(', ')}</div>}
             {viewNote.organizations.length > 0 && <div className="text-xs text-slate-400"><Building2 className="inline mr-1" size={11} />{viewNote.organizations.join(', ')}</div>}

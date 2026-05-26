@@ -152,6 +152,29 @@ export interface SearchResult {
   score: number
 }
 
+export interface Habit {
+  id: string
+  name: string
+  description: string
+  icon: string
+  color: string
+  frequency: 'daily' | 'weekly'
+  targetDays: number[]
+  streak: number
+  bestStreak: number
+  isActive: boolean
+  createdAt: string
+}
+
+export interface HabitLog {
+  id: string
+  habitId: string
+  date: string
+  done: boolean
+  note: string
+  createdAt: string
+}
+
 export interface SearchFilters {
   query: string
   types: string[]

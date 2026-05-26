@@ -1,18 +1,20 @@
 import { useState, useRef } from 'react'
-import { Download, Upload, Trash2, Plus, Database, Folder, Lock, Unlock } from 'lucide-react'
+import { Download, Upload, Trash2, Plus, Database, Folder, Lock, Unlock, Brain, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useStore } from '../lib/store'
 import { exportJSON, importJSON } from '../utils/export'
 import clsx from 'clsx'
 
 export default function SettingsPage() {
-  const { themeId, setTheme, categories, addCategory, deleteCategory, exportAll, importAll, resetAll, notes, tasks, events, goals, dailyEntries, hasDemoData, loadDemoData, clearDemoData, password, setPassword, removePassword } = useStore()
+  const { themeId, setTheme, categories, addCategory, deleteCategory, exportAll, importAll, resetAll, notes, tasks, events, goals, dailyEntries, hasDemoData, loadDemoData, clearDemoData, password, setPassword, removePassword, claudeApiKey, setClaudeApiKey } = useStore()
   const [newCatName, setNewCatName] = useState('')
   const [newCatColor, setNewCatColor] = useState('#6366f1')
   const [newPass, setNewPass] = useState('')
   const [confirmPass, setConfirmPass] = useState('')
   const [passType, setPassType] = useState<'pin' | 'text'>('pin')
   const [newCatIcon, setNewCatIcon] = useState('📁')
+  const [showApiKey, setShowApiKey] = useState(false)
+  const [apiKeyInput, setApiKeyInput] = useState(claudeApiKey)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleSetPassword = () => {
@@ -85,6 +87,31 @@ export default function SettingsPage() {
             ☀️ Aydınlık
           </button>
         </div>
+      </div>
+
+      {/* Claude AI */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+        <h2 className="font-semibold mb-1 flex items-center gap-2"><Brain size={16} /> Claude AI Entegrasyonu</h2>
+        <p className="text-xs text-slate-400 mb-4">Haftalık yansıma ve AI içgörüleri için Anthropic API anahtarınızı ekleyin. Anahtar yalnızca cihazınızda saklanır.</p>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <input
+              type={showApiKey ? 'text' : 'password'}
+              value={apiKeyInput}
+              onChange={e => setApiKeyInput(e.target.value)}
+              placeholder="sk-ant-..."
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+            <button type="button" onClick={() => setShowApiKey(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+          <button onClick={() => { setClaudeApiKey(apiKeyInput.trim()); toast.success(apiKeyInput.trim() ? 'API anahtarı kaydedildi' : 'API anahtarı kaldırıldı') }}
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors">
+            Kaydet
+          </button>
+        </div>
+        {claudeApiKey && <p className="mt-2 text-xs text-green-600 dark:text-green-400">✓ API anahtarı aktif</p>}
       </div>
 
       {/* Password */}

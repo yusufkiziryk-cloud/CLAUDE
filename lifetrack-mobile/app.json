@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "LifeTrack",
+    "slug": "lifetrack",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "lifetrack",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lifetrack.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Sesli not kaydetmek için mikrofona erişim gereklidir.",
+        "NSFaceIDUsageDescription": "Uygulamanın güvenliği için Face ID kullanılmaktadır."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f172a"
+      },
+      "package": "com.lifetrack.app",
+      "permissions": ["RECORD_AUDIO", "USE_BIOMETRIC", "USE_FINGERPRINT"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-local-authentication",
+      "expo-secure-store",
+      ["expo-notifications", {
+        "icon": "./assets/notification-icon.png",
+        "color": "#ea580c"
+      }]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
