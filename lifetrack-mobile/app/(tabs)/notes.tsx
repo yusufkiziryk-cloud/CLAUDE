@@ -2,7 +2,8 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, useC
 import { useState, useMemo } from 'react'
 import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
-import { useStore, Emotion } from '../../src/store/store'
+import * as DocumentPicker from 'expo-document-picker'
+import { useStore, Emotion, NoteAttachment } from '../../src/store/store'
 
 const ORANGE = '#ea580c'
 const EMOTIONS: { key: Emotion; emoji: string; label: string }[] = [
@@ -13,9 +14,25 @@ const EMOTIONS: { key: Emotion; emoji: string; label: string }[] = [
   { key: 'terrible', emoji: '😢', label: 'Berbat' },
 ]
 
+const uid = () => Math.random().toString(36).slice(2, 11)
+
+function fmtSize(bytes: number) {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / 1048576).toFixed(1) + ' MB'
+}
+
+function fileIcon(type: string) {
+  if (type.startsWith('image/')) return '🖼️'
+  if (type === 'application/pdf') return '📄'
+  if (type.includes('word') || type.includes('document')) return '📝'
+  if (type.includes('sheet') || type.includes('excel')) return '📊'
+  return '📎'
+}
+
 export default function NotesScreen() {
   const isDark = useColorScheme() === 'dark'
-  const { notes, addNote, deleteNote } = useStore()
+  const { notes, addNote, updateNote, deleteNote } = useStore()
   const [search, setSearch] = useState('')
   const [filterTag, setFilterTag] = useState('')
   const [filterEmotion, setFilterEmotion] = useState<Emotion | ''>('')
@@ -26,6 +43,7 @@ export default function NotesScreen() {
   const [emotion, setEmotion] = useState<Emotion | undefined>()
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
+  const [attachments, setAttachments] = useState<NoteAttachment[]>([])
 
   const bg = isDark ? '#0f172a' : '#f8fafc'
   const card = isDark ? '#1e293b' : '#ffffff'
@@ -46,11 +64,31 @@ export default function NotesScreen() {
     return true
   }), [notes, search, filterTag, filterEmotion])
 
+  const pickDocuments = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true })
+      if (!result.canceled) {
+        const newAttachments: NoteAttachment[] = result.assets.map(asset => ({
+          id: uid(),
+          name: asset.name,
+          uri: asset.uri,
+          type: asset.mimeType ?? 'application/octet-stream',
+          size: asset.size ?? 0,
+        }))
+        setAttachments(prev => [...prev, ...newAttachments])
+      }
+    } catch {
+      Alert.alert('Hata', 'Dosya seçilirken bir sorun oluştu.')
+    }
+  }
+
+  const removeAttachment = (id: string) => setAttachments(prev => prev.filter(a => a.id !== id))
+
   const handleSave = async () => {
     if (!content.trim() && !title.trim()) { Alert.alert('Boş not', 'Bir şeyler yaz.'); return }
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-    addNote({ title: title.trim() || content.slice(0, 60), content: content.trim() || title, emotion, tags })
-    setTitle(''); setContent(''); setEmotion(undefined); setTags([]); setTagInput(''); setShowAdd(false)
+    addNote({ title: title.trim() || content.slice(0, 60), content: content.trim() || title, emotion, tags, attachments })
+    setTitle(''); setContent(''); setEmotion(undefined); setTags([]); setTagInput(''); setAttachments([]); setShowAdd(false)
   }
 
   const handleDelete = (id: string) => {
@@ -126,12 +164,18 @@ export default function NotesScreen() {
               <Text style={{ color: muted, fontSize: 13, lineHeight: 20, marginBottom: 8 }} numberOfLines={2}>{n.content}</Text>
             )}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+              <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', flex: 1 }}>
                 {n.tags.slice(0, 3).map(t => (
                   <View key={t} style={{ backgroundColor: ORANGE + '15', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
                     <Text style={{ color: ORANGE, fontSize: 11 }}>#{t}</Text>
                   </View>
                 ))}
+                {n.attachments?.length > 0 && (
+                  <View style={{ backgroundColor: '#3b82f620', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                    <Feather name="paperclip" size={10} color="#3b82f6" />
+                    <Text style={{ color: '#3b82f6', fontSize: 11 }}>{n.attachments.length}</Text>
+                  </View>
+                )}
               </View>
               <Text style={{ color: muted, fontSize: 11 }}>
                 {new Date(n.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
@@ -183,13 +227,37 @@ export default function NotesScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
               <TextInput value={tagInput} onChangeText={setTagInput} onSubmitEditing={addTag} placeholder="etiket ekle..." placeholderTextColor={muted}
                 style={{ flex: 1, backgroundColor: card, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, color: text, borderWidth: 1, borderColor: border }} />
               <TouchableOpacity onPress={addTag} style={{ backgroundColor: border, borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center' }}>
                 <Feather name="plus" size={18} color={muted} />
               </TouchableOpacity>
             </View>
+
+            {/* Attachments */}
+            <Text style={{ color: muted, fontSize: 12, marginBottom: 8 }}>EKLER</Text>
+            {attachments.length > 0 && (
+              <View style={{ marginBottom: 10, gap: 8 }}>
+                {attachments.map(a => (
+                  <View key={a.id} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: card, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: border, gap: 10 }}>
+                    <Text style={{ fontSize: 20 }}>{fileIcon(a.type)}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{a.name}</Text>
+                      <Text style={{ color: muted, fontSize: 11 }}>{fmtSize(a.size)}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => removeAttachment(a.id)}>
+                      <Feather name="x" size={18} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+            <TouchableOpacity onPress={pickDocuments}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: card, borderRadius: 14, paddingVertical: 14, borderWidth: 2, borderColor: border, borderStyle: 'dashed', marginBottom: 24 }}>
+              <Feather name="paperclip" size={18} color={muted} />
+              <Text style={{ color: muted, fontSize: 14 }}>Dosya Ekle</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSave}
               style={{ backgroundColor: ORANGE, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: ORANGE, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
@@ -224,6 +292,21 @@ export default function NotesScreen() {
                   {viewNote.tags.map(t => (
                     <View key={t} style={{ backgroundColor: ORANGE + '20', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 }}>
                       <Text style={{ color: ORANGE, fontSize: 13 }}>#{t}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              {viewNote.attachments?.length > 0 && (
+                <View style={{ marginTop: 24 }}>
+                  <Text style={{ color: muted, fontSize: 12, marginBottom: 10 }}>EKLER ({viewNote.attachments.length})</Text>
+                  {viewNote.attachments.map(a => (
+                    <View key={a.id} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: card, borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: border, gap: 10 }}>
+                      <Text style={{ fontSize: 20 }}>{fileIcon(a.type)}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{a.name}</Text>
+                        <Text style={{ color: muted, fontSize: 11 }}>{fmtSize(a.size)}</Text>
+                      </View>
+                      <Feather name="paperclip" size={16} color={muted} />
                     </View>
                   ))}
                 </View>

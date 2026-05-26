@@ -4,12 +4,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export type Emotion = 'great' | 'good' | 'neutral' | 'bad' | 'terrible'
 
+export interface NoteAttachment {
+  id: string
+  name: string
+  uri: string
+  type: string
+  size: number
+}
+
 export interface Note {
   id: string
   title: string
   content: string
   emotion?: Emotion
   tags: string[]
+  attachments: NoteAttachment[]
   createdAt: string
   updatedAt: string
 }
@@ -22,6 +31,7 @@ export interface DailyEntry {
   emotion?: Emotion
   energy: number
   tags: string[]
+  attachments: NoteAttachment[]
   createdAt: string
   updatedAt: string
 }

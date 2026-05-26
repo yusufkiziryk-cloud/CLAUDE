@@ -1,8 +1,9 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, useColorScheme } from 'react-native'
-import { useState, useEffect } from 'react'
+import { View, Text, TextInput, TouchableOpacity, ScrollView, useColorScheme, Alert } from 'react-native'
+import { useState } from 'react'
 import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
-import { useStore, Emotion } from '../../src/store/store'
+import * as DocumentPicker from 'expo-document-picker'
+import { useStore, Emotion, NoteAttachment } from '../../src/store/store'
 
 const ORANGE = '#ea580c'
 const EMOTIONS: { key: Emotion; emoji: string; label: string }[] = [
@@ -12,6 +13,22 @@ const EMOTIONS: { key: Emotion; emoji: string; label: string }[] = [
   { key: 'bad', emoji: '😔', label: 'Kötü' },
   { key: 'terrible', emoji: '😢', label: 'Berbat' },
 ]
+
+const uid = () => Math.random().toString(36).slice(2, 11)
+
+function fmtSize(bytes: number) {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / 1048576).toFixed(1) + ' MB'
+}
+
+function fileIcon(type: string) {
+  if (type.startsWith('image/')) return '🖼️'
+  if (type === 'application/pdf') return '📄'
+  if (type.includes('word') || type.includes('document')) return '📝'
+  if (type.includes('sheet') || type.includes('excel')) return '📊'
+  return '📎'
+}
 
 export default function JournalScreen() {
   const isDark = useColorScheme() === 'dark'
@@ -24,6 +41,7 @@ export default function JournalScreen() {
   const [mainNote, setMainNote] = useState(existing?.mainNote ?? '')
   const [emotion, setEmotion] = useState<Emotion | undefined>(existing?.emotion)
   const [energy, setEnergy] = useState(existing?.energy ?? 3)
+  const [attachments, setAttachments] = useState<NoteAttachment[]>(existing?.attachments ?? [])
   const [saved, setSaved] = useState(false)
 
   const bg = isDark ? '#0f172a' : '#f8fafc'
@@ -32,9 +50,29 @@ export default function JournalScreen() {
   const text = isDark ? '#f1f5f9' : '#0f172a'
   const muted = isDark ? '#94a3b8' : '#64748b'
 
+  const pickDocuments = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true })
+      if (!result.canceled) {
+        const newAttachments: NoteAttachment[] = result.assets.map(asset => ({
+          id: uid(),
+          name: asset.name,
+          uri: asset.uri,
+          type: asset.mimeType ?? 'application/octet-stream',
+          size: asset.size ?? 0,
+        }))
+        setAttachments(prev => [...prev, ...newAttachments])
+      }
+    } catch {
+      Alert.alert('Hata', 'Dosya seçilirken bir sorun oluştu.')
+    }
+  }
+
+  const removeAttachment = (id: string) => setAttachments(prev => prev.filter(a => a.id !== id))
+
   const handleSave = async () => {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-    saveDailyEntry({ date: today, title: title || 'Günlük', mainNote, emotion, energy, tags: [] })
+    saveDailyEntry({ date: today, title: title || 'Günlük', mainNote, emotion, energy, tags: [], attachments })
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -104,6 +142,32 @@ export default function JournalScreen() {
           <Text style={{ color: muted, flex: 1, fontSize: 14 }}>{p}</Text>
         </TouchableOpacity>
       ))}
+
+      {/* Attachments */}
+      <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: border }}>
+        <Text style={{ color: muted, fontSize: 12, marginBottom: 12 }}>📎 EKLER</Text>
+        {attachments.length > 0 && (
+          <View style={{ marginBottom: 10, gap: 8 }}>
+            {attachments.map(a => (
+              <View key={a.id} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: bg, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: border, gap: 10 }}>
+                <Text style={{ fontSize: 18 }}>{fileIcon(a.type)}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{a.name}</Text>
+                  <Text style={{ color: muted, fontSize: 11 }}>{fmtSize(a.size)}</Text>
+                </View>
+                <TouchableOpacity onPress={() => removeAttachment(a.id)}>
+                  <Feather name="x" size={18} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+        <TouchableOpacity onPress={pickDocuments}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 12, borderWidth: 2, borderColor: border, borderStyle: 'dashed' }}>
+          <Feather name="paperclip" size={16} color={muted} />
+          <Text style={{ color: muted, fontSize: 14 }}>Dosya Ekle</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Save */}
       <TouchableOpacity onPress={handleSave} style={{
