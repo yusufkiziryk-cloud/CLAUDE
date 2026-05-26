@@ -29,13 +29,7 @@
       "permissions": ["RECORD_AUDIO", "USE_BIOMETRIC", "USE_FINGERPRINT"]
     },
     "plugins": [
-      "expo-router",
-      "expo-local-authentication",
-      "expo-secure-store",
-      ["expo-notifications", {
-        "icon": "./assets/notification-icon.png",
-        "color": "#ea580c"
-      }]
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true

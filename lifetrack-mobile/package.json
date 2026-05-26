@@ -4,8 +4,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "build:android": "eas build --platform android",
     "build:ios": "eas build --platform ios"
   },
@@ -19,7 +19,7 @@
     "expo-haptics": "~14.0.0",
     "expo-av": "~15.0.0",
     "expo-speech": "~13.0.0",
-    "react": "18.3.2",
+    "react": "18.3.1",
     "react-native": "0.76.3",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/bottom-tabs": "^6.6.1",

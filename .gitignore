@@ -1,3 +1,5 @@
 lifetrack/node_modules/.vite/
 lifetrack/dist/
 lifetrack/node_modules/
+lifetrack-mobile/node_modules/
+lifetrack-mobile/.expo/
