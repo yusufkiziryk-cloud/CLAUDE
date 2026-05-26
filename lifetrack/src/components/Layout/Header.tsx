@@ -44,7 +44,7 @@ export default function Header({ onMenuToggle }: Props) {
           <Plus size={15} />
           <span className="hidden sm:block">Yeni Not</span>
         </button>
-        <button onClick={() => setTheme(theme.isDark ? 'aydinlik' : 'koyu')} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+        <button onClick={() => setTheme(theme.isDark ? 'aydinlik' : 'karanlik')} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
           {theme.isDark ? <Sun size={17} /> : <Moon size={17} />}
         </button>
       </div>

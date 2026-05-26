@@ -84,7 +84,7 @@ interface AppStore {
 export const useStore = create<AppStore>()(
   persist(
     (set, get) => ({
-      themeId: 'koyu',
+      themeId: 'karanlik',
       setTheme: (id) => set({ themeId: id }),
 
       notes: [],

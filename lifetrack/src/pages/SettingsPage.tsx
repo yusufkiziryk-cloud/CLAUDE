@@ -3,7 +3,6 @@ import { Download, Upload, Trash2, Plus, Database, Folder, Lock, Unlock } from '
 import toast from 'react-hot-toast'
 import { useStore } from '../lib/store'
 import { exportJSON, importJSON } from '../utils/export'
-import { THEMES } from '../types'
 import clsx from 'clsx'
 
 export default function SettingsPage() {
@@ -75,16 +74,16 @@ export default function SettingsPage() {
 
       {/* Theme */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
-        <h2 className="font-semibold mb-4">Tema</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          {THEMES.map(t => (
-            <button key={t.id} onClick={() => setTheme(t.id)}
-              className={clsx('flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all', themeId === t.id ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600')}>
-              <div className="w-8 h-8 rounded-full border-2 border-white shadow" style={{ backgroundColor: t.preview }} />
-              <span className="text-xs font-medium">{t.name}</span>
-              {!t.isDark && <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">Açık</span>}
-            </button>
-          ))}
+        <h2 className="font-semibold mb-4">Arka Plan</h2>
+        <div className="flex gap-3">
+          <button onClick={() => setTheme('karanlik')}
+            className={clsx('flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all text-sm font-medium', themeId === 'karanlik' ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600')}>
+            🌙 Karanlık
+          </button>
+          <button onClick={() => setTheme('aydinlik')}
+            className={clsx('flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all text-sm font-medium', themeId === 'aydinlik' ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600')}>
+            ☀️ Aydınlık
+          </button>
         </div>
       </div>
 
@@ -104,23 +103,23 @@ export default function SettingsPage() {
         ) : (
           <div className="space-y-3">
             <div className="flex gap-2">
-              <button onClick={() => setPassType('pin')} className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${passType === 'pin' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-400'}`}>PIN (4-8 rakam)</button>
-              <button onClick={() => setPassType('text')} className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${passType === 'text' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-400'}`}>Metin Şifresi</button>
+              <button onClick={() => setPassType('pin')} className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${passType === 'pin' ? 'bg-primary-600 text-white border-primary-600' : 'border-slate-200 dark:border-slate-700 hover:border-primary-400'}`}>PIN (4-8 rakam)</button>
+              <button onClick={() => setPassType('text')} className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${passType === 'text' ? 'bg-primary-600 text-white border-primary-600' : 'border-slate-200 dark:border-slate-700 hover:border-primary-400'}`}>Metin Şifresi</button>
             </div>
             <input
               type={passType === 'pin' ? 'number' : 'password'}
               value={newPass} onChange={(e) => setNewPass(e.target.value)}
               placeholder={passType === 'pin' ? '4-8 haneli PIN...' : 'Şifre...'}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <input
               type={passType === 'pin' ? 'number' : 'password'}
               value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSetPassword()}
               placeholder="Tekrar gir..."
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
-            <button onClick={handleSetPassword} className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-2">
+            <button onClick={handleSetPassword} className="w-full py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-2">
               <Lock size={14} /> Şifreyi Ayarla
             </button>
           </div>
@@ -133,7 +132,7 @@ export default function SettingsPage() {
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[{ label: 'Not', value: notes.length }, { label: 'Görev', value: tasks.length }, { label: 'Etkinlik', value: events.length }, { label: 'Hedef', value: goals.length }, { label: 'Günlük', value: dailyEntries.length }].map(s => (
             <div key={s.label} className="text-center bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
-              <div className="text-xl font-bold text-indigo-500">{s.value}</div>
+              <div className="text-xl font-bold text-primary-500">{s.value}</div>
               <div className="text-xs text-slate-500">{s.label}</div>
             </div>
           ))}
@@ -213,10 +212,10 @@ export default function SettingsPage() {
           ))}
         </div>
         <div className="flex gap-2 flex-wrap">
-          <input type="text" value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} placeholder="📁" className="w-14 px-2 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          <input type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()} placeholder="Kategori adı..." className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input type="text" value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} placeholder="📁" className="w-14 px-2 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          <input type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()} placeholder="Kategori adı..." className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
           <input type="color" value={newCatColor} onChange={(e) => setNewCatColor(e.target.value)} className="w-10 h-10 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer" />
-          <button onClick={handleAddCategory} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors"><Plus size={14} /> Ekle</button>
+          <button onClick={handleAddCategory} className="flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors"><Plus size={14} /> Ekle</button>
         </div>
       </div>
 
