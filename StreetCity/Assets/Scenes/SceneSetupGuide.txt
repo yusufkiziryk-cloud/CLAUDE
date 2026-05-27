@@ -1,0 +1,248 @@
+## Street City: Open World Mobile - Sahne Kurulum Rehberi
+
+=== SAHNE 1: MainMenu ===
+
+Hiyerarşi:
+├── [Camera] Main Camera
+│   └── AudioListener
+├── [Canvas] MainMenuCanvas
+│   ├── Background (Image - tam ekran)
+│   ├── LogoImage (Street City logo)
+│   ├── Panel_MainMenu
+│   │   ├── TitleText ("STREET CITY")
+│   │   ├── SubTitleText ("Open World Mobile")
+│   │   ├── Button_Play ("OYUNA BAŞLA")
+│   │   ├── Button_Garage ("GARAJ")
+│   │   ├── Button_Settings ("AYARLAR")
+│   │   └── Button_Quit ("ÇIKIŞ")
+│   └── Panel_Settings (başlangıçta gizli)
+│       ├── Slider_Volume
+│       ├── Toggle_SFX
+│       ├── Toggle_Music
+│       ├── Dropdown_Graphics
+│       └── Button_Close
+├── [Manager] GameManager
+├── [Manager] AudioManager
+├── [Manager] SaveLoadSystem
+└── [Manager] UIManager
+
+=== SAHNE 2: GameScene ===
+
+Hiyerarşi:
+├── [Cameras]
+│   ├── Main Camera (kamera rig ile)
+│   └── MiniMap Camera (ortografik, yukarıdan)
+│
+├── [Managers]
+│   ├── GameManager
+│   ├── UIManager
+│   ├── AudioManager
+│   ├── SaveLoadSystem
+│   ├── MissionManager
+│   ├── RaceManager
+│   ├── TimerSystem
+│   ├── TrafficSystem
+│   ├── PoliceChaseSystem
+│   └── MiniMapController
+│
+├── [Player]
+│   ├── PlayerSpawnPoint (empty transform)
+│   └── [PlayerCar] (runtime'da spawn edilir)
+│       ├── CarBody (MeshRenderer)
+│       ├── CarWheels
+│       │   ├── WheelFL (WheelCollider + Transform)
+│       │   ├── WheelFR
+│       │   ├── WheelRL
+│       │   └── WheelRR
+│       └── CenterOfMass (empty transform, y:-0.5)
+│
+├── [CameraRig]
+│   └── Main Camera
+│
+├── [World]
+│   ├── Terrain
+│   ├── Roads
+│   │   ├── MainRoad_H (yatay ana yol)
+│   │   ├── MainRoad_V (dikey ana yol)
+│   │   ├── SideRoad_1
+│   │   ├── SideRoad_2
+│   │   └── CrossRoads
+│   ├── Buildings
+│   │   ├── Block_A (ticaret bölgesi)
+│   │   ├── Block_B (konut bölgesi)
+│   │   ├── Block_C (endüstri bölgesi)
+│   │   └── Block_D (park bölgesi)
+│   ├── Props
+│   │   ├── StreetLamps
+│   │   ├── Trees
+│   │   ├── TrafficLights
+│   │   └── Benches
+│   └── Boundaries (harita sınır duvarları - görünmez)
+│
+├── [Traffic]
+│   ├── TrafficSystem (component)
+│   ├── TrafficRoutes
+│   │   ├── Route_MainH (waypoint'ler)
+│   │   ├── Route_MainV
+│   │   └── Route_Loop
+│   └── PedestrianPaths
+│
+├── [Race]
+│   ├── StartLine (trigger collider + görsel)
+│   ├── FinishLine
+│   ├── Checkpoints
+│   │   ├── Checkpoint_0
+│   │   ├── Checkpoint_1
+│   │   ├── Checkpoint_2
+│   │   └── Checkpoint_3
+│   └── AIRacerSpawns
+│
+├── [Missions]
+│   ├── MissionPoint_1 (teslimat görevi)
+│   ├── MissionPoint_2 (yarış görevi)
+│   ├── MissionPoint_3 (kaçış görevi)
+│   └── GaragePoint
+│
+├── [Police]
+│   ├── PoliceSpawnPoint_1
+│   ├── PoliceSpawnPoint_2
+│   └── PoliceSpawnPoint_3
+│
+└── [UI]
+    └── Canvas (Screen Space - Overlay)
+        ├── HUD
+        │   ├── SpeedDisplay
+        │   │   └── Text_Speed
+        │   ├── MiniMapContainer
+        │   │   ├── RawImage_MiniMap
+        │   │   ├── Icon_Player
+        │   │   └── Icon_Mission
+        │   ├── MoneyDisplay
+        │   │   └── Text_Money
+        │   ├── ScoreDisplay
+        │   │   └── Text_Score
+        │   ├── NitroBar
+        │   │   ├── Slider_Nitro
+        │   │   └── Text_NitroStatus
+        │   └── WantedPanel
+        │       ├── Star_1, Star_2, Star_3
+        │       └── Text_Wanted
+        │
+        ├── Controls
+        │   ├── Left_Side
+        │   │   ├── Joystick_Background
+        │   │   └── Joystick_Handle
+        │   └── Right_Side
+        │       ├── Button_Gas
+        │       ├── Button_Brake
+        │       ├── Button_Handbrake
+        │       ├── Button_Nitro
+        │       ├── Button_EnterExit
+        │       ├── Button_Mission
+        │       ├── Button_Map
+        │       └── Button_Pause
+        │
+        ├── PauseMenu (başlangıçta gizli)
+        │   ├── Button_Resume
+        │   ├── Button_Garage
+        │   ├── Button_Settings
+        │   ├── Button_MainMenu
+        │   └── Button_Restart
+        │
+        ├── RaceUI (başlangıçta gizli)
+        │   ├── Panel_Countdown
+        │   │   └── Text_Countdown
+        │   ├── Text_RaceTimer
+        │   ├── Text_Position
+        │   ├── Text_Lap
+        │   └── Panel_Result
+        │       ├── Text_Result
+        │       ├── Text_Reward
+        │       ├── Button_Retry
+        │       └── Button_Exit
+        │
+        └── MissionUI
+            ├── Panel_Mission
+            │   ├── Text_MissionName
+            │   ├── Text_MissionDesc
+            │   ├── Text_MissionTimer
+            │   └── Text_Reward
+            ├── Panel_Complete (gizli)
+            └── Panel_Fail (gizli)
+
+
+=== CANVAS AYARLARI ===
+
+Canvas:
+  Render Mode: Screen Space - Overlay
+  Canvas Scaler:
+    UI Scale Mode: Scale With Screen Size
+    Reference Resolution: 1920 x 1080
+    Screen Match Mode: Match Width Or Height
+    Match: 0.5
+
+Canvas Raycaster: GraphicRaycaster bileşeni ekle
+
+=== CAMERA AYARLARI ===
+
+Main Camera:
+  Clear Flags: Skybox (veya Solid Color - mavi gök)
+  Background: #87CEEB (gökyüzü mavisi)
+  Culling Mask: Hepsi (MiniMap layer hariç)
+  Field of View: 65
+  Near Clip: 0.3
+  Far Clip: 500
+  Depth: 0
+
+MiniMap Camera:
+  Clear Flags: Solid Color
+  Background: #1A2B1A (koyu yeşil)
+  Culling Mask: World, Vehicle, AI (UI hariç)
+  Orthographic: ✓
+  Orthographic Size: 60
+  Depth: -1
+  Target Texture: MiniMapRenderTexture (Assets/UI/MiniMapRT.renderTexture)
+
+=== RENDER TEXTURE OLUŞTURMA (MiniMap için) ===
+
+Assets > Create > Render Texture
+Name: MiniMapRT
+Size: 256x256 (performans için)
+Format: ARGB32
+MiniMap Camera > Target Texture > MiniMapRT ata
+MiniMap RawImage > Texture > MiniMapRT ata
+
+
+=== COLLIDER AYARLARI ===
+
+Araçlar:
+  Car Body: Box Collider (kaba AABB yeterli)
+  WheelCollider: Her tekerlek için ayrı WheelCollider
+
+Yollar:
+  Mesh Collider (Convex = OFF, yol düz olduğu için)
+  Layer: World
+
+Binalar:
+  Box Collider (birden fazla olabilir)
+  Layer: World
+
+Çarpışma Sınırları:
+  Haritanın 4 kenarına invisible wall (Box Collider, MeshRenderer = off)
+  Layer: World
+
+
+=== WAYPOINT SİSTEMİ KURULUMU ===
+
+1. Route objeleri oluştur (empty gameobject)
+2. Route'un altına Waypoint objeleri ekle (empty gameobject)
+3. Waypoint'leri yol üzerine yerleştir (y = 0.5, yol seviyesi)
+4. TrafficSystem component'ine route waypoint'lerini ata
+5. AICarController'lara waypoint array'ini ata
+
+Waypoint Yerleştirme İpuçları:
+- Kavşaklarda waypoint koy
+- Virajların başına ve sonuna waypoint koy
+- Düz yolda her 20 metrede bir waypoint
+- Waypoint'ler yolun ORTASINDA olmalı
+

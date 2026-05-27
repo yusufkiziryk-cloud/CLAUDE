@@ -1,0 +1,182 @@
+## Street City: Open World Mobile - Mobil UI Tasarımı
+
+=== EKRAN DÜZENİ (1920x1080 - Landscape) ===
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  [PARA: $1,200]          [PUAN: 5,450]           [MİNİ HARİTA]  [PAUSE]    │
+│                                                   ┌──────────┐               │
+│                                                   │  [●]     │               │
+│                                                   │    [★]   │               │
+│                                                   │          │               │
+│                                                   └──────────┘               │
+│                                                                               │
+│  ★★☆  ARANIYOR                                                               │
+│                                                                               │
+│           [ OYUN GÖRSELİ - 3D DÜNYA ]                                        │
+│                                                                               │
+│  ┌────┐                                                           ┌──────┐   │
+│  │ JO │                                             [GERİ]  [EL]  │ GAZ  │   │
+│  │ YS │                                                            │      │   │
+│  │ TK │                                       [GÖREV] [BİN/İN]   └──────┘   │
+│  └────┘                                                                       │
+│  ╔════════════════╗                           [NİTRO] [HARİTA]               │
+│  ║ HIZ: 85 km/h  ║                                                           │
+│  ║ [NITRO ██░░░] ║                                                           │
+│  ╚════════════════╝                                                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+=== RENKLERİ VE BOYUTLAR ===
+
+Renk Paleti:
+  Ana Renk: #1A1A2E (koyu lacivert)
+  Vurgu Renk: #E94560 (kırmızı-pembe)
+  Yardımcı: #16213E (daha koyu)
+  Başarı: #0F9B58 (yeşil)
+  Uyarı: #F7B731 (sarı)
+  Beyaz: #ECEFF4
+
+Buton Tasarımı:
+  Boyut: 120x120px (en az 88x88 - parmak dostu)
+  Köşe Yarıçapı: 15px
+  Arka Plan: semi-transparent siyah (#000000AA)
+  Kenarlık: 2px, #E94560
+  İkon Rengi: Beyaz
+  Aktif Rengi: #E94560
+
+Joystick:
+  Arka Plan Çapı: 200px, opacity: 0.6
+  Topuz Çapı: 90px, opacity: 0.9
+  Renk: Beyaz/Mavi ton
+
+Hız Göstergesi:
+  Boyut: 160x80px
+  Font: Bold, 32px
+  Renk: Beyaz + hafif gölge
+  Arka Plan: Semi-transparent
+
+Mini Harita:
+  Boyut: 180x180px
+  Pozisyon: Sağ üst köşe
+  Kenarlık: 3px beyaz
+  Köşe Yarıçapı: 5px (hafif yuvarlak)
+  Oyuncu ikon: Mavi ok
+  Görev ikonu: Sarı yıldız
+
+Para/Puan Göstergesi:
+  Boyut: Otomatik
+  Font: Bold, 28px
+  İkon + rakam yan yana
+  $ simgesi sarı, rakam beyaz
+
+Wanted Yıldızları:
+  Yıldız Boyutu: 40x40px
+  Aktif: Sarı ★
+  Pasif: Gri ☆
+  3 yıldız yan yana
+
+=== BUTON DÜZENİ (Detaylı) ===
+
+SOL TARAF (Sol Başparmak):
+  Joystick: Sabit veya floating (parmak bastığında hareket eder)
+  Pozisyon: Sol alt, ortalı
+
+SAĞ TARAF (Sağ Başparmak):
+  GAZ:      Sağ alt köşe     - Yeşil (#0F9B58) - Büyük
+  FREN:     Gaz'ın solu      - Kırmızı (#E94560)
+  EL FRENİ: Fren'in solu     - Turuncu
+  NİTRO:    Gaz'ın üstü      - Mavi/Cyan - Parlak
+
+  BİN/İN:   Orta sağ         - Sarı - Durum yazısıyla
+  GÖREV:    Orta sağ üstü    - Mor
+
+  HARİTA:   Sağ üst          - Küçük
+  PAUSE:    Sol üst (header) - Minimal
+
+=== ANİMASYONLAR ===
+
+Buton Basma:
+  Scale punch: 0.9 -> 1.0 (0.1s)
+  Alpha flash: 1.0 -> 0.6 -> 1.0
+
+Para Popup:
+  Yukarı kayma + fade out (1.5s)
+  Renk: Yeşil (kazanç) / Kırmızı (harcama)
+
+Görev Tamamlama Banner:
+  Yukarıdan kayarak giriş
+  2 saniye dur
+  Kayarak çıkış
+
+Geri Sayım:
+  Büyük font (72px)
+  Ölçek animasyonu: 2.0 -> 1.0
+  Renk değişimi: Kırmızı -> Yeşil
+
+HUD Geçiş:
+  Slide in/out animasyonları
+  Fade in/out
+
+=== ANA MENÜ DÜZENİ ===
+
+┌──────────────────────────────────────────────┐
+│                                              │
+│         🏎️  STREET CITY                     │
+│         Open World Mobile                    │
+│                                              │
+│    ┌────────────────────┐                   │
+│    │  ▶  OYUNA BAŞLA    │                   │
+│    └────────────────────┘                   │
+│    ┌────────────────────┐                   │
+│    │  🚗  GARAJ         │                   │
+│    └────────────────────┘                   │
+│    ┌────────────────────┐                   │
+│    │  ⚙️  AYARLAR       │                   │
+│    └────────────────────┘                   │
+│    ┌────────────────────┐                   │
+│    │  ✕  ÇIKIŞ          │                   │
+│    └────────────────────┘                   │
+│                                              │
+│    Versiyon: 1.0.0                           │
+└──────────────────────────────────────────────┘
+
+=== GARAJ UI DÜZENİ ===
+
+┌──────────────────────────────────────────────────┐
+│  GARAJ                                [KAPAT]    │
+│                                                  │
+│  [◄]    🚗  KIRMIZI SPOR ARABA    [►]           │
+│                                                  │
+│         [ARAÇ ÖNİZLEME GÖRSELİ]                 │
+│                                                  │
+│  HIZ:    ★★☆    [YÜKSELT - 1000$]               │
+│  FREN:   ★★★    [MAX]                           │
+│  NİTRO:  ★☆☆    [YÜKSELT - 500$]               │
+│  TUTUŞ:  ★★☆    [YÜKSELT - 1000$]               │
+│                                                  │
+│  [RENK DEĞİŞTİR - 200$]   [SEÇ / SATIN AL]     │
+│                                                  │
+│  Renk Seçenekleri:                               │
+│  🔴 🔵 🟡 ⚫ 🟢 ⚪ 🟠 💜                       │
+└──────────────────────────────────────────────────┘
+
+=== AYARLAR UI DÜZENİ ===
+
+┌──────────────────────────────────────────────────┐
+│  AYARLAR                              [KAPAT]    │
+│                                                  │
+│  🔊 Ana Ses:        [━━━━━━●──────]             │
+│                                                  │
+│  🎵 Müzik:         [ ●ON ] veya [OFF● ]         │
+│  🔔 Ses Efektleri: [ ●ON ] veya [OFF● ]         │
+│                                                  │
+│  📊 Grafik Kalitesi:                             │
+│     [DÜŞÜK] [ORTA●] [YÜKSEK]                   │
+│                                                  │
+│  🎮 Kontrol Hassasiyeti:                         │
+│     [━━━━━●──────]                              │
+│                                                  │
+│  🌐 Dil: [Türkçe]                               │
+│                                                  │
+│  ⚠️  Kayıtları Sil: [SİL]                       │
+└──────────────────────────────────────────────────┘
+

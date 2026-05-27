@@ -1,0 +1,188 @@
+## Street City: Open World Mobile - Unity Project Settings Rehberi
+
+Unity 2022.3 LTS (Önerilen) veya Unity 2021.3 LTS için aşağıdaki ayarları uygula:
+
+=== PLAYER SETTINGS ===
+
+Edit > Project Settings > Player
+
+[ Android Tab ]
+
+Company Name: YourCompany
+Product Name: Street City: Open World Mobile
+Version: 1.0.0
+
+Package Name (Bundle Identifier):
+  com.yourcompany.streetcity
+
+Minimum API Level: Android 7.0 (API 24)
+Target API Level: Android 13 (API 33) - veya Automatic (Highest Installed)
+
+Orientation:
+  Default Orientation: Landscape Left (veya Auto Rotation: sadece Landscape Left + Landscape Right işaretle)
+  Allow Rotation: SADECE Landscape Left + Landscape Right işaretle
+
+Scripting Backend: IL2CPP (Önerilen - daha iyi performans)
+  veya Mono (Daha hızlı build)
+
+Target Architectures:
+  ARM64: ✓ (Modern cihazlar için)
+  ARMv7: ✓ (Eski cihazlar için opsiyonel)
+  x86: ✗ (Android emülatör için gerekli değil)
+  x86-64: ✗
+
+Internet Access: Not Required
+Write Permission: External (SD Card) - opsiyonel
+
+=== QUALITY SETTINGS ===
+
+Edit > Project Settings > Quality
+
+3 kalite profili oluştur:
+
+[LowQuality - Düşük]
+Rendering:
+  Pixel Light Count: 0
+  Texture Quality: Half Res
+  Anisotropic Textures: Disabled
+  Anti Aliasing: Disabled
+  Soft Particles: OFF
+  Realtime Reflection Probes: OFF
+  Billboards Face Camera Position: ON
+
+Shadows:
+  Shadows: Disable Shadows
+  Shadow Resolution: Low
+
+Other:
+  V Sync Count: Don't Sync
+  Target Frame Rate: 30
+
+[MediumQuality - Orta]
+Rendering:
+  Pixel Light Count: 1
+  Texture Quality: Full Res
+  Anisotropic Textures: Per Texture
+  Anti Aliasing: 2x
+  Realtime Reflection Probes: OFF
+
+Shadows:
+  Shadows: Hard Shadows Only
+  Shadow Resolution: Medium
+  Shadow Distance: 30
+
+Other:
+  Target Frame Rate: 45
+
+[HighQuality - Yüksek]
+Rendering:
+  Pixel Light Count: 2
+  Texture Quality: Full Res
+  Anisotropic Textures: Per Texture
+  Anti Aliasing: 4x
+
+Shadows:
+  Shadows: Hard and Soft Shadows
+  Shadow Resolution: High
+  Shadow Distance: 50
+
+Other:
+  Target Frame Rate: 60
+
+=== GRAPHICS SETTINGS ===
+
+Edit > Project Settings > Graphics
+
+Always Included Shaders (ekle):
+- Mobile/Diffuse
+- Mobile/Bumped Diffuse
+- Sprites/Default
+- UI/Default
+
+=== BUILD SETTINGS ===
+
+File > Build Settings
+
+Platform: Android
+Texture Compression: ETC2 (Önerilen)
+ETC2 Fallback: 16 bits
+Build System: Gradle
+Export as Google Android Project: ✗ (direkt APK için)
+Development Build: ✗ (final build için)
+Script Debugging: ✗
+Compress with LZ4: ✓
+
+=== ANDROID SDK AYARLARI ===
+
+Edit > Preferences > External Tools
+
+Android SDK: C:\Users\[User]\AppData\Local\Android\Sdk
+  veya ~/Library/Android/sdk (Mac)
+
+Android NDK: Unity ile birlikte gelir
+  veya r21d sürümünü indir
+
+JDK: Unity ile birlikte gelir
+  veya Java 11 JDK
+
+=== TAGS VE LAYERS ===
+
+Edit > Project Settings > Tags and Layers
+
+Tags:
+  Tag 0: Untagged
+  Tag 1: Player
+  Tag 2: PlayerCar
+  Tag 3: AICar
+  Tag 4: PoliceCar
+  Tag 5: Building
+  Tag 6: Road
+  Tag 7: MissionPoint
+  Tag 8: Checkpoint
+
+Layers:
+  Layer 8: Player
+  Layer 9: Vehicle
+  Layer 10: AI
+  Layer 11: World
+  Layer 12: UI
+  Layer 13: MiniMap
+  Layer 14: Terrain
+
+=== PHYSICS SETTINGS ===
+
+Edit > Project Settings > Physics
+
+Gravity: (0, -9.81, 0) [Standart]
+Default Solver Iterations: 6
+Default Solver Velocity Iterations: 1
+
+Layer Collision Matrix:
+  Player vs Vehicle: ✓
+  Vehicle vs Vehicle: ✓
+  Vehicle vs World: ✓
+  AI vs World: ✓
+  AI vs AI: ✓ (veya ✗ performans için)
+
+=== INPUT SETTINGS ===
+
+Mobil için custom input kullanıyoruz (MobileInputController)
+Unity Input System kurulumu:
+  Window > Package Manager > Input System > Install
+
+=== AUDIO SETTINGS ===
+
+Edit > Project Settings > Audio
+
+System Sample Rate: 44100
+DSP Buffer Size: Good latency
+Default Speaker Mode: Stereo
+
+=== RENDER PIPELINE ===
+
+Universal Render Pipeline (URP) - Önerilen mobil için:
+  Window > Package Manager > Universal RP > Install
+
+Eğer URP kullanıyorsan:
+  Assets > Create > Rendering > URP Asset (with Universal Renderer)
+  Edit > Project Settings > Graphics > Scriptable Render Pipeline Settings > URP Asset ata
