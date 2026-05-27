@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+<title>🏎️ Street City</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;}
+canvas{display:block;}
+#c{position:fixed;top:0;left:0;width:100%;height:100%;}
+
+/* ===== ANA MENÜ ===== */
+#menu{
+  position:fixed;inset:0;
+  background:linear-gradient(135deg,#0d0d1a 0%,#1a1a3e 50%,#0a2040 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:300;color:#fff;
+}
+#menu h1{
+  font-size:clamp(32px,8vw,56px);font-weight:900;
+  color:#E94560;text-shadow:0 0 30px rgba(233,69,96,.6);
+  margin-bottom:4px;letter-spacing:4px;font-family:Arial,sans-serif;
+}
+#menu .sub{font-size:clamp(10px,2.5vw,14px);color:#aaa;margin-bottom:30px;letter-spacing:3px;}
+.mBtn{
+  background:linear-gradient(135deg,#E94560,#1a3060);
+  color:#fff;border:none;padding:14px 44px;
+  font-size:clamp(14px,3.5vw,18px);font-weight:bold;
+  border-radius:30px;margin:7px;cursor:pointer;
+  letter-spacing:2px;min-width:220px;width:70vw;max-width:280px;
+  -webkit-tap-highlight-color:transparent;transition:transform .1s;
+}
+.mBtn:active{transform:scale(.95);}
+.mBtnY{background:linear-gradient(135deg,#FFD700,#FF8C00);color:#000;}
+#carPicker{display:flex;gap:12px;margin:18px 0;}
+.cDot{width:44px;height:28px;border-radius:8px;border:3px solid transparent;cursor:pointer;transition:transform .15s;}
+.cDot.sel{border-color:#fff;transform:scale(1.25);}
+#menuTip{color:#555;font-size:11px;text-align:center;margin-top:18px;line-height:1.7;}
+
+/* ===== HUD ===== */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10;font-family:Arial,sans-serif;}
+#money{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.72);color:#FFD700;padding:7px 14px;border-radius:8px;font-size:clamp(14px,3.5vw,19px);font-weight:bold;}
+#wanted{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#E94560;padding:7px 16px;border-radius:8px;font-size:clamp(14px,3.5vw,18px);font-weight:bold;display:none;border:2px solid #E94560;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+#speedBox{position:absolute;bottom:180px;left:14px;background:rgba(0,0,0,.75);border:2px solid #E94560;border-radius:10px;padding:8px 14px;text-align:center;min-width:76px;}
+#spd{font-size:clamp(22px,5.5vw,34px);font-weight:900;color:#fff;}
+#spdU{font-size:10px;color:#aaa;}
+#nitroWrap{position:absolute;bottom:180px;left:100px;background:rgba(0,0,0,.72);border:2px solid #00bcd4;border-radius:8px;padding:5px 8px;width:120px;}
+#nitroLbl{color:#00bcd4;font-size:9px;font-weight:bold;text-align:center;}
+#nitroBar{height:10px;background:rgba(255,255,255,.15);border-radius:5px;margin-top:3px;}
+#nitroFill{height:100%;background:#00bcd4;border-radius:5px;width:100%;transition:width .08s;}
+
+/* ===== YARŞ HUD ===== */
+#raceHUD{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:10px 22px;border-radius:10px;font-size:clamp(15px,4vw,20px);font-weight:bold;display:none;text-align:center;border:2px solid #FFD700;z-index:11;}
+#raceTime{color:#FFD700;}
+#raceInfo{font-size:12px;color:#ddd;margin-top:2px;}
+
+/* ===== KONTROLLER ===== */
+#ctrl{position:fixed;bottom:0;left:0;right:0;height:195px;pointer-events:none;z-index:20;}
+
+#joyArea{position:absolute;left:0;bottom:0;width:210px;height:195px;pointer-events:all;}
+#joyBase{position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.12);border:3px solid rgba(255,255,255,.35);display:none;}
+#joyKnob{position:absolute;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.8);border:3px solid #fff;display:none;}
+
+#btnGrid{position:absolute;right:8px;bottom:8px;display:grid;grid-template-areas:"nitro nitro""brake gas""hbk gas";grid-template-columns:80px 90px;grid-template-rows:50px 68px 68px;gap:6px;pointer-events:all;}
+.btn{border-radius:12px;border:2px solid rgba(255,255,255,.35);color:#fff;font-size:13px;font-weight:bold;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-direction:column;gap:2px;}
+.btn span{font-size:9px;opacity:.8;}
+#nitroBtn{grid-area:nitro;background:rgba(0,188,212,.82);font-size:15px;}
+#brakeBtn{grid-area:brake;background:rgba(233,69,96,.82);}
+#hbkBtn{grid-area:hbk;background:rgba(255,140,0,.82);}
+#gasBtn{grid-area:gas;background:rgba(15,155,88,.85);font-size:26px;}
+
+/* ===== BİLDİRİM ===== */
+#notif{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);color:#fff;padding:10px 22px;border-radius:10px;font-size:15px;font-weight:bold;display:none;z-index:50;text-align:center;border:2px solid rgba(255,255,255,.3);}
+
+/* ===== MİNİ HARİTA ===== */
+#miniMap{position:fixed;top:14px;right:14px;border:3px solid rgba(255,255,255,.6);border-radius:8px;z-index:10;display:none;}
+
+/* ===== ÜST EXTRA BUTONLAR ===== */
+#topRight{position:fixed;top:14px;right:185px;display:flex;gap:6px;z-index:11;}
+.xBtn{background:rgba(0,0,0,.72);color:#fff;border:2px solid rgba(255,255,255,.3);border-radius:7px;padding:6px 11px;font-size:11px;font-weight:bold;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+
+/* ===== OVERLAY (duraklama/sonuç) ===== */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:16px;}
+#overlayTitle{color:#fff;font-size:clamp(24px,6vw,40px);font-weight:900;text-align:center;}
+#overlayMsg{color:#aaa;font-size:clamp(14px,3.5vw,18px);text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- Three.js canvas -->
+<canvas id="c"></canvas>
+<!-- Mini harita canvas -->
+<canvas id="miniMap" width="150" height="150"></canvas>
+
+<!-- Ana Menü -->
+<div id="menu">
+  <h1>🏎️ STREET CITY</h1>
+  <div class="sub">OPEN WORLD MOBILE</div>
+  <div style="text-align:center;margin-bottom:6px;color:#888;font-size:12px;">ARAÇ SEÇ:</div>
+  <div id="carPicker">
+    <div class="cDot sel" style="background:#E94560" data-i="0"></div>
+    <div class="cDot" style="background:#4A90D9" data-i="1"></div>
+    <div class="cDot" style="background:#FFD700" data-i="2"></div>
+    <div class="cDot" style="background:#333" data-i="3"></div>
+    <div class="cDot" style="background:#4CAF50" data-i="4"></div>
+  </div>
+  <button class="mBtn" id="btnPlay">▶ &nbsp;OYUNA BAŞLA</button>
+  <button class="mBtn mBtnY" id="btnRace">🏁 &nbsp;YARIŞ MODU</button>
+  <div id="menuTip">Sol: Joystick &nbsp;|&nbsp; Sağ: GAZ / FREN / EL FRENİ / NİTRO<br>Hız ihlali → Polis takibi başlar!</div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="money">💰 $<span id="moneyTxt">1000</span></div>
+  <div id="wanted"><span id="wantedStr">★</span> ARANIYOR</div>
+  <div id="speedBox"><div id="spd">0</div><div id="spdU">km/h</div></div>
+  <div id="nitroWrap">
+    <div id="nitroLbl">⚡ NİTRO</div>
+    <div id="nitroBar"><div id="nitroFill"></div></div>
+  </div>
+</div>
+
+<!-- Yarış HUD -->
+<div id="raceHUD"><div id="raceTime">00:00</div><div id="raceInfo">0/6 checkpoint</div></div>
+
+<!-- Kontroller -->
+<div id="ctrl">
+  <div id="joyArea">
+    <div id="joyBase"></div>
+    <div id="joyKnob"></div>
+  </div>
+  <div id="btnGrid">
+    <div class="btn" id="nitroBtn">⚡<span>NİTRO</span></div>
+    <div class="btn" id="brakeBtn">🛑<span>FREN</span></div>
+    <div class="btn" id="hbkBtn">🔒<span>EL FR.</span></div>
+    <div class="btn" id="gasBtn">▲</div>
+  </div>
+</div>
+
+<!-- Üst butonlar -->
+<div id="topRight" style="display:none">
+  <button class="xBtn" id="btnPause">⏸</button>
+  <button class="xBtn" id="btnMenu">🏠</button>
+  <button class="xBtn" id="btnMap">🗺</button>
+</div>
+
+<!-- Bildirim -->
+<div id="notif"></div>
+
+<!-- Overlay (duraklama/sonuç) -->
+<div id="overlay">
+  <div id="overlayTitle">⏸ DURAKLANDI</div>
+  <div id="overlayMsg"></div>
+  <button class="mBtn" id="btnResume">▶ DEVAM ET</button>
+  <button class="mBtn" style="background:rgba(100,100,100,.8)" id="btnMenuOvr">🏠 MENÜ</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script>
+// ╔══════════════════════════════════════════════════════════╗
+// ║        STREET CITY - Oyun Motoru                       ║
+// ╚══════════════════════════════════════════════════════════╝
+
+const CAR_COLORS = [0xE94560, 0x4A90D9, 0xFFD700, 0x222222, 0x4CAF50];
+const CAR_NAMES  = ['Kırmızı Spor','Mavi Sedan','Sarı Taksi','Siyah SUV','Yeşil Yarış'];
+const CAR_SPEEDS = [42, 35, 32, 37, 48]; // m/s (max hız)
+const CAR_ACCELS = [32, 24, 22, 26, 38];
+
+let selectedCar = 0;
+let gameActive  = false;
+let paused      = false;
+let raceMode    = false;
+let money       = 1000;
+let score       = 0;
+let showMap     = true;
+
+// ─── THREE.JS ───────────────────────────────────────────────
+let renderer, scene, camera, clock;
+
+function initThree() {
+  const canvas = document.getElementById('c');
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.8));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setClearColor(0x87CEEB);
+
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x87CEEB, 80, 220);
+
+  camera = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.3, 300);
+  camera.position.set(0, 6, -12);
+
+  // Işıklar
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+  const sun = new THREE.DirectionalLight(0xfffde0, 1.0);
+  sun.position.set(40, 80, 20);
+  scene.add(sun);
+
+  clock = new THREE.Clock();
+  window.addEventListener('resize', onResize);
+}
+
+function onResize() {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+}
+
+// ─── DÜNYA / ŞEHİR ──────────────────────────────────────────
+const ROAD_W  = 14;   // Yol genişliği
+const BLOCK   = 44;   // Blok boyutu
+const GRID    = 4;    // 4x4 grid
+const HALF    = (GRID / 2) * (BLOCK + ROAD_W); // ~115
+
+let buildings  = []; // AABB çarpışma kutuları { x,z,hw,hd }
+let treeList   = [];
+let cpMeshes   = []; // Checkpoint görsel halkaları
+let cpPositions= []; // Checkpoint dünya pozisyonları
+
+function buildCity() {
+  // Zemin
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(500, 500),
+    new THREE.MeshLambertMaterial({ color: 0x3a7d3a })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+
+  // Yollar
+  const roadMat = new THREE.MeshLambertMaterial({ color: 0x404040 });
+  const lineMat = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+
+  for (let i = 0; i <= GRID; i++) {
+    const pos = -HALF + i * (BLOCK + ROAD_W) + ROAD_W / 2;
+    // Dikey yol
+    addRoad(pos, 0, ROAD_W, 500, roadMat, lineMat);
+    // Yatay yol
+    addRoadH(pos, 0, 500, ROAD_W, roadMat, lineMat);
+  }
+
+  // Binalar
+  const bColors = [0x8B7355,0x9E9E9E,0x607D8B,0x795548,0x546E7A,0x4E342E,0x37474F,0xBDBDBD];
+  for (let row = 0; row < GRID; row++) {
+    for (let col = 0; col < GRID; col++) {
+      const bx = -HALF + ROAD_W + col * (BLOCK + ROAD_W) + BLOCK / 2;
+      const bz = -HALF + ROAD_W + row * (BLOCK + ROAD_W) + BLOCK / 2;
+      placeBlock(bx, bz, BLOCK, bColors);
+    }
+  }
+
+  // Harita sınır duvarları (görünmez)
+  addWalls();
+}
+
+function addRoad(x, y, w, d, mat, lmat) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.12, d), mat);
+  m.position.set(x, 0.06, 0);
+  scene.add(m);
+  // Orta çizgi
+  const line = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.13, d), lmat);
+  line.position.set(x, 0.07, 0);
+  scene.add(line);
+}
+
+function addRoadH(z, y, w, d, mat, lmat) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.12, d), mat);
+  m.position.set(0, 0.06, z);
+  scene.add(m);
+  const line = new THREE.Mesh(new THREE.BoxGeometry(w, 0.13, 0.4), lmat);
+  line.position.set(0, 0.07, z);
+  scene.add(line);
+}
+
+function placeBlock(cx, cz, blockSize, colors) {
+  const half = blockSize / 2 - 2;
+  const layout = [
+    { ox: -half * .5, oz: -half * .5, w: half * .8, d: half * .8 },
+    { ox:  half * .5, oz: -half * .5, w: half * .7, d: half * .9 },
+    { ox: -half * .5, oz:  half * .5, w: half * .9, d: half * .7 },
+    { ox:  half * .5, oz:  half * .5, w: half * .75, d: half * .75 },
+  ];
+  // 2-4 bina per blok
+  const count = 2 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < Math.min(count, layout.length); i++) {
+    const l = layout[i];
+    const h = 6 + Math.random() * 24;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const bw = l.w * (0.7 + Math.random() * 0.3);
+    const bd = l.d * (0.7 + Math.random() * 0.3);
+    const mat = new THREE.MeshLambertMaterial({ color });
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(bw, h, bd), mat);
+    const wx = cx + l.ox, wz = cz + l.oz;
+    mesh.position.set(wx, h / 2, wz);
+    scene.add(mesh);
+
+    // Bina pencere efekti (üst üste ince çizgi)
+    const wmat = new THREE.MeshLambertMaterial({ color: 0xADD8E6 });
+    for (let f = 2; f < h - 2; f += 3.5) {
+      const wm = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.1, 0.5, 0.1), wmat);
+      wm.position.set(wx, f, wz + bd / 2 + 0.05);
+      scene.add(wm);
+    }
+
+    // AABB kaydet
+    buildings.push({ x: wx, z: wz, hw: bw / 2 + 0.6, hd: bd / 2 + 0.6 });
+  }
+
+  // Ağaçlar (köşelere)
+  const corners = [
+    { x: cx - half, z: cz - half },
+    { x: cx + half, z: cz + half },
+    { x: cx - half, z: cz + half },
+    { x: cx + half, z: cz - half },
+  ];
+  corners.slice(0, 2 + Math.floor(Math.random() * 3)).forEach(c => {
+    if (Math.random() < 0.6) addTree(c.x, c.z);
+  });
+}
+
+function addTree(x, z) {
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.25, 0.35, 2.5, 6),
+    new THREE.MeshLambertMaterial({ color: 0x8B4513 })
+  );
+  trunk.position.set(x, 1.25, z);
+  scene.add(trunk);
+
+  const leaves = new THREE.Mesh(
+    new THREE.SphereGeometry(1.8, 7, 7),
+    new THREE.MeshLambertMaterial({ color: 0x228B22 })
+  );
+  leaves.position.set(x, 4, z);
+  scene.add(leaves);
+  treeList.push({ x, z, r: 1.5 });
+}
+
+function addWalls() {
+  // Haritanın sınırları
+  const wmat = new THREE.MeshLambertMaterial({ color: 0x555555, transparent: true, opacity: 0 });
+  const wh = 4;
+  [[0, HALF, 500, 2],[0, -HALF, 500, 2],[HALF, 0, 2, 500],[-HALF, 0, 2, 500]].forEach(([x,z,w,d])=>{
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, wh, d), wmat);
+    m.position.set(x, wh/2, z);
+    scene.add(m);
+    buildings.push({ x, z, hw: w/2, hd: d/2 });
+  });
+}
+
+// ─── CHECKPOINT SISTEMI ──────────────────────────────────────
+function setupCheckpoints() {
+  cpPositions = [
+    new THREE.Vector3( 55,  0.5,   0),
+    new THREE.Vector3( 55,  0.5,  55),
+    new THREE.Vector3(  0,  0.5,  55),
+    new THREE.Vector3(-55,  0.5,  55),
+    new THREE.Vector3(-55,  0.5,   0),
+    new THREE.Vector3(  0,  0.5, -55),
+  ];
+  cpMeshes.forEach(m => scene.remove(m));
+  cpMeshes = [];
+  cpPositions.forEach((p, i) => {
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(5, 0.6, 8, 20),
+      new THREE.MeshLambertMaterial({ color: i === 0 ? 0xFFD700 : 0x00bcd4, transparent: true, opacity: 0.85 })
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.copy(p);
+    ring.visible = false;
+    scene.add(ring);
+    cpMeshes.push(ring);
+  });
+}
+
+// ─── OYUNCU ARACI ────────────────────────────────────────────
+let car = {
+  mesh: null, wheelMeshes: [],
+  x: 5, y: 0, z: 5,
+  vx: 0, vz: 0,
+  angle: 0,           // radian (yön)
+  speed: 0,           // m/s
+  steer: 0,           // şu anki direksiyon açısı
+  maxSpeed: 42,
+  accel: 32,
+  brakeF: 75,
+  friction: 0.91,
+  lateralFric: 0.82,
+  maxSteer: 0.55,     // radian
+  steerSpd: 3.0,
+  steerReturn: 7,
+  nitroActive: false,
+  nitroPct: 1.0,      // 0-1
+  nitroCharging: false,
+  wantedLevel: 0,
+  wantedTimer: 0,
+  violCount: 0,
+  collisionCooldown: 0,
+  width: 1.1, length: 2.2,
+};
+
+let camX = 0, camY = 8, camZ = -15;
+
+function spawnCar(colorIdx) {
+  if (car.mesh) scene.remove(car.mesh);
+  car.x = 5; car.z = 5; car.angle = 0;
+  car.speed = 0; car.steer = 0;
+  car.vx = 0; car.vz = 0;
+
+  const color = CAR_COLORS[colorIdx];
+  const carGroup = new THREE.Group();
+
+  // Gövde
+  const bodyMat = new THREE.MeshLambertMaterial({ color });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 4.2), bodyMat);
+  body.position.y = 0.55;
+  carGroup.add(body);
+
+  // Kabin
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.65, 2.2), bodyMat);
+  cabin.position.set(0, 1.22, 0.2);
+  carGroup.add(cabin);
+
+  // Cam (ön)
+  const glassMat = new THREE.MeshLambertMaterial({ color: 0x88ccff, transparent: true, opacity: 0.7 });
+  const windshield = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.55, 0.1), glassMat);
+  windshield.position.set(0, 1.22, 1.35);
+  windshield.rotation.x = 0.25;
+  carGroup.add(windshield);
+
+  // Tekerlekler
+  const wMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+  const rimMat = new THREE.MeshLambertMaterial({ color: 0xCCCCCC });
+  car.wheelMeshes = [];
+  [[-1, 0.32, 1.4],[1, 0.32, 1.4],[-1, 0.32, -1.4],[1, 0.32, -1.4]].forEach(([ox,oy,oz])=>{
+    const wg = new THREE.Group();
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.22, 10), wMat);
+    w.rotation.z = Math.PI / 2;
+    wg.add(w);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.23, 6), rimMat);
+    rim.rotation.z = Math.PI / 2;
+    wg.add(rim);
+    wg.position.set(ox * 1.1, oy, oz);
+    carGroup.add(wg);
+    car.wheelMeshes.push(wg);
+  });
+
+  // Far lambaları
+  const farMat = new THREE.MeshLambertMaterial({ color: 0xFFFF88 });
+  [-0.7, 0.7].forEach(ox => {
+    const f = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.1), farMat);
+    f.position.set(ox, 0.65, 2.1);
+    carGroup.add(f);
+  });
+  // Arka stop
+  const stopMat = new THREE.MeshLambertMaterial({ color: 0xFF2200 });
+  [-0.7, 0.7].forEach(ox => {
+    const s = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.1), stopMat);
+    s.position.set(ox, 0.65, -2.1);
+    carGroup.add(s);
+  });
+
+  car.mesh = carGroup;
+  car.mesh.position.set(car.x, car.y, car.z);
+  scene.add(car.mesh);
+
+  car.maxSpeed = CAR_SPEEDS[colorIdx];
+  car.accel    = CAR_ACCELS[colorIdx];
+}
+
+// ─── TRAFIK ARAÇLARI ─────────────────────────────────────────
+let traffic = [];
+const TRAFFIC_COUNT = 10;
+
+function spawnTraffic() {
+  traffic.forEach(t => scene.remove(t.mesh));
+  traffic = [];
+  const tColors = [0xBBBBBB, 0x558B2F, 0x0D47A1, 0xF57F17, 0x4A148C, 0xBF360C];
+  const routes = getTrafficRoutes();
+  for (let i = 0; i < TRAFFIC_COUNT; i++) {
+    const route = routes[i % routes.length];
+    const ci = Math.floor(Math.random() * tColors.length);
+    const tMat = new THREE.MeshLambertMaterial({ color: tColors[ci] });
+    const tMesh = new THREE.Group();
+    const tb = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.65, 3.8), tMat);
+    tb.position.y = 0.52; tMesh.add(tb);
+    const tc = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.55, 2.0), tMat);
+    tc.position.set(0, 1.1, 0.1); tMesh.add(tc);
+    const idx = Math.floor(Math.random() * route.length);
+    const sp = route[idx];
+    tMesh.position.set(sp.x, 0, sp.z);
+    scene.add(tMesh);
+    traffic.push({
+      mesh: tMesh,
+      route,
+      wpIdx: idx,
+      speed: 8 + Math.random() * 5,
+      maxSpd: 10 + Math.random() * 6,
+    });
+  }
+}
+
+function getTrafficRoutes() {
+  // Şehir içi döngüsel rotalar
+  return [
+    [ {x:0,z:-60},{x:55,z:-60},{x:55,z:0},{x:55,z:60},{x:0,z:60},{x:-55,z:60},{x:-55,z:0},{x:-55,z:-60} ],
+    [ {x:0,z:0},{x:55,z:0},{x:55,z:55},{x:0,z:55},{x:-55,z:55},{x:-55,z:0} ],
+    [ {x:0,z:-55},{x:0,z:0},{x:0,z:55} ],
+    [ {x:-55,z:-55},{x:0,z:-55},{x:55,z:-55},{x:55,z:0},{x:0,z:0},{x:-55,z:0} ],
+  ];
+}
+
+function updateTraffic(dt) {
+  traffic.forEach(t => {
+    const wp = t.route[t.wpIdx % t.route.length];
+    const dx = wp.x - t.mesh.position.x;
+    const dz = wp.z - t.mesh.position.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+    if (dist < 3) {
+      t.wpIdx = (t.wpIdx + 1) % t.route.length;
+      return;
+    }
+    const spd = Math.min(t.speed + dt * 3, t.maxSpd);
+    t.speed = spd;
+    const nx = dx / dist, nz = dz / dist;
+    t.mesh.position.x += nx * spd * dt;
+    t.mesh.position.z += nz * spd * dt;
+    t.mesh.rotation.y = Math.atan2(nx, nz);
+  });
+}
+
+// ─── POLİS ARAÇLARI ──────────────────────────────────────────
+let policeList = [];
+
+function spawnPolice() {
+  if (policeList.length >= car.wantedLevel) return;
+  const pMat = new THREE.MeshLambertMaterial({ color: 0x003399 });
+  const pGroup = new THREE.Group();
+  const pb = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.65, 4.0), pMat);
+  pb.position.y = 0.52; pGroup.add(pb);
+  const pc = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.55, 2.1), pMat);
+  pc.position.set(0, 1.1, 0.1); pGroup.add(pc);
+  // Işık çubuğu
+  const barMat = new THREE.MeshLambertMaterial({ color: 0xFF0000 });
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.2, 0.4), barMat);
+  bar.position.set(0, 1.55, 0); pGroup.add(bar);
+  // Beyaz çizgi
+  const stripMat = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.1, 0.3), stripMat);
+  strip.position.set(0, 0.9, 0); pGroup.add(strip);
+
+  // Spawn: oyuncunun arkasında
+  const spawnDist = 35 + Math.random() * 25;
+  const ang = car.angle + Math.PI + (Math.random() - 0.5);
+  const spx = car.x + Math.sin(ang) * spawnDist;
+  const spz = car.z + Math.cos(ang) * spawnDist;
+  pGroup.position.set(spx, 0, spz);
+  scene.add(pGroup);
+  policeList.push({ mesh: pGroup, speed: 0, angle: 0, siren: 0 });
+}
+
+function updatePolice(dt) {
+  // Hedef adet
+  const target = car.wantedLevel;
+  while (policeList.length < target) spawnPolice();
+
+  // Wanted cooldown
+  if (car.wantedLevel > 0) {
+    car.wantedTimer -= dt;
+    if (car.wantedTimer <= 0) {
+      car.wantedLevel = Math.max(0, car.wantedLevel - 1);
+      car.wantedTimer = car.wantedLevel > 0 ? 20 : 0;
+      updateWantedUI();
+      if (car.wantedLevel === 0) clearPolice();
+    }
+  }
+
+  policeList.forEach((p, idx) => {
+    const dx = car.x - p.mesh.position.x;
+    const dz = car.z - p.mesh.position.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+    // Çarpışma → oyuncuya çarptı
+    if (dist < 4) {
+      car.speed *= -0.3;
+      addViolation(1);
+      return;
+    }
+    const targetAngle = Math.atan2(dx, dz);
+    let da = targetAngle - p.angle;
+    while (da > Math.PI) da -= 2 * Math.PI;
+    while (da < -Math.PI) da += 2 * Math.PI;
+    p.angle += da * dt * 3;
+    const chaseSpd = car.maxSpeed * 0.88;
+    p.speed = Math.min(p.speed + dt * 20, chaseSpd / 3.6);
+    p.mesh.position.x += Math.sin(p.angle) * p.speed * dt;
+    p.mesh.position.z += Math.cos(p.angle) * p.speed * dt;
+    p.mesh.rotation.y = p.angle;
+
+    // Siren ışığı yanıp sönme (bar rengi)
+    p.siren += dt * 5;
+    const sirens = p.mesh.children.find(c => c.geometry && c.geometry.type === 'BoxGeometry' && c.position.y > 1.4);
+    if (sirens) sirens.material.color.setHex(Math.sin(p.siren) > 0 ? 0xFF0000 : 0x0000FF);
+
+    // Çok uzaklaşırsa yeniden spawn
+    if (dist > 150) {
+      const ang2 = car.angle + Math.PI + (Math.random() - 0.5) * 1.2;
+      p.mesh.position.x = car.x + Math.sin(ang2) * 40;
+      p.mesh.position.z = car.z + Math.cos(ang2) * 40;
+    }
+  });
+}
+
+function clearPolice() {
+  policeList.forEach(p => scene.remove(p.mesh));
+  policeList = [];
+}
+
+function addViolation(n) {
+  if (raceMode) return;
+  car.violCount += n;
+  if (car.violCount >= 3) {
+    car.violCount = 0;
+    if (car.wantedLevel < 3) {
+      car.wantedLevel++;
+      car.wantedTimer = 20 + car.wantedLevel * 8;
+      updateWantedUI();
+      showNotif('🚔 ' + '★'.repeat(car.wantedLevel) + ' Polis kovalıyor!', '#E94560');
+    }
+  }
+}
+
+function updateWantedUI() {
+  const el = document.getElementById('wanted');
+  if (car.wantedLevel > 0) {
+    el.style.display = 'block';
+    document.getElementById('wantedStr').textContent = '★'.repeat(car.wantedLevel);
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ─── GİRİŞ SİSTEMİ ───────────────────────────────────────────
+let input = { steer: 0, gas: 0, brake: false, handbrake: false, nitro: false };
+let joyActive = false, joyTouchId = -1;
+let joyBaseX = 0, joyBaseY = 0;
+
+const joyArea = document.getElementById('joyArea');
+const joyBase = document.getElementById('joyBase');
+const joyKnob = document.getElementById('joyKnob');
+const JR = 55; // Joystick yarıçapı
+
+function setupInput() {
+  // Joystick
+  joyArea.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (joyTouchId !== -1) return;
+    const t = e.changedTouches[0];
+    joyTouchId = t.identifier;
+    joyBaseX = t.clientX;
+    joyBaseY = t.clientY;
+    joyBase.style.left = (joyBaseX - 60) + 'px';
+    joyBase.style.top  = (joyBaseY - 60) + 'px';
+    joyKnob.style.left = (joyBaseX - 26) + 'px';
+    joyKnob.style.top  = (joyBaseY - 26) + 'px';
+    joyBase.style.display = 'block';
+    joyKnob.style.display = 'block';
+    joyActive = true;
+  }, { passive: false });
+
+  joyArea.addEventListener('touchmove', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      if (t.identifier !== joyTouchId) continue;
+      const dx = t.clientX - joyBaseX;
+      const dy = t.clientY - joyBaseY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const clamp = Math.min(dist, JR);
+      const nx = dist > 0 ? dx / dist : 0;
+      const ny = dist > 0 ? dy / dist : 0;
+      joyKnob.style.left = (joyBaseX + nx * clamp - 26) + 'px';
+      joyKnob.style.top  = (joyBaseY + ny * clamp - 26) + 'px';
+      input.steer = nx * Math.min(dist / JR, 1);
+      // İleri/geri (opsiyonel - joystick Y)
+      // input.gas = Math.max(0, -ny * Math.min(dist/JR, 1));
+    }
+  }, { passive: false });
+
+  ['touchend','touchcancel'].forEach(ev => {
+    joyArea.addEventListener(ev, e => {
+      for (const t of e.changedTouches) {
+        if (t.identifier !== joyTouchId) continue;
+        joyTouchId = -1; joyActive = false;
+        input.steer = 0;
+        joyBase.style.display = 'none';
+        joyKnob.style.display = 'none';
+      }
+    });
+  });
+
+  // GAZ butonu
+  holdBtn('gasBtn',  () => input.gas = 1,  () => input.gas = 0);
+  holdBtn('brakeBtn',() => input.brake = true, () => input.brake = false);
+  holdBtn('hbkBtn',  () => input.handbrake = true, () => input.handbrake = false);
+
+  // Nitro
+  const nitBtn = document.getElementById('nitroBtn');
+  nitBtn.addEventListener('touchstart', e => { e.preventDefault(); activateNitro(); }, { passive: false });
+
+  // Klavye (PC test)
+  document.addEventListener('keydown', e => {
+    if (e.code === 'ArrowUp'   || e.code === 'KeyW') input.gas = 1;
+    if (e.code === 'ArrowDown' || e.code === 'KeyS') input.brake = true;
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') input.steer = -1;
+    if (e.code === 'ArrowRight'|| e.code === 'KeyD') input.steer = 1;
+    if (e.code === 'Space') input.handbrake = true;
+    if (e.code === 'ShiftLeft') activateNitro();
+    if (e.code === 'Escape') togglePause();
+  });
+  document.addEventListener('keyup', e => {
+    if (e.code === 'ArrowUp'   || e.code === 'KeyW') input.gas = 0;
+    if (e.code === 'ArrowDown' || e.code === 'KeyS') input.brake = false;
+    if ((e.code === 'ArrowLeft'|| e.code === 'KeyA') && input.steer < 0) input.steer = 0;
+    if ((e.code === 'ArrowRight'|| e.code === 'KeyD') && input.steer > 0) input.steer = 0;
+    if (e.code === 'Space') input.handbrake = false;
+  });
+}
+
+function holdBtn(id, onDown, onUp) {
+  const el = document.getElementById(id);
+  ['touchstart'].forEach(ev => el.addEventListener(ev, e => { e.preventDefault(); onDown(); }, { passive: false }));
+  ['touchend','touchcancel'].forEach(ev => el.addEventListener(ev, e => { e.preventDefault(); onUp(); }, { passive: false }));
+  el.addEventListener('mousedown', onDown);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ─── NİTRO ───────────────────────────────────────────────────
+function activateNitro() {
+  if (car.nitroActive || car.nitroCharging || car.nitroPct < 0.1) return;
+  car.nitroActive = true;
+  setTimeout(() => {
+    car.nitroActive = false;
+    car.nitroCharging = true;
+    setTimeout(() => { car.nitroCharging = false; }, 7000);
+  }, 2500);
+}
+
+function updateNitroUI() {
+  const fill = document.getElementById('nitroFill');
+  const lbl  = document.getElementById('nitroLbl');
+  if (car.nitroActive) {
+    fill.style.width = '100%';
+    fill.style.background = '#fff';
+    lbl.textContent = '⚡ AKTİF!';
+  } else if (car.nitroCharging) {
+    car.nitroPct = Math.min(1, car.nitroPct + 0.003);
+    fill.style.width = (car.nitroPct * 100) + '%';
+    fill.style.background = '#888';
+    lbl.textContent = '⏳ ŞARJ...';
+  } else {
+    car.nitroPct = 1;
+    fill.style.width = '100%';
+    fill.style.background = '#00bcd4';
+    lbl.textContent = '⚡ NİTRO';
+  }
+}
+
+// ─── ARABa FİZİĞİ ────────────────────────────────────────────
+function updateCar(dt) {
+  // Gaz / Fren
+  let maxSpd = car.maxSpeed;
+  if (car.nitroActive) maxSpd *= 1.45;
+
+  if (input.gas > 0 && !input.brake) {
+    car.speed += car.accel * input.gas * dt;
+  } else if (input.brake) {
+    const bf = input.handbrake ? car.brakeF * 1.8 : car.brakeF;
+    car.speed -= bf * dt;
+    if (car.speed < -8) car.speed = -8;
+  }
+
+  // Sürtünme
+  const fric = input.handbrake ? 0.78 : car.friction;
+  car.speed *= Math.pow(fric, dt * 60);
+
+  // Hız sınırı
+  if (car.speed > maxSpd) car.speed = maxSpd;
+
+  // Hız gösterge (ihlal)
+  const kmh = Math.abs(car.speed) * 3.6;
+  if (kmh > 95 && car.wantedLevel === 0 && !raceMode) {
+    car.collisionCooldown -= dt;
+    if (car.collisionCooldown <= 0) {
+      addViolation(1);
+      car.collisionCooldown = 4;
+    }
+  }
+
+  // Direksiyon
+  const steerInput = input.steer;
+  const speedFac = Math.min(Math.abs(car.speed) / car.maxSpeed, 1);
+  const targetSteer = steerInput * car.maxSteer;
+  car.steer += (targetSteer - car.steer) * dt * car.steerSpd;
+  if (Math.abs(steerInput) < 0.05) car.steer *= (1 - dt * car.steerReturn);
+
+  // Açı değişimi (yalnızca hareket ederken)
+  if (Math.abs(car.speed) > 0.5) {
+    car.angle += car.steer * (car.speed / car.maxSpeed) * dt * 2.8;
+  }
+
+  // Hareket
+  const prevX = car.x, prevZ = car.z;
+  car.x += Math.sin(car.angle) * car.speed * dt;
+  car.z += Math.cos(car.angle) * car.speed * dt;
+
+  // Çarpışma kontrolü
+  if (checkCollision(car.x, car.z, car.width, car.length)) {
+    car.x = prevX;
+    car.z = prevZ;
+    car.speed *= -0.25;
+    addViolation(1);
+    car.collisionCooldown = 2;
+  }
+
+  // Mesh güncelle
+  car.mesh.position.set(car.x, 0, car.z);
+  car.mesh.rotation.y = car.angle;
+
+  // Tekerlek dönüşü
+  const wRot = car.speed * dt * 0.8;
+  car.wheelMeshes.forEach((w, i) => {
+    w.children[0].rotation.x += wRot;
+    // Ön tekerlekler steer
+    if (i < 2) w.rotation.y = car.steer * 0.8;
+  });
+}
+
+function checkCollision(x, z, hw, hl) {
+  for (const b of buildings) {
+    if (Math.abs(x - b.x) < hw + b.hw && Math.abs(z - b.z) < hl + b.hd) return true;
+  }
+  return false;
+}
+
+// ─── KAMERA ──────────────────────────────────────────────────
+let camTargX = 0, camTargY = 6, camTargZ = 0;
+
+function updateCamera(dt) {
+  const dist = 11, height = 5.5;
+  const tx = car.x - Math.sin(car.angle) * dist;
+  const ty = height;
+  const tz = car.z - Math.cos(car.angle) * dist;
+  camTargX += (tx - camTargX) * dt * 6;
+  camTargY += (ty - camTargY) * dt * 4;
+  camTargZ += (tz - camTargZ) * dt * 6;
+  camera.position.set(camTargX, camTargY, camTargZ);
+  camera.lookAt(car.x, 1.2, car.z);
+}
+
+// ─── YARIŞ MODU ──────────────────────────────────────────────
+let raceTimer = 0, raceCP = 0, raceBest = null;
+let racePrevBest = null;
+
+function startRaceMode() {
+  raceMode = true;
+  raceTimer = 0;
+  raceCP = 0;
+  // Checkpoint'leri göster
+  cpMeshes.forEach((m, i) => {
+    m.visible = i === 0;
+    m.material.color.setHex(0xFFD700);
+  });
+  document.getElementById('raceHUD').style.display = 'block';
+  updateRaceUI();
+}
+
+function updateRace(dt) {
+  if (!raceMode) return;
+  raceTimer += dt;
+
+  // Checkpoint kontrol
+  if (raceCP < cpPositions.length) {
+    const cp = cpPositions[raceCP];
+    const dist = Math.sqrt((car.x - cp.x)**2 + (car.z - cp.z)**2);
+    if (dist < 7) {
+      cpMeshes[raceCP].visible = false;
+      raceCP++;
+      if (raceCP < cpPositions.length) {
+        cpMeshes[raceCP].visible = true;
+        cpMeshes[raceCP].material.color.setHex(0xFFD700);
+      }
+      showNotif(`✅ Checkpoint ${raceCP}/${cpPositions.length}`, '#00bcd4');
+    }
+  }
+
+  // Checkpoint halkaları dönsün
+  cpMeshes.forEach(m => { if (m.visible) m.rotation.z += dt * 1.5; });
+
+  // Yarış bitti
+  if (raceCP >= cpPositions.length) {
+    const t = raceTimer;
+    const reward = Math.max(200, 1500 - Math.floor(t) * 8);
+    addMoney(reward);
+    const best = raceBest;
+    if (!best || t < best) raceBest = t;
+    const mins = String(Math.floor(t / 60)).padStart(2,'0');
+    const secs = String(Math.floor(t % 60)).padStart(2,'0');
+    showOverlay(`🏆 YARIŞ BİTTİ!`, `Süre: ${mins}:${secs} | +$${reward}\n${best ? 'En iyi: ' + fmtTime(best) : 'İlk rekor!'}`);
+    raceMode = false;
+    document.getElementById('raceHUD').style.display = 'none';
+    cpMeshes.forEach(m => m.visible = false);
+    setTimeout(hideOverlay, 4000);
+    return;
+  }
+
+  updateRaceUI();
+}
+
+function updateRaceUI() {
+  const mins = String(Math.floor(raceTimer / 60)).padStart(2,'0');
+  const secs = String(Math.floor(raceTimer % 60)).padStart(2,'0');
+  document.getElementById('raceTime').textContent = `🏁 ${mins}:${secs}`;
+  document.getElementById('raceInfo').textContent = `${raceCP}/${cpPositions.length} checkpoint`;
+}
+
+function fmtTime(t) {
+  return String(Math.floor(t/60)).padStart(2,'0') + ':' + String(Math.floor(t%60)).padStart(2,'0');
+}
+
+// ─── MİNİ HARİTA ─────────────────────────────────────────────
+const mapCanvas = document.getElementById('miniMap');
+const mapCtx    = mapCanvas.getContext('2d');
+const MAP_W = 150, MAP_SCALE = MAP_W / (HALF * 2);
+
+function drawMiniMap() {
+  if (!showMap) return;
+  mapCtx.clearRect(0, 0, MAP_W, MAP_W);
+  // Arka plan
+  mapCtx.fillStyle = '#1a2a1a';
+  mapCtx.fillRect(0, 0, MAP_W, MAP_W);
+  // Yollar
+  mapCtx.fillStyle = '#555';
+  const rw = ROAD_W * MAP_SCALE;
+  for (let i = 0; i <= GRID; i++) {
+    const p = (HALF + (-HALF + i * (BLOCK + ROAD_W) + ROAD_W / 2)) * MAP_SCALE;
+    mapCtx.fillRect(p - rw/2, 0, rw, MAP_W);
+    mapCtx.fillRect(0, p - rw/2, MAP_W, rw);
+  }
+  // Binalar
+  mapCtx.fillStyle = '#3a3a4a';
+  buildings.slice(0, -4).forEach(b => {
+    const bx = (HALF + b.x) * MAP_SCALE;
+    const bz = (HALF + b.z) * MAP_SCALE;
+    const bw = b.hw * 2 * MAP_SCALE;
+    const bd = b.hd * 2 * MAP_SCALE;
+    mapCtx.fillRect(bx - bw/2, bz - bd/2, bw, bd);
+  });
+  // Polis
+  policeList.forEach(p => {
+    const px = (HALF + p.mesh.position.x) * MAP_SCALE;
+    const pz = (HALF + p.mesh.position.z) * MAP_SCALE;
+    mapCtx.fillStyle = '#4499FF';
+    mapCtx.beginPath();
+    mapCtx.arc(px, pz, 3, 0, Math.PI*2);
+    mapCtx.fill();
+  });
+  // Checkpoint
+  if (raceMode && raceCP < cpPositions.length) {
+    const cp = cpPositions[raceCP];
+    const cx = (HALF + cp.x) * MAP_SCALE;
+    const cz = (HALF + cp.z) * MAP_SCALE;
+    mapCtx.fillStyle = '#FFD700';
+    mapCtx.beginPath();
+    mapCtx.arc(cx, cz, 4, 0, Math.PI*2);
+    mapCtx.fill();
+  }
+  // Trafik
+  traffic.forEach(t => {
+    const tx = (HALF + t.mesh.position.x) * MAP_SCALE;
+    const tz = (HALF + t.mesh.position.z) * MAP_SCALE;
+    mapCtx.fillStyle = '#888';
+    mapCtx.fillRect(tx-1.5, tz-1.5, 3, 3);
+  });
+  // Oyuncu (ok)
+  const px = (HALF + car.x) * MAP_SCALE;
+  const pz = (HALF + car.z) * MAP_SCALE;
+  mapCtx.save();
+  mapCtx.translate(px, pz);
+  mapCtx.rotate(car.angle);
+  mapCtx.fillStyle = '#E94560';
+  mapCtx.beginPath();
+  mapCtx.moveTo(0, -7);
+  mapCtx.lineTo(-4, 5);
+  mapCtx.lineTo(4, 5);
+  mapCtx.closePath();
+  mapCtx.fill();
+  mapCtx.restore();
+}
+
+// ─── PARA ────────────────────────────────────────────────────
+function addMoney(n) {
+  money += n;
+  document.getElementById('moneyTxt').textContent = money.toLocaleString();
+  if (n > 0) showNotif(`+$${n} kazandın! 💰`, '#FFD700');
+}
+
+// ─── BİLDİRİM ────────────────────────────────────────────────
+let notifTimeout = null;
+function showNotif(msg, color = '#fff') {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.style.color = color;
+  el.style.borderColor = color;
+  el.style.display = 'block';
+  clearTimeout(notifTimeout);
+  notifTimeout = setTimeout(() => el.style.display = 'none', 2500);
+}
+
+// ─── OVERLAY ─────────────────────────────────────────────────
+function showOverlay(title, msg) {
+  document.getElementById('overlayTitle').textContent = title;
+  document.getElementById('overlayMsg').textContent   = msg;
+  document.getElementById('overlay').style.display = 'flex';
+  paused = true;
+}
+function hideOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+  paused = false;
+}
+
+// ─── HUD GÜNCELLE ────────────────────────────────────────────
+let _moneyRound = 0;
+function updateHUD() {
+  const kmh = Math.abs(car.speed) * 3.6;
+  document.getElementById('spd').textContent = Math.round(kmh);
+  updateNitroUI();
+
+  // Para
+  _moneyRound++;
+  if (_moneyRound % 30 === 0) {
+    document.getElementById('moneyTxt').textContent = money.toLocaleString();
+  }
+}
+
+// ─── DURAKLAMA ───────────────────────────────────────────────
+function togglePause() {
+  if (!gameActive) return;
+  paused = !paused;
+  if (paused) showOverlay('⏸ DURAKLANDI', 'Devam etmek için butona bas');
+  else hideOverlay();
+}
+function goToMenu() {
+  gameActive = false; paused = false;
+  hideOverlay();
+  clearPolice();
+  document.getElementById('menu').style.display = 'flex';
+  document.getElementById('topRight').style.display = 'none';
+  document.getElementById('miniMap').style.display = 'none';
+  document.getElementById('raceHUD').style.display = 'none';
+  car.wantedLevel = 0; updateWantedUI();
+  raceMode = false;
+}
+
+// ─── OYUNU BAŞLAT ────────────────────────────────────────────
+function startGame(race = false) {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('topRight').style.display = 'flex';
+  document.getElementById('miniMap').style.display = 'block';
+  gameActive = true; paused = false;
+  car.wantedLevel = 0; car.violCount = 0; updateWantedUI();
+  car.speed = 0; car.x = 5; car.z = 5; car.angle = 0;
+  clearPolice();
+
+  spawnCar(selectedCar);
+  spawnTraffic();
+
+  if (race) {
+    setupCheckpoints();
+    setTimeout(startRaceMode, 500);
+    showNotif('🏁 Yarış başlıyor! Checkpointleri geç!', '#FFD700');
+  } else {
+    cpMeshes.forEach(m => m.visible = false);
+    raceMode = false;
+    showNotif('🏎️ Hoş geldin! Serbest gezin.', '#4CAF50');
+    setTimeout(() => { if(gameActive) addMoney(100); }, 3000);
+    // Para kazanma döngüsü
+    setInterval(() => { if (gameActive && !paused && Math.abs(car.speed) > 15) addMoney(Math.floor(Math.abs(car.speed) * 0.4)); }, 5000);
+  }
+}
+
+// ─── OYUN DÖNGÜSÜ ────────────────────────────────────────────
+function gameLoop() {
+  requestAnimationFrame(gameLoop);
+  if (!gameActive || paused) {
+    renderer.render(scene, camera);
+    return;
+  }
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  updateCar(dt);
+  updateTraffic(dt);
+  updatePolice(dt);
+  updateCamera(dt);
+  updateRace(dt);
+  updateHUD();
+  drawMiniMap();
+
+  renderer.render(scene, camera);
+}
+
+// ─── UI BAĞLANTI ─────────────────────────────────────────────
+document.getElementById('btnPlay').onclick = () => startGame(false);
+document.getElementById('btnRace').onclick = () => startGame(true);
+document.getElementById('btnResume').onclick = hideOverlay;
+document.getElementById('btnMenuOvr').onclick = goToMenu;
+document.getElementById('btnPause').onclick = togglePause;
+document.getElementById('btnMenu').onclick = goToMenu;
+document.getElementById('btnMap').onclick = () => {
+  showMap = !showMap;
+  document.getElementById('miniMap').style.display = showMap ? 'block' : 'none';
+};
+
+// Araç seçimi
+document.querySelectorAll('.cDot').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.cDot').forEach(d => d.classList.remove('sel'));
+    el.classList.add('sel');
+    selectedCar = parseInt(el.dataset.i);
+  });
+  el.addEventListener('touchstart', e => {
+    e.preventDefault();
+    document.querySelectorAll('.cDot').forEach(d => d.classList.remove('sel'));
+    el.classList.add('sel');
+    selectedCar = parseInt(el.dataset.i);
+  }, { passive: false });
+});
+
+// ─── BAŞLAT ──────────────────────────────────────────────────
+initThree();
+buildCity();
+setupCheckpoints();
+setupInput();
+// Sahneyi arka planda hazırla (menüdeyken de render)
+clock.start();
+gameLoop();
+
+// Menüde arka plan kamerası
+setInterval(() => {
+  if (!gameActive) {
+    camera.position.x = Math.sin(Date.now() * 0.0002) * 20;
+    camera.position.z = Math.cos(Date.now() * 0.0002) * 20;
+    camera.position.y = 12;
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+  }
+}, 16);
+
+console.log('🏎️ Street City yüklendi!');
+</script>
+</body>
+</html>
