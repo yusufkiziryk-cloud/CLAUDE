@@ -15,17 +15,21 @@ const empty = (date: string): Omit<DailyEntry, 'id' | 'createdAt' | 'updatedAt'>
 })
 
 export default function DailyPage() {
-  const { saveDailyEntry, getDailyEntry, dailyEntries, categories } = useStore()
+  const { saveDailyEntry, dailyEntries, categories } = useStore()
   const [date, setDate] = useState(todayISO())
   const [form, setForm] = useState<Omit<DailyEntry, 'id' | 'createdAt' | 'updatedAt'>>(empty(date))
   const [tagInput, setTagInput] = useState('')
   const [saved, setSaved] = useState(false)
 
+  // Read the entry reactively so the form re-syncs once the store finishes
+  // hydrating from IndexedDB (async) or when the date changes.
+  const existing = dailyEntries.find((e) => e.date === date)
+
   useEffect(() => {
-    const existing = getDailyEntry(date)
     setForm(existing ? { ...existing } : empty(date))
     setSaved(false)
-  }, [date])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, existing])
 
   const set = (k: keyof typeof form, v: unknown) => { setForm(f => ({ ...f, [k]: v })); setSaved(false) }
   const addTag = () => { if (tagInput.trim()) { set('tags', [...form.tags, tagInput.trim()]); setTagInput('') } }
