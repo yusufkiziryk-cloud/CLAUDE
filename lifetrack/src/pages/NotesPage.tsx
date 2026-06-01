@@ -37,9 +37,7 @@ function NoteForm({ initial, onSave, onClose }: { initial?: Partial<Note>; onSav
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return
-    const MAX = 5 * 1024 * 1024
     Array.from(files).forEach(file => {
-      if (file.size > MAX) { toast.error(`${file.name} çok büyük (max 5 MB)`); return }
       const reader = new FileReader()
       reader.onload = (e) => {
         const att: NoteAttachment = { id: Math.random().toString(36).slice(2), name: file.name, type: file.type, size: file.size, data: e.target!.result as string }
@@ -122,7 +120,7 @@ function NoteForm({ initial, onSave, onClose }: { initial?: Partial<Note>; onSav
           <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
           <Paperclip size={20} className="mx-auto mb-2 text-slate-400" />
           <p className="text-xs text-slate-500">Dosyaları buraya sürükle veya tıkla</p>
-          <p className="text-xs text-slate-400 mt-1">PDF, Word, resim, vb. — max 5 MB</p>
+          <p className="text-xs text-slate-400 mt-1">PDF, Word, resim ve diğer dosyalar</p>
         </div>
         {(form.attachments ?? []).length > 0 && (
           <div className="mt-2 space-y-1.5">
