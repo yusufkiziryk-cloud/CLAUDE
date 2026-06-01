@@ -1,8 +1,9 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { Note, Task, CalendarEvent, Goal, DailyEntry, MonthlyReview, YearlyReview, Category, Habit, HabitLog, Theme } from '../types'
 import { nowISO } from '../utils/dates'
 import { demoNotes, demoTasks, demoEvents, demoGoals, demoDailyEntries } from '../utils/demo'
+import { idbStorage } from './idb-storage'
 
 const uid = () => Math.random().toString(36).slice(2, 11)
 
@@ -252,6 +253,6 @@ export const useStore = create<AppStore>()(
         return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, count }))
       },
     }),
-    { name: 'lifetrack-store' }
+    { name: 'lifetrack-store', storage: createJSONStorage(() => idbStorage) }
   )
 )
