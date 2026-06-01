@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Save, Calendar } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { ChevronLeft, ChevronRight, Save, Cloud } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useStore } from '../lib/store'
 import { fmtDate, todayISO, format, parseISO, addDays, subDays } from '../utils/dates'
@@ -19,46 +19,82 @@ export default function DailyPage() {
   const [date, setDate] = useState(todayISO())
   const [form, setForm] = useState<Omit<DailyEntry, 'id' | 'createdAt' | 'updatedAt'>>(empty(date))
   const [tagInput, setTagInput] = useState('')
-  const [saved, setSaved] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isHydrated = useRef(false)
 
-  // Read the entry reactively so the form re-syncs once the store finishes
-  // hydrating from IndexedDB (async) or when the date changes.
-  const existing = dailyEntries.find((e) => e.date === date)
-
+  // Sync form when the date changes or when the store hydrates from storage.
   useEffect(() => {
-    setForm(existing ? { ...existing } : empty(date))
-    setSaved(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, existing])
+    const existing = dailyEntries.find((e) => e.date === date)
+    if (existing) {
+      // Only replace the form if we just switched dates OR this is the first
+      // hydration — not on every auto-save write (which would reset the cursor).
+      if (!isHydrated.current) {
+        setForm({ ...existing })
+        isHydrated.current = true
+      }
+    } else {
+      setForm(empty(date))
+      isHydrated.current = false
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, dailyEntries.length > 0 ? dailyEntries.find((e) => e.date === date)?.updatedAt : null])
 
-  const set = (k: keyof typeof form, v: unknown) => { setForm(f => ({ ...f, [k]: v })); setSaved(false) }
-  const addTag = () => { if (tagInput.trim()) { set('tags', [...form.tags, tagInput.trim()]); setTagInput('') } }
+  // Reset hydration flag when date changes.
+  const changeDate = (d: string) => {
+    isHydrated.current = false
+    setDate(d)
+    setSaveStatus('idle')
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+  }
+
+  const set = (k: keyof typeof form, v: unknown) => {
+    setForm(f => ({ ...f, [k]: v }))
+    setSaveStatus('idle')
+    // Auto-save after 1.5 s of inactivity
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    autoSaveTimer.current = setTimeout(() => doSave({ ...form, [k]: v }), 1500)
+  }
+
+  const doSave = (data = form) => {
+    if (!data.title && !data.mainNote && !data.summary) return // nothing to save
+    setSaveStatus('saving')
+    saveDailyEntry(data)
+    setSaveStatus('saved')
+  }
 
   const handleSave = () => {
-    saveDailyEntry(form)
-    setSaved(true)
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    doSave()
     toast.success('Günlük kaydedildi')
   }
 
+  const addTag = () => { if (tagInput.trim()) { set('tags', [...form.tags, tagInput.trim()]); setTagInput('') } }
+
   const recentDates = dailyEntries.slice(0, 7).map(e => e.date)
   const isToday = date === todayISO()
+
+  const statusLabel = saveStatus === 'saving' ? 'Kaydediliyor...'
+    : saveStatus === 'saved' ? 'Kaydedildi ✓'
+    : 'Kaydet'
 
   return (
     <div className="max-w-3xl mx-auto">
       {/* Date navigation */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <button onClick={() => setDate(format(subDays(parseISO(date), 1), 'yyyy-MM-dd'))} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><ChevronLeft size={16} /></button>
+          <button onClick={() => changeDate(format(subDays(parseISO(date), 1), 'yyyy-MM-dd'))} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><ChevronLeft size={16} /></button>
           <div className="text-center">
             <div className="font-semibold">{fmtDate(date)}</div>
             {isToday && <div className="text-xs text-primary-500">Bugün</div>}
           </div>
-          <button onClick={() => setDate(format(addDays(parseISO(date), 1), 'yyyy-MM-dd'))} disabled={date >= todayISO()} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors"><ChevronRight size={16} /></button>
+          <button onClick={() => changeDate(format(addDays(parseISO(date), 1), 'yyyy-MM-dd'))} disabled={date >= todayISO()} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors"><ChevronRight size={16} /></button>
         </div>
         <div className="flex items-center gap-2">
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} max={todayISO()} className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-          <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors">
-            <Save size={14} /> {saved ? 'Kaydedildi ✓' : 'Kaydet'}
+          {saveStatus === 'saved' && <span className="text-xs text-emerald-500 flex items-center gap-1"><Cloud size={12} /> Kaydedildi</span>}
+          <input type="date" value={date} onChange={(e) => changeDate(e.target.value)} max={todayISO()} className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          <button onClick={handleSave} className={clsx('flex items-center gap-2 px-4 py-2 text-white text-sm rounded-lg transition-colors', saveStatus === 'saved' ? 'bg-emerald-600' : 'bg-primary-600 hover:bg-primary-700')}>
+            <Save size={14} /> {statusLabel}
           </button>
         </div>
       </div>
@@ -67,7 +103,7 @@ export default function DailyPage() {
       {recentDates.length > 0 && (
         <div className="flex gap-1.5 mb-4 flex-wrap">
           {recentDates.map(d => (
-            <button key={d} onClick={() => setDate(d)} className={clsx('px-2 py-1 rounded-lg text-xs transition-colors', d === date ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-primary-400')}>
+            <button key={d} onClick={() => changeDate(d)} className={clsx('px-2 py-1 rounded-lg text-xs transition-colors', d === date ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-primary-400')}>
               {format(parseISO(d), 'd MMM')}
             </button>
           ))}
@@ -149,8 +185,8 @@ export default function DailyPage() {
         </div>
 
         <div className="flex justify-end pb-4">
-          <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors">
-            <Save size={15} /> {saved ? 'Kaydedildi ✓' : 'Günlüğü Kaydet'}
+          <button onClick={handleSave} className={clsx('flex items-center gap-2 px-6 py-2.5 text-white rounded-lg transition-colors', saveStatus === 'saved' ? 'bg-emerald-600' : 'bg-primary-600 hover:bg-primary-700')}>
+            <Save size={15} /> {statusLabel}
           </button>
         </div>
       </div>
