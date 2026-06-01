@@ -141,7 +141,7 @@ export default function DailyPage() {
         {/* Main Note */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800">
           <h3 className="text-sm font-medium mb-3">📝 Günlük Not</h3>
-          <LifeEditor value={form.mainNote} onChange={(v) => set('mainNote', v)} placeholder="Bugün ne oldu? Düşüncelerini, gözlemlerini yaz..." minHeight={180} />
+          <LifeEditor key={date} value={form.mainNote} onChange={(v) => set('mainNote', v)} placeholder="Bugün ne oldu? Düşüncelerini, gözlemlerini yaz..." minHeight={180} />
         </div>
 
         {/* Grid sections */}

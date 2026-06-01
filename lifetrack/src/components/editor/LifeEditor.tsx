@@ -1,5 +1,6 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
+import { useEffect } from 'react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import UnderlineExt from '@tiptap/extension-underline'
@@ -65,6 +66,7 @@ export default function LifeEditor({ value, onChange, placeholder = 'Yazmaya baÅ
     ],
     content: value || '',
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     editorProps: {
       attributes: { class: 'life-editor-content focus:outline-none' },
     },
@@ -78,6 +80,16 @@ export default function LifeEditor({ value, onChange, placeholder = 'Yazmaya baÅ
     if (url === '') { editor.chain().focus().extendMarkRange('link').unsetLink().run(); return }
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
   }
+
+  // Sync external value changes (e.g. after async storage hydration or date switch).
+  // Only update when the editor is not focused to avoid disrupting the user mid-type.
+  useEffect(() => {
+    if (!editor || editor.isFocused) return
+    const current = editor.getHTML()
+    if (value !== undefined && current !== value) {
+      editor.commands.setContent(value || '', { emitUpdate: false })
+    }
+  }, [editor, value])
 
   if (!editor) return null
 
