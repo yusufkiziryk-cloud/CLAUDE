@@ -32,6 +32,30 @@ async function callClaude(apiKey: string, system: string, user: string): Promise
   return data.content[0]?.text ?? ''
 }
 
+async function callChatGPT(apiKey: string, system: string, user: string): Promise<string> {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: 900,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error((err as { error?: { message?: string } }).error?.message ?? `API hatası (${res.status})`)
+  }
+  const data = await res.json() as { choices: { message: { content: string } }[] }
+  return data.choices[0]?.message?.content ?? ''
+}
+
 function InsightCard({ title, icon: Icon, children, accent = false }: {
   title: string; icon: React.ElementType; children: React.ReactNode; accent?: boolean
 }) {
@@ -49,7 +73,7 @@ function InsightCard({ title, icon: Icon, children, accent = false }: {
 }
 
 export default function AIPage() {
-  const { notes, dailyEntries, tasks, goals, claudeApiKey } = useStore()
+  const { notes, dailyEntries, tasks, goals, claudeApiKey, openaiApiKey } = useStore()
   const navigate = useNavigate()
   const [reflection, setReflection] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
@@ -101,7 +125,7 @@ export default function AIPage() {
   }, [notes, dailyEntries])
 
   const generateWeeklyReflection = async () => {
-    if (!claudeApiKey) { navigate('/settings'); return }
+    if (!claudeApiKey && !openaiApiKey) { navigate('/settings'); return }
     setLoading('reflection'); setError('')
     try {
       const recentNotes = notes.slice(0, 15).map(n => `- ${n.title}: ${n.content.replace(/<[^>]*>/g, '').slice(0, 120)}`).join('\n')
@@ -134,7 +158,9 @@ Bu verilere dayanarak 250-350 kelimelik bir haftalık değerlendirme yaz.
 
 Ton: Sıcak, anlayışlı, hiçbir zaman buyurgan değil. Bir akıl hocası gibi, koç gibi değil.`
 
-      const text = await callClaude(claudeApiKey, system, prompt)
+      const text = openaiApiKey
+        ? await callChatGPT(openaiApiKey, system, prompt)
+        : await callClaude(claudeApiKey!, system, prompt)
       setReflection(text)
     } catch (e) {
       setError((e as Error).message)
@@ -150,7 +176,7 @@ Ton: Sıcak, anlayışlı, hiçbir zaman buyurgan değil. Bir akıl hocası gibi
           <h1 className="text-xl font-bold flex items-center gap-2"><Brain size={20} className="text-primary-500" /> AI Hafıza Merkezi</h1>
           <p className="text-xs text-slate-400 mt-0.5">Hayatınızı anlayan zeka</p>
         </div>
-        {!claudeApiKey && (
+        {!claudeApiKey && !openaiApiKey && (
           <button onClick={() => navigate('/settings')} className="flex items-center gap-2 px-3 py-2 bg-primary-600 text-white text-sm rounded-lg">
             <Lock size={13} /> API Anahtarı Ekle
           </button>
@@ -169,7 +195,7 @@ Ton: Sıcak, anlayışlı, hiçbir zaman buyurgan değil. Bir akıl hocası gibi
           </div>
         ) : (
           <div className="text-center py-4">
-            <p className="text-sm text-slate-400 mb-4">Claude AI son notlarınızı, günlüklerinizi ve hedeflerinizi analiz ederek kişisel bir haftalık yansıma üretecek.</p>
+            <p className="text-sm text-slate-400 mb-4">{openaiApiKey ? 'ChatGPT' : 'Claude AI'} son notlarınızı, günlüklerinizi ve hedeflerinizi analiz ederek kişisel bir haftalık yansıma üretecek.</p>
             {error && <p className="text-xs text-red-500 mb-3 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
             <button onClick={generateWeeklyReflection} disabled={loading !== null}
               className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-xl mx-auto transition-colors disabled:opacity-60">
