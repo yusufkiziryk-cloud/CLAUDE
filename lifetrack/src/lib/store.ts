@@ -76,6 +76,8 @@ interface AppStore {
 
   claudeApiKey: string
   setClaudeApiKey: (key: string) => void
+  openaiApiKey: string
+  setOpenaiApiKey: (key: string) => void
 
   password: string
   setPassword: (p: string) => void
@@ -203,6 +205,8 @@ export const useStore = create<AppStore>()(
 
       claudeApiKey: '',
       setClaudeApiKey: (key) => set({ claudeApiKey: key }),
+      openaiApiKey: '',
+      setOpenaiApiKey: (key) => set({ openaiApiKey: key }),
 
       password: '',
       setPassword: (p) => set({ password: p }),

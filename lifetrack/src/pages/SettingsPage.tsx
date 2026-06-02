@@ -6,7 +6,7 @@ import { exportJSON, importJSON } from '../utils/export'
 import clsx from 'clsx'
 
 export default function SettingsPage() {
-  const { themeId, setTheme, categories, addCategory, deleteCategory, exportAll, importAll, resetAll, notes, tasks, events, goals, dailyEntries, hasDemoData, loadDemoData, clearDemoData, password, setPassword, removePassword, claudeApiKey, setClaudeApiKey } = useStore()
+  const { themeId, setTheme, categories, addCategory, deleteCategory, exportAll, importAll, resetAll, notes, tasks, events, goals, dailyEntries, hasDemoData, loadDemoData, clearDemoData, password, setPassword, removePassword, claudeApiKey, setClaudeApiKey, openaiApiKey, setOpenaiApiKey } = useStore()
   const [newCatName, setNewCatName] = useState('')
   const [newCatColor, setNewCatColor] = useState('#6366f1')
   const [newPass, setNewPass] = useState('')
@@ -15,6 +15,8 @@ export default function SettingsPage() {
   const [newCatIcon, setNewCatIcon] = useState('📁')
   const [showApiKey, setShowApiKey] = useState(false)
   const [apiKeyInput, setApiKeyInput] = useState(claudeApiKey)
+  const [showOpenaiKey, setShowOpenaiKey] = useState(false)
+  const [openaiKeyInput, setOpenaiKeyInput] = useState(openaiApiKey)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleSetPassword = () => {
@@ -112,6 +114,31 @@ export default function SettingsPage() {
           </button>
         </div>
         {claudeApiKey && <p className="mt-2 text-xs text-green-600 dark:text-green-400">✓ API anahtarı aktif</p>}
+      </div>
+
+      {/* ChatGPT / OpenAI */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+        <h2 className="font-semibold mb-1 flex items-center gap-2"><Brain size={16} /> ChatGPT (OpenAI) Entegrasyonu</h2>
+        <p className="text-xs text-slate-400 mb-4">OpenAI GPT modellerini kullanmak için API anahtarınızı ekleyin. Anahtar yalnızca cihazınızda saklanır.</p>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <input
+              type={showOpenaiKey ? 'text' : 'password'}
+              value={openaiKeyInput}
+              onChange={e => setOpenaiKeyInput(e.target.value)}
+              placeholder="sk-..."
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+            <button type="button" onClick={() => setShowOpenaiKey(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              {showOpenaiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+          <button onClick={() => { setOpenaiApiKey(openaiKeyInput.trim()); toast.success(openaiKeyInput.trim() ? 'OpenAI API anahtarı kaydedildi' : 'OpenAI API anahtarı kaldırıldı') }}
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors">
+            Kaydet
+          </button>
+        </div>
+        {openaiApiKey && <p className="mt-2 text-xs text-green-600 dark:text-green-400">✓ OpenAI API anahtarı aktif</p>}
       </div>
 
       {/* Password */}
