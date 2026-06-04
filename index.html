@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#6C63FF" />
+  <meta name="description" content="Günlük gelir ve gider takip uygulaması" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Cüzdanım" />
+  <title>Cüzdanım</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ═══════════════════════════════════════════
+         PAGE 1 — ANA SAYFA
+    ════════════════════════════════════════════ -->
+    <section id="page-home" class="page active">
+
+      <!-- Header -->
+      <div class="header">
+        <div class="header-top">
+          <div>
+            <div class="header-title">Cüzdanım 💜</div>
+            <div class="header-subtitle">Finansal özgürlüğünü takip et</div>
+          </div>
+          <div class="month-nav">
+            <button id="prevMonth" aria-label="Önceki ay">&#8249;</button>
+            <span id="currentMonth">Haziran 2026</span>
+            <button id="nextMonth" aria-label="Sonraki ay">&#8250;</button>
+          </div>
+        </div>
+        <div class="balance-card">
+          <div class="balance-label">Net Bakiye</div>
+          <div class="balance-amount" id="netBalance">0,00 ₺</div>
+        </div>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="summary-row">
+        <div class="summary-card">
+          <div class="summary-icon income">📈</div>
+          <div class="summary-info">
+            <div class="summary-info-label">Toplam Gelir</div>
+            <div class="summary-info-amount income" id="totalIncome">0,00 ₺</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon expense">📉</div>
+          <div class="summary-info">
+            <div class="summary-info-label">Toplam Gider</div>
+            <div class="summary-info-amount expense" id="totalExpense">0,00 ₺</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category breakdown -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Gider Kategorileri</div>
+          <span class="section-link" onclick="switchTab('charts')">Grafikler →</span>
+        </div>
+        <div class="category-list" id="categoryList">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <!-- Recent transactions -->
+      <div class="section" style="padding-bottom: 8px;">
+        <div class="section-header">
+          <div class="section-title">Son İşlemler</div>
+          <span class="section-link" onclick="switchTab('transactions')">Tümü →</span>
+        </div>
+        <div class="tx-list" id="recentTxList">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+    </section><!-- /page-home -->
+
+
+    <!-- ═══════════════════════════════════════════
+         PAGE 2 — İŞLEMLER
+    ════════════════════════════════════════════ -->
+    <section id="page-transactions" class="page">
+
+      <div class="page-header-plain">
+        <h1>İşlemler</h1>
+      </div>
+
+      <!-- Filter chips -->
+      <div class="filter-row">
+        <button class="filter-chip active" data-filter="all">Tümü</button>
+        <button class="filter-chip" data-filter="income">Gelir</button>
+        <button class="filter-chip" data-filter="expense">Gider</button>
+      </div>
+
+      <!-- Transaction list -->
+      <div class="section" style="padding-top: 16px;">
+        <div class="tx-list" id="allTxList">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+    </section><!-- /page-transactions -->
+
+
+    <!-- ═══════════════════════════════════════════
+         PAGE 3 — GRAFİKLER
+    ════════════════════════════════════════════ -->
+    <section id="page-charts" class="page">
+
+      <div class="charts-header">
+        <h1 style="color:white; font-size:1.3rem; font-weight:800;">Grafikler</h1>
+        <div style="font-size:0.8rem; opacity:0.75; margin-top:2px;">Gelir &amp; gider analizi</div>
+      </div>
+
+      <div class="section" style="gap: 14px; display: flex; flex-direction: column; padding-bottom: 8px;">
+
+        <!-- Pie chart -->
+        <div class="chart-card">
+          <div class="chart-title">📊 Kategoriye Göre Giderler</div>
+          <div class="chart-wrap">
+            <canvas id="pieChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Bar chart -->
+        <div class="chart-card">
+          <div class="chart-title">📅 Son 6 Ay Gelir / Gider</div>
+          <div class="chart-wrap">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </section><!-- /page-charts -->
+
+
+    <!-- ═══════════════════════════════════════════
+         BOTTOM NAVIGATION
+    ════════════════════════════════════════════ -->
+    <nav class="bottom-nav" role="navigation" aria-label="Ana navigasyon">
+      <button class="nav-tab active" id="tab-home" onclick="switchTab('home')" aria-label="Ana Sayfa">
+        <span class="nav-tab-icon">🏠</span>
+        <span class="nav-tab-label">Ana Sayfa</span>
+      </button>
+      <button class="nav-tab" id="tab-transactions" onclick="switchTab('transactions')" aria-label="İşlemler">
+        <span class="nav-tab-icon">📋</span>
+        <span class="nav-tab-label">İşlemler</span>
+      </button>
+      <button class="nav-tab" id="tab-charts" onclick="switchTab('charts')" aria-label="Grafikler">
+        <span class="nav-tab-icon">📊</span>
+        <span class="nav-tab-label">Grafikler</span>
+      </button>
+    </nav>
+
+
+    <!-- ═══════════════════════════════════════════
+         FLOATING ACTION BUTTON
+    ════════════════════════════════════════════ -->
+    <button class="fab" id="fabBtn" onclick="openModal()" aria-label="Yeni işlem ekle">
+      +
+    </button>
+
+
+    <!-- ═══════════════════════════════════════════
+         ADD TRANSACTION MODAL
+    ════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+      <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-handle"></div>
+
+        <div class="modal-header">
+          <span class="modal-title" id="modalTitle">Yeni İşlem Ekle</span>
+          <button class="modal-close" onclick="closeModal()" aria-label="Kapat">✕</button>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- Type toggle -->
+          <div class="type-toggle">
+            <button class="type-btn active income" id="typeIncome" onclick="setType('income')">
+              📈 Gelir
+            </button>
+            <button class="type-btn expense" id="typeExpense" onclick="setType('expense')">
+              📉 Gider
+            </button>
+          </div>
+
+          <!-- Amount -->
+          <div class="form-group">
+            <label class="form-label" for="inputAmount">Tutar (₺)</label>
+            <div class="amount-input-wrap">
+              <span class="amount-prefix">₺</span>
+              <input
+                class="form-input"
+                type="number"
+                id="inputAmount"
+                placeholder="0,00"
+                min="0"
+                step="0.01"
+                inputmode="decimal"
+              />
+            </div>
+          </div>
+
+          <!-- Category -->
+          <div class="form-group">
+            <label class="form-label" for="inputCategory">Kategori</label>
+            <div class="form-select-wrap">
+              <select class="form-select" id="inputCategory">
+                <!-- options injected by JS based on type -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Note -->
+          <div class="form-group">
+            <label class="form-label" for="inputNote">Not / Açıklama</label>
+            <input
+              class="form-input"
+              type="text"
+              id="inputNote"
+              placeholder="İsteğe bağlı not..."
+              maxlength="120"
+            />
+          </div>
+
+          <!-- Date -->
+          <div class="form-group">
+            <label class="form-label" for="inputDate">Tarih</label>
+            <input
+              class="form-input"
+              type="date"
+              id="inputDate"
+            />
+          </div>
+
+          <!-- Submit -->
+          <button class="btn-submit" id="submitBtn" onclick="submitTransaction()">
+            Kaydet
+          </button>
+
+        </div>
+      </div>
+    </div><!-- /modal -->
+
+
+    <!-- ═══════════════════════════════════════════
+         DELETE CONFIRM DIALOG
+    ════════════════════════════════════════════ -->
+    <div class="confirm-overlay" id="confirmOverlay">
+      <div class="confirm-card">
+        <div class="confirm-title">İşlemi Sil</div>
+        <div class="confirm-text">Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</div>
+        <div class="confirm-actions">
+          <button class="btn-cancel" onclick="cancelDelete()">İptal</button>
+          <button class="btn-danger" onclick="confirmDelete()">Sil</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════
+         TOAST
+    ════════════════════════════════════════════ -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  </div><!-- /#app -->
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

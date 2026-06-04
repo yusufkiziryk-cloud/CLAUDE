@@ -1,0 +1,24 @@
+{
+  "name": "Cüzdanım",
+  "short_name": "Cüzdanım",
+  "description": "Günlük gelir ve gider takip uygulaması",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F0E17",
+  "theme_color": "#6C63FF",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%236C63FF'/><text x='96' y='130' font-size='100' text-anchor='middle' fill='white'>₺</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%236C63FF'/><text x='256' y='350' font-size='280' text-anchor='middle' fill='white'>₺</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "lang": "tr"
+}
