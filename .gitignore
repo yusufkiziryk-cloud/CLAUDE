@@ -5,3 +5,7 @@ lifetrack-mobile/node_modules/
 lifetrack-mobile/.expo/
 lifetrack-app.apk
 lifetrack-mobile/android/app/src/main/assets/
+
+# telegram-agents
+telegram-agents/node_modules/
+telegram-agents/.env
