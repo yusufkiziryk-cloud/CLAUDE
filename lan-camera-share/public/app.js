@@ -460,6 +460,73 @@ function updateShareLink() {
   }
 }
 
+// ---- QR tarayıcı (guest) ---------------------------------------------------
+const scan = { stream: null, raf: null, canvas: null, ctx: null };
+
+async function startScanner() {
+  if (typeof jsQR === 'undefined') { alert('QR tarayıcı yüklenemedi.'); return; }
+  const overlay = $('#scanner');
+  overlay.classList.remove('hidden');
+  try {
+    scan.stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }, audio: false,
+    });
+  } catch (e) {
+    alert('Kamera açılamadı: ' + e.message +
+      '\n\nHTTPS güvenlik uyarısını onayladığından ve kamera iznini verdiğinden emin ol.');
+    stopScanner();
+    return;
+  }
+  const v = $('#scanVideo');
+  v.srcObject = scan.stream;
+  await v.play().catch(() => {});
+
+  scan.canvas = document.createElement('canvas');
+  scan.ctx = scan.canvas.getContext('2d', { willReadFrequently: true });
+
+  const tick = () => {
+    if (!scan.stream) return;
+    if (v.readyState >= v.HAVE_ENOUGH_DATA && v.videoWidth) {
+      scan.canvas.width = v.videoWidth;
+      scan.canvas.height = v.videoHeight;
+      scan.ctx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight);
+      const img = scan.ctx.getImageData(0, 0, v.videoWidth, v.videoHeight);
+      const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+      if (code && code.data) { onScanResult(code.data); return; }
+    }
+    scan.raf = requestAnimationFrame(tick);
+  };
+  scan.raf = requestAnimationFrame(tick);
+}
+
+function stopScanner() {
+  if (scan.raf) { cancelAnimationFrame(scan.raf); scan.raf = null; }
+  if (scan.stream) { scan.stream.getTracks().forEach((t) => t.stop()); scan.stream = null; }
+  $('#scanner').classList.add('hidden');
+}
+
+function onScanResult(text) {
+  stopScanner();
+  let room = null;
+  try {
+    const u = new URL(text);
+    room = u.searchParams.get('room');
+  } catch (_) {
+    room = (text || '').trim(); // düz oda kodu da kabul et
+  }
+  if (!room) { alert('Geçersiz QR. Bağlantı/oda kodu bulunamadı.'); return; }
+
+  // guest rolünü seç ve doğrudan bağlan
+  document.querySelectorAll('.role').forEach((b) => b.classList.remove('is-active'));
+  document.querySelector('.role[data-role="guest"]').classList.add('is-active');
+  state.role = 'guest';
+  $('#roomInput').value = room.toUpperCase();
+  refreshConnectBtn();
+  updateShareLink();
+  state.room = $('#roomInput').value.trim().toUpperCase();
+  connect();
+}
+
 function init() {
   // Rol seçimi
   document.querySelectorAll('.role').forEach((btn) => {
@@ -537,6 +604,9 @@ function init() {
     const t = state.localStream.getVideoTracks()[0];
     if (t) { t.enabled = !t.enabled; $('#toggleVideo').textContent = t.enabled ? '📹 Kamera aç/kapa' : '🚫 Kamera kapalı'; }
   });
+
+  $('#scanBtn').addEventListener('click', () => startScanner());
+  $('#scanClose').addEventListener('click', () => stopScanner());
 
   $('#hangupBtn').addEventListener('click', hangup);
 

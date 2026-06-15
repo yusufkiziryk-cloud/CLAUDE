@@ -46,6 +46,7 @@
         </div>
       </label>
 
+      <button id="scanBtn" class="btn btn--ghost btn--block">📷 QR kodu tara</button>
       <button id="connectBtn" class="btn btn--primary" disabled>Bağlan</button>
 
       <div id="shareLink" class="sharelink hidden">
@@ -96,7 +97,16 @@
     </section>
   </main>
 
+  <!-- QR TARAYICI -->
+  <div id="scanner" class="scanner hidden">
+    <video id="scanVideo" playsinline autoplay muted></video>
+    <div class="scanner__frame"></div>
+    <p class="scanner__hint">QR kodu çerçeveye getir</p>
+    <button id="scanClose" class="btn btn--danger scanner__close">Kapat</button>
+  </div>
+
   <script src="/vendor/qrcode.js"></script>
+  <script src="/vendor/jsQR.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

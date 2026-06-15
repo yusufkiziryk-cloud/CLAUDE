@@ -44,7 +44,8 @@ https://localhost:8443
 3. Kamerayı verecek telefonda **"Bu cihazı paylaş"** seç → bir **oda kodu** üretilir.
    - "Kopyala" / "Paylaş…" ile bağlantıyı diğer telefona gönderebilirsin
      (bağlantı oda kodunu içerir).
-4. Diğer telefonda **"Bir cihaza bağlan"** seç, aynı oda kodunu gir, **Bağlan**.
+4. Diğer telefonda ya **"📷 QR kodu tara"** ile host'taki QR'ı okut (otomatik
+   bağlanır), ya da **"Bir cihaza bağlan"** seçip aynı oda kodunu girip **Bağlan** de.
 5. İzleyen taraf yayını görür. Host "Paylaşılacak dosya seç" ile dosya sunar;
    karşı taraf listeden **İndir** der. İki taraf da "Karşı cihaza dosya gönder"
    ile dosya iletebilir.
