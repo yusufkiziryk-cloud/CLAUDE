@@ -1,7 +1,8 @@
 name: Android APK (LAN Paylaşım)
 
 # LAN Kamera & Dosya Paylaşımı web uygulamasını Capacitor ile saran
-# Android APK'sını derler ve indirilebilir artifact olarak yayınlar.
+# Android APK'sını derler; artifact olarak yükler ve telefondan kolayca
+# indirilebilmesi için "apk-latest" Release'ine ekler.
 
 on:
   push:
@@ -10,6 +11,9 @@ on:
       - "lan-camera-share/**"
       - ".github/workflows/android-apk.yml"
   workflow_dispatch: {}
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -53,3 +57,16 @@ jobs:
           name: lan-paylasim-apk
           path: lan-camera-share/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # Telefondan doğrudan (zip'siz, giriş gerektirmeden) indirilebilsin diye
+      # APK'yı her zaman güncel "apk-latest" Release'ine yükle.
+      - name: Yayınla (GitHub Release)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: LAN Paylaşım — son APK
+          body: |
+            LAN Kamera & Dosya Paylaşımı uygulamasının son derlenen APK'sı.
+            Telefonda indir, kur (debug yapısı imzasızdır; "bilinmeyen
+            kaynaklara izin ver" gerekebilir). Commit: ${{ github.sha }}
+          files: lan-camera-share/android/app/build/outputs/apk/debug/app-debug.apk
