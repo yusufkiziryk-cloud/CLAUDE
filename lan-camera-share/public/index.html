@@ -49,7 +49,8 @@
       <button id="connectBtn" class="btn btn--primary" disabled>Bağlan</button>
 
       <div id="shareLink" class="sharelink hidden">
-        <span class="hint">Diğer telefonda bu bağlantıyı aç:</span>
+        <span class="hint">Diğer telefonda bu QR'ı okut ya da bağlantıyı aç:</span>
+        <div id="qrcode" class="qrcode"></div>
         <code id="shareUrl"></code>
         <div class="field__row">
           <button id="copyLink" class="btn btn--ghost">Kopyala</button>
@@ -95,6 +96,7 @@
     </section>
   </main>
 
+  <script src="/vendor/qrcode.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

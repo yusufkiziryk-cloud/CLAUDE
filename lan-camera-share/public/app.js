@@ -433,11 +433,27 @@ function buildShareUrl() {
   return u.toString();
 }
 
+function renderQR(text) {
+  const el = $('#qrcode');
+  el.innerHTML = '';
+  if (typeof qrcode === 'undefined') return;
+  try {
+    const qr = qrcode(0, 'M'); // 0 = otomatik boyut, M = orta hata düzeltme
+    qr.addData(text);
+    qr.make();
+    el.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 12, scalable: true });
+  } catch (e) {
+    console.warn('QR üretilemedi', e);
+  }
+}
+
 function updateShareLink() {
   const box = $('#shareLink');
   if (state.role === 'host' && $('#roomInput').value.trim().length >= 4) {
     box.classList.remove('hidden');
-    $('#shareUrl').textContent = buildShareUrl();
+    const url = buildShareUrl();
+    $('#shareUrl').textContent = url;
+    renderQR(url);
     if (navigator.share) $('#shareSheet').classList.remove('hidden');
   } else {
     box.classList.add('hidden');
