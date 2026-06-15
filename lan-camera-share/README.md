@@ -50,6 +50,45 @@ https://localhost:8443
    karşı taraf listeden **İndir** der. İki taraf da "Karşı cihaza dosya gönder"
    ile dosya iletebilir.
 
+## İki bağlantı modu
+
+Uygulama açılışta iki mod sunar:
+
+- **Sunucusuz (QR):** Hiçbir sunucu gerekmez. Host telefon, WebRTC teklifini
+  (kamera + ICE adayları, deflate ile sıkıştırılıp) QR olarak gösterir; guest
+  okutur, cevabını QR yapar; host onu okutur — bağlantı kurulur. APK'da
+  **varsayılan** mod budur. (Teklif/cevap büyükse QR otomatik birden çok kareye
+  bölünür ve sırayla döner; tarayıcı hepsini toplar.)
+- **Oda kodu (sunucu):** Yukarıda anlatılan `node server.js` üzerinden
+  sinyalleşme. Web tarayıcısında varsayılan budur.
+
+Her iki modda da kamera görüntüsü ve dosyalar cihazdan cihaza **doğrudan** akar.
+
+## Android APK (Capacitor + GitHub Actions)
+
+Web uygulaması **Capacitor** ile bir Android WebView uygulamasına sarılır.
+APK içindeyken WebView güvenli bağlam (`https://localhost`) olduğundan kamera
+**sertifika uyarısı olmadan** çalışır ve sunucusuz QR modu varsayılandır.
+
+APK bu depoda **GitHub Actions** ile derlenir (bu ortamda Android SDK yok):
+
+1. `lan-camera-share/**` altına push yapıldığında
+   `.github/workflows/android-apk.yml` workflow'u tetiklenir
+   (Actions sekmesinden **Run workflow** ile elle de çalıştırılabilir).
+2. Workflow: `npm ci` → `npx cap sync android` → Android SDK kurar →
+   `./gradlew assembleDebug`.
+3. Çıktı **`lan-paylasim-apk`** adlı artifact olarak yüklenir
+   (`app-debug.apk`). Actions çalışması sayfasından indir, telefona kur.
+
+> Yerelde derlemek istersen: Android Studio / Android SDK gerekir.
+> `cd lan-camera-share && npm install && npx cap sync android` ardından
+> `cd android && ./gradlew assembleDebug`. APK:
+> `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+> Not: `app-debug.apk` imzasız "debug" yapısıdır; kurarken telefonda
+> "bilinmeyen kaynaklara izin ver" gerekebilir. Mağaza dağıtımı için
+> imzalı release yapısı ayrıca yapılandırılmalıdır.
+
 ## Ortam değişkenleri
 
 | Değişken | Varsayılan | Açıklama |

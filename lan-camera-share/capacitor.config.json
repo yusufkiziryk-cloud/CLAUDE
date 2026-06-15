@@ -1,0 +1,11 @@
+{
+  "appId": "com.lanshare.camera",
+  "appName": "LAN Paylasim",
+  "webDir": "public",
+  "android": {
+    "allowMixedContent": true
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

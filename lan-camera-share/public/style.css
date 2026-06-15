@@ -55,6 +55,14 @@ h1 { font-size: 20px; margin-bottom: 8px; }
 h2 { font-size: 15px; margin-bottom: 10px; color: var(--muted); }
 .hint { color: var(--muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
 
+.modes { display: flex; gap: 8px; margin-bottom: 16px; }
+.mode {
+  flex: 1; padding: 10px; border-radius: 12px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+  color: var(--muted); font-size: 13px; font-weight: 600;
+}
+.mode.is-active { color: var(--text); border-color: var(--primary); background: rgba(59, 130, 246, 0.15); }
+
 .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
 .role {
   display: flex; flex-direction: column; gap: 4px; align-items: flex-start;

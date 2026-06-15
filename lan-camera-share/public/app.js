@@ -36,7 +36,14 @@ const state = {
   incoming: null,        // { meta, buffers, received, el }
   sendQueue: [],
   sending: false,
+  mode: 'server',        // 'server' (oda kodu) | 'qr' (sunucusuz)
+  scanMode: 'url',       // 'url' | 'frames'
+  framesOnDone: null,    // çok-kareli QR tamamlanınca çağrılır
 };
+
+// Capacitor (APK) içinde çalışıyorsak sunucusuz QR modu varsayılan olsun.
+const IS_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform &&
+  window.Capacitor.isNativePlatform());
 
 // ---- UI yardımcıları -------------------------------------------------------
 function setStatus(text, kind) {
@@ -101,18 +108,11 @@ function openSignaling() {
 }
 
 // ---- WebRTC ----------------------------------------------------------------
-function startPeer(remoteId, isOfferer) {
-  if (state.peers.has(remoteId)) return;
-  const pc = new RTCPeerConnection(ICE_CONFIG);
-  const entry = { pc, dc: null };
-  state.peers.set(remoteId, entry);
-
-  pc.onicecandidate = (e) => {
-    if (e.candidate) postSignal(remoteId, { kind: 'ice', candidate: e.candidate });
-  };
+// Her iki modda (sunucu / QR) ortak peer davranışı: durum + gelen görüntü.
+function wirePeerCommon(pc) {
   pc.onconnectionstatechange = () => {
     const st = pc.connectionState;
-    if (st === 'connected') setStatus('Bağlandı', 'connected');
+    if (st === 'connected') { setStatus('Bağlandı', 'connected'); onConnected(); }
     else if (st === 'connecting') setStatus('Bağlanıyor…', 'connecting');
     else if (st === 'failed' || st === 'disconnected') setStatus('Bağlantı koptu', 'error');
   };
@@ -120,6 +120,27 @@ function startPeer(remoteId, isOfferer) {
     const v = $('#remoteVideo');
     if (v.srcObject !== e.streams[0]) v.srcObject = e.streams[0];
     $('#videoPlaceholder').classList.add('hidden');
+  };
+}
+
+// Bağlantı kurulunca el sıkışma/kurulum panellerini gizle, canlı paneli aç.
+function onConnected() {
+  stopPayloadQR();
+  $('#qrHandshake').classList.add('hidden');
+  $('#scanner').classList.add('hidden');
+  $('#setup').classList.add('hidden');
+  $('#live').classList.remove('hidden');
+}
+
+function startPeer(remoteId, isOfferer) {
+  if (state.peers.has(remoteId)) return;
+  const pc = new RTCPeerConnection(ICE_CONFIG);
+  const entry = { pc, dc: null };
+  state.peers.set(remoteId, entry);
+
+  wirePeerCommon(pc);
+  pc.onicecandidate = (e) => {
+    if (e.candidate) postSignal(remoteId, { kind: 'ice', candidate: e.candidate });
   };
 
   // Host kamerayı yollar
@@ -433,18 +454,21 @@ function buildShareUrl() {
   return u.toString();
 }
 
-function renderQR(text) {
-  const el = $('#qrcode');
+function renderQRInto(el, text, cellSize) {
   el.innerHTML = '';
   if (typeof qrcode === 'undefined') return;
   try {
-    const qr = qrcode(0, 'M'); // 0 = otomatik boyut, M = orta hata düzeltme
+    const qr = qrcode(0, 'L'); // 0 = otomatik boyut, L = düşük ECC (daha çok veri sığar)
     qr.addData(text);
     qr.make();
-    el.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 12, scalable: true });
+    el.innerHTML = qr.createSvgTag({ cellSize: cellSize || 6, margin: 10, scalable: true });
   } catch (e) {
     console.warn('QR üretilemedi', e);
   }
+}
+
+function renderQR(text) {
+  renderQRInto($('#qrcode'), text);
 }
 
 function updateShareLink() {
@@ -492,7 +516,16 @@ async function startScanner() {
       scan.ctx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight);
       const img = scan.ctx.getImageData(0, 0, v.videoWidth, v.videoHeight);
       const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
-      if (code && code.data) { onScanResult(code.data); return; }
+      if (code && code.data) {
+        if (state.scanMode === 'frames') {
+          const finished = collectFrame(code.data);
+          if (finished) { stopScanner(); return; }
+          // diğer kareleri okumaya devam et
+        } else {
+          onScanResult(code.data);
+          return;
+        }
+      }
     }
     scan.raf = requestAnimationFrame(tick);
   };
@@ -503,6 +536,8 @@ function stopScanner() {
   if (scan.raf) { cancelAnimationFrame(scan.raf); scan.raf = null; }
   if (scan.stream) { scan.stream.getTracks().forEach((t) => t.stop()); scan.stream = null; }
   $('#scanner').classList.add('hidden');
+  const hint = $('#scanHint');
+  if (hint) hint.textContent = 'QR kodu çerçeveye getir';
 }
 
 function onScanResult(text) {
@@ -527,13 +562,240 @@ function onScanResult(text) {
   connect();
 }
 
+// ===========================================================================
+// SUNUCUSUZ MOD — QR ile WebRTC el sıkışma (signaling server yok)
+//
+// Akış:
+//   host:  kamera + offer üretir, ICE toplanmasını bekler, offer'ı QR yapar.
+//          guest'in cevap QR'ını okutunca bağlanır.
+//   guest: host'un offer QR'ını okutur, answer üretir, answer'ı QR yapar.
+//          host bunu okutunca bağlanır.
+// SDP, deflate ile sıkıştırılıp base64'lenir ve gerekirse çok kareli QR'a bölünür.
+// ===========================================================================
+
+async function deflateToBytes(str) {
+  const data = new TextEncoder().encode(str);
+  if (typeof CompressionStream === 'undefined') return data;
+  const cs = new CompressionStream('deflate-raw');
+  const ab = await new Response(new Blob([data]).stream().pipeThrough(cs)).arrayBuffer();
+  return new Uint8Array(ab);
+}
+async function inflateFromBytes(bytes) {
+  if (typeof DecompressionStream === 'undefined') return new TextDecoder().decode(bytes);
+  const ds = new DecompressionStream('deflate-raw');
+  const ab = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer();
+  return new TextDecoder().decode(ab);
+}
+function bytesToB64(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s);
+}
+function b64ToBytes(b64) {
+  const s = atob(b64);
+  const a = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i);
+  return a;
+}
+async function encodeDesc(desc) {
+  const json = JSON.stringify({ t: desc.type, s: desc.sdp });
+  const compressed = typeof CompressionStream !== 'undefined';
+  const bytes = await deflateToBytes(json);
+  return (compressed ? '1' : '0') + bytesToB64(bytes); // önek = sıkıştırma bayrağı
+}
+async function decodeDesc(payload) {
+  const flag = payload[0];
+  const bytes = b64ToBytes(payload.slice(1));
+  const json = flag === '1' ? await inflateFromBytes(bytes) : new TextDecoder().decode(bytes);
+  const o = JSON.parse(json);
+  return { type: o.t, sdp: o.s };
+}
+
+// Tüm ICE adayları toplanana kadar bekle (non-trickle); zaman aşımıyla devam et.
+function waitIceComplete(pc, timeoutMs) {
+  return new Promise((resolve) => {
+    if (pc.iceGatheringState === 'complete') return resolve();
+    let done = false;
+    const finish = () => { if (!done) { done = true; resolve(); } };
+    pc.addEventListener('icegatheringstatechange', () => {
+      if (pc.iceGatheringState === 'complete') finish();
+    });
+    setTimeout(finish, timeoutMs || 2500);
+  });
+}
+
+// ---- Çok kareli QR gösterimi ----
+let hsFrames = null, hsTimer = null, hsIdx = 0;
+function showPayloadQR(payload) {
+  stopPayloadQR();
+  const CH = 200; // kare başına base64 karakter
+  const total = Math.ceil(payload.length / CH);
+  hsFrames = [];
+  for (let i = 0; i < total; i++) {
+    hsFrames.push(`LCS|${i}|${total}|${payload.slice(i * CH, (i + 1) * CH)}`);
+  }
+  hsIdx = 0;
+  const draw = () => {
+    renderQRInto($('#hsQR'), hsFrames[hsIdx % total], 5);
+    $('#hsFrameInfo').textContent = total > 1
+      ? `Kare ${(hsIdx % total) + 1}/${total} — QR ekrana sığacak şekilde okut`
+      : '';
+    hsIdx++;
+  };
+  draw();
+  if (total > 1) hsTimer = setInterval(draw, 600);
+}
+function stopPayloadQR() {
+  if (hsTimer) { clearInterval(hsTimer); hsTimer = null; }
+  hsFrames = null;
+}
+
+// ---- Kare toplayıcı (tarayıcı çok-kareli modda) ----
+let frameCollect = null;
+function collectFrame(text) {
+  const m = /^LCS\|(\d+)\|(\d+)\|([\s\S]*)$/.exec(text);
+  if (!m) return false;
+  const idx = +m[1], total = +m[2], data = m[3];
+  if (!frameCollect || frameCollect.total !== total) frameCollect = { total, parts: new Map() };
+  frameCollect.parts.set(idx, data);
+  $('#scanHint').textContent = `QR okunuyor… ${frameCollect.parts.size}/${total}`;
+  if (frameCollect.parts.size === total) {
+    let payload = '';
+    for (let i = 0; i < total; i++) payload += frameCollect.parts.get(i);
+    const cb = state.framesOnDone;
+    frameCollect = null;
+    if (cb) cb(payload);
+    return true;
+  }
+  return false;
+}
+
+// ---- QR modu: host ----
+async function qrHostStart() {
+  state.role = 'host';
+  $('#setup').classList.add('hidden');
+  $('#hostControls').classList.remove('hidden');
+  $('#hostShareBox').classList.remove('hidden');
+  $('#sharedTitle').textContent = 'Paylaştığın dosyalar';
+
+  try { await startCamera(); } catch (_) { return; }
+
+  const pc = new RTCPeerConnection({ iceServers: [] }); // sadece yerel adaylar (LAN)
+  const entry = { pc, dc: null };
+  state.peers.set('qr', entry);
+  wirePeerCommon(pc);
+  for (const t of state.localStream.getTracks()) pc.addTrack(t, state.localStream);
+  const dc = pc.createDataChannel('data');
+  entry.dc = dc;
+  setupDataChannel('qr', dc);
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  setStatus('ICE toplanıyor…', 'connecting');
+  await waitIceComplete(pc);
+
+  const payload = await encodeDesc(pc.localDescription);
+  openHandshake('host-offer', payload);
+}
+
+// ---- QR modu: guest ----
+function qrGuestStart() {
+  state.role = 'guest';
+  $('#setup').classList.add('hidden');
+  $('#sharedTitle').textContent = 'Diğer cihazın paylaştıkları';
+  openHandshake('guest-scan');
+}
+
+async function onHostOfferScanned(payload) {
+  const offer = await decodeDesc(payload);
+  const pc = new RTCPeerConnection({ iceServers: [] });
+  const entry = { pc, dc: null };
+  state.peers.set('qr', entry);
+  wirePeerCommon(pc);
+  pc.ondatachannel = (e) => { entry.dc = e.channel; setupDataChannel('qr', e.channel); };
+  await pc.setRemoteDescription(offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  setStatus('ICE toplanıyor…', 'connecting');
+  await waitIceComplete(pc);
+  const ansPayload = await encodeDesc(pc.localDescription);
+  openHandshake('guest-answer', ansPayload);
+}
+
+async function onGuestAnswerScanned(payload) {
+  const answer = await decodeDesc(payload);
+  const entry = state.peers.get('qr');
+  if (entry) await entry.pc.setRemoteDescription(answer);
+  setStatus('Bağlanıyor…', 'connecting');
+}
+
+// ---- El sıkışma paneli adımları ----
+function openHandshake(step, payload) {
+  const panel = $('#qrHandshake');
+  panel.classList.remove('hidden');
+  const text = $('#hsText');
+  const qrBox = $('#hsQR');
+  const scanBtn = $('#hsScanBtn');
+
+  qrBox.classList.add('hidden');
+  scanBtn.classList.add('hidden');
+  $('#hsFrameInfo').textContent = '';
+
+  if (step === 'host-offer') {
+    text.textContent = '1) Bu QR\'ı karşı telefona okut.  2) Sonra "Cevabı tara" ile onun cevabını okut.';
+    qrBox.classList.remove('hidden');
+    showPayloadQR(payload);
+    scanBtn.textContent = '📷 Cevabı tara';
+    scanBtn.classList.remove('hidden');
+    scanBtn.onclick = () => startScannerFrames(onGuestAnswerScanned);
+  } else if (step === 'guest-scan') {
+    text.textContent = 'Host telefondaki QR\'ı tara.';
+    startScannerFrames(onHostOfferScanned);
+  } else if (step === 'guest-answer') {
+    text.textContent = 'Bu cevap QR\'ını host telefona okut. Bağlantı kurulunca yayın başlar.';
+    qrBox.classList.remove('hidden');
+    showPayloadQR(payload);
+  }
+}
+
+function startScannerFrames(onDone) {
+  frameCollect = null;
+  state.scanMode = 'frames';
+  state.framesOnDone = onDone;
+  startScanner();
+}
+
+function applyMode(mode) {
+  state.mode = mode;
+  document.querySelectorAll('.mode').forEach((b) => b.classList.toggle('is-active', b.dataset.mode === mode));
+  // sunucu moduna özel kontroller
+  document.querySelectorAll('.server-only').forEach((el) => el.classList.toggle('hidden', mode !== 'server'));
+  // rol seçimini sıfırla
+  document.querySelectorAll('.role').forEach((b) => b.classList.remove('is-active'));
+  state.role = null;
+  $('#shareLink').classList.add('hidden');
+}
+
 function init() {
+  // Mod seçimi (sunucusuz QR / oda kodu)
+  document.querySelectorAll('.mode').forEach((btn) => {
+    btn.addEventListener('click', () => applyMode(btn.dataset.mode));
+  });
+
   // Rol seçimi
   document.querySelectorAll('.role').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.role').forEach((b) => b.classList.remove('is-active'));
       btn.classList.add('is-active');
       state.role = btn.dataset.role;
+
+      if (state.mode === 'qr') {
+        // Sunucusuz mod: rol seçimi doğrudan QR el sıkışmayı başlatır
+        if (state.role === 'host') qrHostStart();
+        else qrGuestStart();
+        return;
+      }
+
       if (state.role === 'host' && !$('#roomInput').value.trim()) {
         $('#roomInput').value = randomCode();
       }
@@ -605,17 +867,24 @@ function init() {
     if (t) { t.enabled = !t.enabled; $('#toggleVideo').textContent = t.enabled ? '📹 Kamera aç/kapa' : '🚫 Kamera kapalı'; }
   });
 
-  $('#scanBtn').addEventListener('click', () => startScanner());
+  $('#scanBtn').addEventListener('click', () => { state.scanMode = 'url'; startScanner(); });
   $('#scanClose').addEventListener('click', () => stopScanner());
+  $('#hsCancel').addEventListener('click', () => location.reload());
 
   $('#hangupBtn').addEventListener('click', hangup);
 
-  // URL'den otomatik doldur (paylaşılan bağlantı)
+  // Varsayılan mod: APK içinde sunucusuz QR, web'de oda kodu
+  applyMode(IS_NATIVE ? 'qr' : 'server');
+
+  // URL'den otomatik doldur (paylaşılan bağlantı — yalnız sunucu modu)
   const params = new URLSearchParams(location.search);
   const roomParam = params.get('room');
   const roleParam = params.get('role');
-  if (roomParam) $('#roomInput').value = roomParam.toUpperCase();
-  if (roleParam === 'guest' || roleParam === 'host') {
+  if (roomParam) {
+    applyMode('server');
+    $('#roomInput').value = roomParam.toUpperCase();
+  }
+  if (roomParam && (roleParam === 'guest' || roleParam === 'host')) {
     const btn = document.querySelector(`.role[data-role="${roleParam}"]`);
     if (btn) btn.click();
   }

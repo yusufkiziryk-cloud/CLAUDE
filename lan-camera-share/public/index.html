@@ -24,6 +24,11 @@
         bağlantı doğrudan kurulur.
       </p>
 
+      <div class="modes">
+        <button class="mode" data-mode="qr">Sunucusuz (QR)</button>
+        <button class="mode" data-mode="server">Oda kodu (sunucu)</button>
+      </div>
+
       <div class="roles">
         <button class="role" data-role="host">
           <span class="role__icon">📡</span>
@@ -37,7 +42,7 @@
         </button>
       </div>
 
-      <label class="field">
+      <label class="field server-only">
         <span>Oda kodu</span>
         <div class="field__row">
           <input id="roomInput" inputmode="text" autocomplete="off"
@@ -46,10 +51,10 @@
         </div>
       </label>
 
-      <button id="scanBtn" class="btn btn--ghost btn--block">📷 QR kodu tara</button>
-      <button id="connectBtn" class="btn btn--primary" disabled>Bağlan</button>
+      <button id="scanBtn" class="btn btn--ghost btn--block server-only">📷 QR kodu tara</button>
+      <button id="connectBtn" class="btn btn--primary server-only" disabled>Bağlan</button>
 
-      <div id="shareLink" class="sharelink hidden">
+      <div id="shareLink" class="sharelink hidden server-only">
         <span class="hint">Diğer telefonda bu QR'ı okut ya da bağlantıyı aç:</span>
         <div id="qrcode" class="qrcode"></div>
         <code id="shareUrl"></code>
@@ -58,6 +63,16 @@
           <button id="shareSheet" class="btn btn--ghost hidden">Paylaş…</button>
         </div>
       </div>
+    </section>
+
+    <!-- SUNUCUSUZ QR EL SIKIŞMA -->
+    <section id="qrHandshake" class="card hidden">
+      <h1>Sunucusuz bağlantı</h1>
+      <p id="hsText" class="hint"></p>
+      <div id="hsQR" class="qrcode hidden"></div>
+      <p id="hsFrameInfo" class="hint" style="text-align:center"></p>
+      <button id="hsScanBtn" class="btn btn--primary hidden">📷 Cevabı tara</button>
+      <button id="hsCancel" class="btn btn--ghost btn--block">Vazgeç</button>
     </section>
 
     <!-- CANLI -->
@@ -101,7 +116,7 @@
   <div id="scanner" class="scanner hidden">
     <video id="scanVideo" playsinline autoplay muted></video>
     <div class="scanner__frame"></div>
-    <p class="scanner__hint">QR kodu çerçeveye getir</p>
+    <p id="scanHint" class="scanner__hint">QR kodu çerçeveye getir</p>
     <button id="scanClose" class="btn btn--danger scanner__close">Kapat</button>
   </div>
 
