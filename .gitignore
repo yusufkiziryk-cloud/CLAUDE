@@ -5,3 +5,6 @@ lifetrack-mobile/node_modules/
 lifetrack-mobile/.expo/
 lifetrack-app.apk
 lifetrack-mobile/android/app/src/main/assets/
+
+# LAN Camera & File Share — yerel üretilen sertifikalar
+lan-camera-share/certs/

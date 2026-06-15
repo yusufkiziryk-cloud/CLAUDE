@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f3460" />
+  <title>LAN Kamera & Dosya Paylaşımı</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">📷 LAN Paylaşım</div>
+    <div id="status" class="status status--idle">Hazır</div>
+  </header>
+
+  <main>
+    <!-- KURULUM -->
+    <section id="setup" class="card">
+      <h1>Aynı ağdaki iki cihazı bağla</h1>
+      <p class="hint">
+        Bir telefon <b>kamerasını ve dosyalarını paylaşır</b>, diğeri
+        <b>izler ve dosyalara erişir</b>. İki cihaz da aynı Wi-Fi'da olduğunda
+        bağlantı doğrudan kurulur.
+      </p>
+
+      <div class="roles">
+        <button class="role" data-role="host">
+          <span class="role__icon">📡</span>
+          <span class="role__title">Bu cihazı paylaş</span>
+          <span class="role__desc">Kameranı ve dosyalarını sun</span>
+        </button>
+        <button class="role" data-role="guest">
+          <span class="role__icon">👁️</span>
+          <span class="role__title">Bir cihaza bağlan</span>
+          <span class="role__desc">Diğer cihazı izle / dosyalara eriş</span>
+        </button>
+      </div>
+
+      <label class="field">
+        <span>Oda kodu</span>
+        <div class="field__row">
+          <input id="roomInput" inputmode="text" autocomplete="off"
+                 placeholder="örn. 4F2K9A" maxlength="12" />
+          <button id="genCode" type="button" class="btn btn--ghost" title="Yeni kod üret">🎲</button>
+        </div>
+      </label>
+
+      <button id="connectBtn" class="btn btn--primary" disabled>Bağlan</button>
+
+      <div id="shareLink" class="sharelink hidden">
+        <span class="hint">Diğer telefonda bu bağlantıyı aç:</span>
+        <code id="shareUrl"></code>
+        <div class="field__row">
+          <button id="copyLink" class="btn btn--ghost">Kopyala</button>
+          <button id="shareSheet" class="btn btn--ghost hidden">Paylaş…</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CANLI -->
+    <section id="live" class="card hidden">
+      <div class="video-wrap">
+        <video id="remoteVideo" playsinline autoplay></video>
+        <video id="localVideo" playsinline autoplay muted class="pip hidden"></video>
+        <div id="videoPlaceholder" class="video-placeholder">Bağlantı bekleniyor…</div>
+      </div>
+
+      <div id="hostControls" class="controls hidden">
+        <button id="switchCam" class="btn btn--ghost">🔄 Kamera</button>
+        <button id="muteMic" class="btn btn--ghost">🎤 Mikrofon</button>
+        <button id="toggleVideo" class="btn btn--ghost">📹 Kamera aç/kapa</button>
+      </div>
+
+      <!-- DOSYALAR -->
+      <div class="files">
+        <div class="files__col">
+          <h2 id="sharedTitle">Paylaşılan dosyalar</h2>
+          <div id="hostShareBox" class="hidden">
+            <input id="sharePicker" type="file" multiple hidden />
+            <button id="pickShare" class="btn btn--ghost">+ Paylaşılacak dosya seç</button>
+          </div>
+          <ul id="sharedList" class="filelist"></ul>
+        </div>
+
+        <div class="files__col">
+          <h2>Gönder / Gelen</h2>
+          <input id="sendPicker" type="file" multiple hidden />
+          <button id="sendFileBtn" class="btn btn--ghost">📤 Karşı cihaza dosya gönder</button>
+          <ul id="transferList" class="filelist"></ul>
+        </div>
+      </div>
+
+      <button id="hangupBtn" class="btn btn--danger">Bağlantıyı kes</button>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

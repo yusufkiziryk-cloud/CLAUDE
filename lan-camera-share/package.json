@@ -1,0 +1,12 @@
+{
+  "name": "lan-camera-share",
+  "version": "1.0.0",
+  "description": "Aynı Wi-Fi ağındaki iki cihaz arasında kamera ve dosya paylaşımı (WebRTC, bağımlılıksız).",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

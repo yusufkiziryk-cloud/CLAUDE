@@ -1,0 +1,17 @@
+{
+  "name": "LAN Kamera & Dosya Paylaşımı",
+  "short_name": "LAN Paylaşım",
+  "description": "Aynı Wi-Fi ağındaki iki cihaz arasında kamera ve dosya paylaşımı.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c1222",
+  "theme_color": "#0f3460",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
