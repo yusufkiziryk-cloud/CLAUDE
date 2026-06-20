@@ -2,8 +2,9 @@ import { Tabs } from 'expo-router'
 import { useColorScheme } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 
-const ORANGE = '#ea580c'
-const INACTIVE = '#64748b'
+const ORANGE = '#c2410c'
+const INACTIVE_DARK = '#94a3b8'
+const INACTIVE_LIGHT = '#475569'
 
 export default function TabLayout() {
   const colorScheme = useColorScheme()
@@ -12,7 +13,7 @@ export default function TabLayout() {
   return (
     <Tabs screenOptions={{
       tabBarActiveTintColor: ORANGE,
-      tabBarInactiveTintColor: INACTIVE,
+      tabBarInactiveTintColor: isDark ? INACTIVE_DARK : INACTIVE_LIGHT,
       tabBarStyle: {
         backgroundColor: isDark ? '#0f172a' : '#ffffff',
         borderTopColor: isDark ? '#1e293b' : '#e2e8f0',
@@ -25,19 +26,19 @@ export default function TabLayout() {
       headerShadowVisible: false,
     }}>
       <Tabs.Screen name="index" options={{
-        title: 'Bugün', tabBarIcon: ({ color }) => <Feather name="sun" size={22} color={color} />, headerTitle: 'LifeTrack',
+        title: 'Bugün', tabBarIcon: ({ color }) => <Feather name="sun" size={22} color={color} accessible={false} importantForAccessibility="no" />, headerTitle: 'LifeTrack',
       }} />
       <Tabs.Screen name="notes" options={{
-        title: 'Notlar', tabBarIcon: ({ color }) => <Feather name="file-text" size={22} color={color} />, headerTitle: 'Notlar',
+        title: 'Notlar', tabBarIcon: ({ color }) => <Feather name="file-text" size={22} color={color} accessible={false} importantForAccessibility="no" />, headerTitle: 'Notlar',
       }} />
       <Tabs.Screen name="journal" options={{
-        title: 'Günlük', tabBarIcon: ({ color }) => <Feather name="book-open" size={22} color={color} />, headerTitle: "Günlük",
+        title: 'Günlük', tabBarIcon: ({ color }) => <Feather name="book-open" size={22} color={color} accessible={false} importantForAccessibility="no" />, headerTitle: "Günlük",
       }} />
       <Tabs.Screen name="habits" options={{
-        title: 'Alışkanlık', tabBarIcon: ({ color }) => <Feather name="zap" size={22} color={color} />, headerTitle: 'Alışkanlıklar',
+        title: 'Alışkanlık', tabBarIcon: ({ color }) => <Feather name="zap" size={22} color={color} accessible={false} importantForAccessibility="no" />, headerTitle: 'Alışkanlıklar',
       }} />
       <Tabs.Screen name="insights" options={{
-        title: 'Zeka', tabBarIcon: ({ color }) => <Feather name="cpu" size={22} color={color} />, headerTitle: 'AI Hafıza',
+        title: 'Zeka', tabBarIcon: ({ color }) => <Feather name="cpu" size={22} color={color} accessible={false} importantForAccessibility="no" />, headerTitle: 'AI Hafıza',
       }} />
       <Tabs.Screen name="capture" options={{ href: null }} />
     </Tabs>

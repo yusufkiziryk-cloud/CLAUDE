@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics'
 import * as DocumentPicker from 'expo-document-picker'
 import { useStore, Emotion, NoteAttachment } from '../../src/store/store'
 
-const ORANGE = '#ea580c'
+const ORANGE = '#c2410c'
 const EMOTIONS: { key: Emotion; emoji: string; label: string }[] = [
   { key: 'great', emoji: '😄', label: 'Harika' },
   { key: 'good', emoji: '🙂', label: 'İyi' },
@@ -112,17 +112,18 @@ export default function NotesScreen() {
       {/* Search */}
       <View style={{ padding: 16, paddingBottom: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: card, borderRadius: 14, paddingHorizontal: 14, borderWidth: 1, borderColor: border, marginBottom: 10 }}>
-          <Feather name="search" size={16} color={muted} style={{ marginRight: 8 }} />
+          <Feather name="search" size={16} color={muted} style={{ marginRight: 8 }} accessibilityElementsHidden importantForAccessibility="no" />
           <TextInput value={search} onChangeText={setSearch} placeholder="Notlarda ara..." placeholderTextColor={muted}
-            style={{ flex: 1, color: text, fontSize: 15, paddingVertical: 12 }} />
-          {search ? <TouchableOpacity onPress={() => setSearch('')}><Feather name="x" size={16} color={muted} /></TouchableOpacity> : null}
+            accessibilityLabel="Notlarda ara" style={{ flex: 1, color: text, fontSize: 15, paddingVertical: 12 }} />
+          {search ? <TouchableOpacity onPress={() => setSearch('')} accessibilityRole="button" accessibilityLabel="Aramayı temizle" style={{ padding: 8 }}><Feather name="x" size={16} color={muted} accessibilityElementsHidden importantForAccessibility="no" /></TouchableOpacity> : null}
         </View>
 
         {/* Emotion filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel="Duygu durumu filtresi" style={{ marginBottom: 6 }}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {EMOTIONS.map(e => (
               <TouchableOpacity key={e.key} onPress={() => setFilterEmotion(filterEmotion === e.key ? '' : e.key)}
+                accessibilityRole="button" accessibilityLabel={`${e.label} filtresi`} accessibilityState={{ selected: filterEmotion === e.key }}
                 style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: filterEmotion === e.key ? ORANGE + '30' : card, borderWidth: 1, borderColor: filterEmotion === e.key ? ORANGE : border }}>
                 <Text style={{ fontSize: 13, color: filterEmotion === e.key ? ORANGE : muted }}>{e.emoji} {e.label}</Text>
               </TouchableOpacity>
@@ -132,10 +133,11 @@ export default function NotesScreen() {
 
         {/* Tag filter */}
         {allTags.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel="Etiket filtresi">
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {allTags.map(t => (
                 <TouchableOpacity key={t} onPress={() => setFilterTag(filterTag === t ? '' : t)}
+                  accessibilityRole="button" accessibilityLabel={`#${t} etiket filtresi`} accessibilityState={{ selected: filterTag === t }}
                   style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, backgroundColor: filterTag === t ? ORANGE + '20' : card, borderWidth: 1, borderColor: filterTag === t ? ORANGE : border }}>
                   <Text style={{ fontSize: 12, color: filterTag === t ? ORANGE : muted }}>#{t}</Text>
                 </TouchableOpacity>
@@ -155,6 +157,7 @@ export default function NotesScreen() {
           </View>
         ) : filtered.map(n => (
           <TouchableOpacity key={n.id} onPress={() => setViewNote(n)}
+            accessibilityRole="button" accessibilityLabel={n.title} accessibilityHint="Notu görüntülemek için dokunun"
             style={{ backgroundColor: card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: border, borderLeftWidth: 4, borderLeftColor: n.emotion ? emotionColor[n.emotion] : ORANGE }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
               <Text style={{ color: text, fontWeight: '700', fontSize: 15, flex: 1, marginRight: 8 }} numberOfLines={1}>{n.title}</Text>
@@ -171,9 +174,10 @@ export default function NotesScreen() {
                   </View>
                 ))}
                 {n.attachments?.length > 0 && (
-                  <View style={{ backgroundColor: '#3b82f620', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                    <Feather name="paperclip" size={10} color="#3b82f6" />
-                    <Text style={{ color: '#3b82f6', fontSize: 11 }}>{n.attachments.length}</Text>
+                  <View accessible accessibilityLabel={`${n.attachments.length} ek`}
+                    style={{ backgroundColor: '#3b82f620', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                    <Feather name="paperclip" size={10} color="#3b82f6" accessibilityElementsHidden importantForAccessibility="no" />
+                    <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: '#3b82f6', fontSize: 11 }}>{n.attachments.length}</Text>
                   </View>
                 )}
               </View>
@@ -187,32 +191,34 @@ export default function NotesScreen() {
 
       {/* FAB */}
       <TouchableOpacity onPress={() => setShowAdd(true)}
+        accessibilityRole="button" accessibilityLabel="Yeni not ekle"
         style={{ position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, borderRadius: 28, backgroundColor: ORANGE, alignItems: 'center', justifyContent: 'center', shadowColor: ORANGE, shadowOpacity: 0.5, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
-        <Feather name="plus" size={28} color="white" />
+        <Feather name="plus" size={28} color="white" accessibilityElementsHidden importantForAccessibility="no" />
       </TouchableOpacity>
 
       {/* Add Modal */}
-      <Modal visible={showAdd} animationType="slide" presentationStyle="pageSheet">
+      <Modal visible={showAdd} animationType="slide" presentationStyle="pageSheet" accessibilityViewIsModal onRequestClose={() => setShowAdd(false)}>
         <View style={{ flex: 1, backgroundColor: bg }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingBottom: 12 }}>
             <Text style={{ color: text, fontSize: 20, fontWeight: '700' }}>Yeni Not</Text>
-            <TouchableOpacity onPress={() => setShowAdd(false)}><Feather name="x" size={24} color={muted} /></TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowAdd(false)} accessibilityRole="button" accessibilityLabel="Modalı kapat" style={{ padding: 4 }}><Feather name="x" size={24} color={muted} accessibilityElementsHidden importantForAccessibility="no" /></TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 0, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
             <TextInput value={title} onChangeText={setTitle} placeholder="Başlık (isteğe bağlı)" placeholderTextColor={muted}
-              style={{ fontSize: 20, fontWeight: '700', color: text, marginBottom: 12 }} />
+              accessibilityLabel="Not başlığı" style={{ fontSize: 20, fontWeight: '700', color: text, marginBottom: 12 }} />
             <View style={{ backgroundColor: card, borderRadius: 14, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: border, minHeight: 160 }}>
               <TextInput value={content} onChangeText={setContent} placeholder="Ne düşünüyorsun? Bir fikir, gözlem, his..." placeholderTextColor={muted}
-                multiline autoFocus style={{ color: text, fontSize: 15, lineHeight: 24, textAlignVertical: 'top' }} />
+                accessibilityLabel="Not içeriği" multiline autoFocus style={{ color: text, fontSize: 15, lineHeight: 24, textAlignVertical: 'top' }} />
             </View>
 
             <Text style={{ color: muted, fontSize: 12, marginBottom: 10 }}>DUYGU DURUMU</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
               {EMOTIONS.map(e => (
                 <TouchableOpacity key={e.key} onPress={() => setEmotion(emotion === e.key ? undefined : e.key)}
+                  accessibilityRole="radio" accessibilityLabel={e.label} accessibilityState={{ selected: emotion === e.key }}
                   style={{ alignItems: 'center', padding: 10, borderRadius: 14, backgroundColor: emotion === e.key ? emotionColor[e.key] + '25' : 'transparent', borderWidth: 2, borderColor: emotion === e.key ? emotionColor[e.key] : 'transparent' }}>
-                  <Text style={{ fontSize: 26 }}>{e.emoji}</Text>
-                  <Text style={{ color: emotion === e.key ? emotionColor[e.key] : muted, fontSize: 10, marginTop: 4 }}>{e.label}</Text>
+                  <Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 26 }}>{e.emoji}</Text>
+                  <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: emotion === e.key ? emotionColor[e.key] : muted, fontSize: 10, marginTop: 4 }}>{e.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -221,17 +227,19 @@ export default function NotesScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
               {tags.map(t => (
                 <TouchableOpacity key={t} onPress={() => setTags(p => p.filter(x => x !== t))}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: ORANGE + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
-                  <Text style={{ color: ORANGE, fontSize: 13 }}>#{t}</Text>
-                  <Feather name="x" size={12} color={ORANGE} />
+                  accessibilityRole="button" accessibilityLabel={`Etiketi kaldır: ${t}`}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: ORANGE + '20', paddingHorizontal: 10, paddingVertical: 10, minHeight: 44, borderRadius: 20 }}>
+                  <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: ORANGE, fontSize: 13 }}>#{t}</Text>
+                  <Feather name="x" size={12} color={ORANGE} accessibilityElementsHidden importantForAccessibility="no" />
                 </TouchableOpacity>
               ))}
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
               <TextInput value={tagInput} onChangeText={setTagInput} onSubmitEditing={addTag} placeholder="etiket ekle..." placeholderTextColor={muted}
+                accessibilityLabel="Etiket ekle"
                 style={{ flex: 1, backgroundColor: card, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, color: text, borderWidth: 1, borderColor: border }} />
-              <TouchableOpacity onPress={addTag} style={{ backgroundColor: border, borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center' }}>
-                <Feather name="plus" size={18} color={muted} />
+              <TouchableOpacity onPress={addTag} accessibilityRole="button" accessibilityLabel="Etiket ekle" style={{ backgroundColor: border, borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center' }}>
+                <Feather name="plus" size={18} color={muted} accessibilityElementsHidden importantForAccessibility="no" />
               </TouchableOpacity>
             </View>
 
@@ -246,20 +254,20 @@ export default function NotesScreen() {
                       <Text style={{ color: text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{a.name}</Text>
                       <Text style={{ color: muted, fontSize: 11 }}>{fmtSize(a.size)}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => removeAttachment(a.id)}>
-                      <Feather name="x" size={18} color="#ef4444" />
+                    <TouchableOpacity onPress={() => removeAttachment(a.id)} accessibilityRole="button" accessibilityLabel={`Eki kaldır: ${a.name}`} style={{ padding: 6 }}>
+                      <Feather name="x" size={18} color="#ef4444" accessibilityElementsHidden importantForAccessibility="no" />
                     </TouchableOpacity>
                   </View>
                 ))}
               </View>
             )}
-            <TouchableOpacity onPress={pickDocuments}
+            <TouchableOpacity onPress={pickDocuments} accessibilityRole="button" accessibilityLabel="Dosya ekle"
               style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: card, borderRadius: 14, paddingVertical: 14, borderWidth: 2, borderColor: border, borderStyle: 'dashed', marginBottom: 24 }}>
-              <Feather name="paperclip" size={18} color={muted} />
+              <Feather name="paperclip" size={18} color={muted} accessibilityElementsHidden importantForAccessibility="no" />
               <Text style={{ color: muted, fontSize: 14 }}>Dosya Ekle</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleSave}
+            <TouchableOpacity onPress={handleSave} accessibilityRole="button" accessibilityLabel="Hafızaya kaydet"
               style={{ backgroundColor: ORANGE, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: ORANGE, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
               <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Hafızaya Kaydet ✓</Text>
             </TouchableOpacity>
@@ -269,11 +277,11 @@ export default function NotesScreen() {
 
       {/* View Note Modal */}
       {viewNote && (
-        <Modal visible={!!viewNote} animationType="slide" presentationStyle="pageSheet">
+        <Modal visible={!!viewNote} animationType="slide" presentationStyle="pageSheet" accessibilityViewIsModal onRequestClose={() => setViewNote(null)}>
           <View style={{ flex: 1, backgroundColor: bg }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 }}>
-              <TouchableOpacity onPress={() => setViewNote(null)}><Feather name="arrow-left" size={24} color={muted} /></TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDelete(viewNote.id)}><Feather name="trash-2" size={20} color="#ef4444" /></TouchableOpacity>
+              <TouchableOpacity onPress={() => setViewNote(null)} accessibilityRole="button" accessibilityLabel="Geri" style={{ padding: 4 }}><Feather name="arrow-left" size={24} color={muted} accessibilityElementsHidden importantForAccessibility="no" /></TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDelete(viewNote.id)} accessibilityRole="button" accessibilityLabel="Notu sil" style={{ padding: 4 }}><Feather name="trash-2" size={20} color="#ef4444" accessibilityElementsHidden importantForAccessibility="no" /></TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 0 }}>
               <Text style={{ color: muted, fontSize: 12, marginBottom: 8 }}>

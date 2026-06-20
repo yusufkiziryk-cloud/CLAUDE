@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics'
 import { useStore, Emotion } from '../../src/store/store'
 import { useRouter } from 'expo-router'
 
-const ORANGE = '#ea580c'
+const ORANGE = '#c2410c'
 const EMOTIONS: { key: Emotion; emoji: string; label: string; color: string }[] = [
   { key: 'great', emoji: '😄', label: 'Harika', color: '#10b981' },
   { key: 'good', emoji: '🙂', label: 'İyi', color: '#3b82f6' },
@@ -59,6 +59,7 @@ export default function CaptureScreen() {
         onChangeText={setTitle}
         placeholder="Başlık (isteğe bağlı)"
         placeholderTextColor={muted}
+        accessibilityLabel="Not başlığı"
         style={{ fontSize: 22, fontWeight: '700', color: text, marginBottom: 12, padding: 0 }}
       />
 
@@ -69,6 +70,7 @@ export default function CaptureScreen() {
           onChangeText={setContent}
           placeholder="Ne düşünüyorsun? Bir fikir, gözlem, his..."
           placeholderTextColor={muted}
+          accessibilityLabel="Not içeriği"
           multiline
           autoFocus
           style={{ color: text, fontSize: 16, lineHeight: 26, flex: 1, textAlignVertical: 'top' }}
@@ -80,10 +82,11 @@ export default function CaptureScreen() {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
         {EMOTIONS.map(e => (
           <TouchableOpacity key={e.key} onPress={() => setEmotion(emotion === e.key ? undefined : e.key)}
+            accessibilityRole="radio" accessibilityLabel={e.label} accessibilityState={{ selected: emotion === e.key }}
             style={{ alignItems: 'center', padding: 10, borderRadius: 14, backgroundColor: emotion === e.key ? e.color + '25' : 'transparent',
               borderWidth: 2, borderColor: emotion === e.key ? e.color : 'transparent' }}>
-            <Text style={{ fontSize: 26 }}>{e.emoji}</Text>
-            <Text style={{ color: emotion === e.key ? e.color : muted, fontSize: 10, marginTop: 4 }}>{e.label}</Text>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 26 }}>{e.emoji}</Text>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: emotion === e.key ? e.color : muted, fontSize: 10, marginTop: 4 }}>{e.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -93,22 +96,26 @@ export default function CaptureScreen() {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
         {tags.map(t => (
           <TouchableOpacity key={t} onPress={() => setTags(prev => prev.filter(x => x !== t))}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: ORANGE + '20', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 }}>
-            <Text style={{ color: ORANGE, fontSize: 13 }}>#{t}</Text>
-            <Feather name="x" size={12} color={ORANGE} />
+            accessibilityRole="button" accessibilityLabel={`Etiketi kaldır: ${t}`}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: ORANGE + '20', paddingHorizontal: 10, paddingVertical: 10, minHeight: 44, borderRadius: 20 }}>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: ORANGE, fontSize: 13 }}>#{t}</Text>
+            <Feather name="x" size={12} color={ORANGE} accessibilityElementsHidden importantForAccessibility="no" />
           </TouchableOpacity>
         ))}
       </View>
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
         <TextInput value={tagInput} onChangeText={setTagInput} onSubmitEditing={addTag} placeholder="etiket ekle..." placeholderTextColor={muted}
+          accessibilityLabel="Etiket ekle"
           style={{ flex: 1, backgroundColor: card, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, color: text, borderWidth: 1, borderColor: border }} />
-        <TouchableOpacity onPress={addTag} style={{ backgroundColor: border, borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center' }}>
-          <Feather name="plus" size={18} color={muted} />
+        <TouchableOpacity onPress={addTag} accessibilityRole="button" accessibilityLabel="Etiket ekle"
+          style={{ backgroundColor: border, borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center' }}>
+          <Feather name="plus" size={18} color={muted} accessibilityElementsHidden importantForAccessibility="no" />
         </TouchableOpacity>
       </View>
 
       {/* Save */}
       <TouchableOpacity onPress={handleSave}
+        accessibilityRole="button" accessibilityLabel="Hafızaya kaydet"
         style={{ backgroundColor: ORANGE, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: ORANGE, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 6 } }}>
         <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Hafızaya Kaydet ✓</Text>
       </TouchableOpacity>

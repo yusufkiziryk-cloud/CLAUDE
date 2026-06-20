@@ -4,8 +4,8 @@ import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useStore } from '../../src/store/store'
 
-const ORANGE = '#ea580c'
-const ICONS = ['💪', '📚', '🏃', '🧘', '💧', '🥗', '😴', '✍️', '🎯', '🎸', '🧠', '🌅', '🚶', '🏋️', '☕', '🎨', '📖', '🧹']
+const ORANGE = '#c2410c'
+const ICONS =['💪', '📚', '🏃', '🧘', '💧', '🥗', '😴', '✍️', '🎯', '🎸', '🧠', '🌅', '🚶', '🏋️', '☕', '🎨', '📖', '🧹']
 
 function HabitHeatmap({ habitId, habitLogs }: { habitId: string; habitLogs: any[] }) {
   const isDark = useColorScheme() === 'dark'
@@ -18,9 +18,10 @@ function HabitHeatmap({ habitId, habitLogs }: { habitId: string; habitLogs: any[
     days.push({ date, done: habitLogs.some(l => l.habitId === habitId && l.date === date && l.done) })
   }
   const border = isDark ? '#334155' : '#e2e8f0'
+  const doneDays = days.filter(d => d.done).length
   return (
-    <View style={{ marginTop: 12 }}>
-      <View style={{ flexDirection: 'row', gap: 3 }}>
+    <View accessible accessibilityLabel={`Son 12 haftada ${doneDays} gün tamamlandı`} style={{ marginTop: 12 }}>
+      <View style={{ flexDirection: 'row', gap: 3 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         {Array.from({ length: weeks }).map((_, wi) => (
           <View key={wi} style={{ gap: 3 }}>
             {Array.from({ length: 7 }).map((_, di) => {
@@ -85,7 +86,9 @@ export default function HabitsScreen() {
             <Text style={{ color: muted, fontSize: 11 }}>%{Math.round(completionPct)}</Text>
           </View>
         </View>
-        <View style={{ height: 10, backgroundColor: border, borderRadius: 5, overflow: 'hidden' }}>
+        <View accessible accessibilityRole="progressbar" accessibilityLabel="Günlük alışkanlık ilerlemesi"
+          accessibilityValue={{ min: 0, max: 100, now: Math.round(completionPct) }}
+          style={{ height: 10, backgroundColor: border, borderRadius: 5, overflow: 'hidden' }}>
           <View style={{ height: 10, width: `${completionPct}%` as any, backgroundColor: completionPct === 100 ? '#10b981' : ORANGE, borderRadius: 5 }} />
         </View>
         {completionPct === 100 && <Text style={{ color: '#10b981', marginTop: 12, fontWeight: '700' }}>🏆 Hepsi tamamlandı!</Text>}
@@ -95,10 +98,11 @@ export default function HabitsScreen() {
             { label: 'Aktif Seri', value: activeHabits.filter(h => h.streak > 0).length, icon: '🔥' },
             { label: 'Toplam', value: totalDone, icon: '✅' },
           ].map(s => (
-            <View key={s.label} style={{ flex: 1, backgroundColor: isDark ? '#0f172a' : '#f8fafc', borderRadius: 12, padding: 10, alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, marginBottom: 2 }}>{s.icon}</Text>
-              <Text style={{ color: ORANGE, fontSize: 18, fontWeight: '800' }}>{s.value}</Text>
-              <Text style={{ color: muted, fontSize: 10, marginTop: 1, textAlign: 'center' }}>{s.label}</Text>
+            <View key={s.label} accessible accessibilityLabel={`${s.label}: ${s.value}`}
+              style={{ flex: 1, backgroundColor: isDark ? '#0f172a' : '#f8fafc', borderRadius: 12, padding: 10, alignItems: 'center' }}>
+              <Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 18, marginBottom: 2 }}>{s.icon}</Text>
+              <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: ORANGE, fontSize: 18, fontWeight: '800' }}>{s.value}</Text>
+              <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: muted, fontSize: 10, marginTop: 1, textAlign: 'center' }}>{s.label}</Text>
             </View>
           ))}
         </View>
@@ -116,8 +120,15 @@ export default function HabitsScreen() {
         const expanded = expandedId === h.id
         return (
           <View key={h.id} style={{ backgroundColor: card, borderRadius: 18, marginBottom: 10, borderWidth: 2, borderColor: done ? '#10b981' : border }}>
-            <TouchableOpacity onPress={() => handleToggle(h.id)} style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}>
-              <Text style={{ fontSize: 28, marginRight: 14 }}>{h.icon}</Text>
+            <TouchableOpacity onPress={() => handleToggle(h.id)}
+              accessibilityRole="checkbox"
+              accessibilityLabel={h.name}
+              accessibilityState={{ checked: done }}
+              accessibilityHint={`${h.streak} günlük seri, en iyi ${h.bestStreak}`}
+              accessibilityActions={[{ name: 'expand', label: expanded ? 'Geçmişi gizle' : '12 haftalık geçmişi göster' }]}
+              onAccessibilityAction={(e) => { if (e.nativeEvent.actionName === 'expand') setExpandedId(expanded ? null : h.id) }}
+              style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}>
+              <Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 28, marginRight: 14 }}>{h.icon}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: done ? muted : text, fontSize: 16, fontWeight: '600', textDecorationLine: done ? 'line-through' : 'none' }}>{h.name}</Text>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
@@ -126,10 +137,12 @@ export default function HabitsScreen() {
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <TouchableOpacity onPress={() => setExpandedId(expanded ? null : h.id)} style={{ padding: 4 }}>
-                  <Feather name="activity" size={16} color={expanded ? ORANGE : muted} />
+                <TouchableOpacity onPress={() => setExpandedId(expanded ? null : h.id)}
+                  accessibilityRole="button" accessibilityLabel={expanded ? `${h.name} geçmişini gizle` : `${h.name} 12 haftalık geçmişini göster`}
+                  style={{ padding: 8 }}>
+                  <Feather name="activity" size={16} color={expanded ? ORANGE : muted} accessibilityElementsHidden importantForAccessibility="no" />
                 </TouchableOpacity>
-                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: done ? '#10b981' : border, alignItems: 'center', justifyContent: 'center' }}>
+                <View accessibilityElementsHidden importantForAccessibility="no" style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: done ? '#10b981' : border, alignItems: 'center', justifyContent: 'center' }}>
                   {done && <Feather name="check" size={18} color="white" />}
                 </View>
               </View>
@@ -145,29 +158,32 @@ export default function HabitsScreen() {
       })}
 
       <TouchableOpacity onPress={() => setModalVisible(true)}
+        accessibilityRole="button" accessibilityLabel="Yeni alışkanlık ekle"
         style={{ backgroundColor: ORANGE, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 8, flexDirection: 'row', justifyContent: 'center', gap: 8, shadowColor: ORANGE, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 5 } }}>
-        <Feather name="plus" size={20} color="white" />
+        <Feather name="plus" size={20} color="white" accessibilityElementsHidden importantForAccessibility="no" />
         <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Yeni Alışkanlık</Text>
       </TouchableOpacity>
 
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
+      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" accessibilityViewIsModal onRequestClose={() => setModalVisible(false)}>
         <View style={{ flex: 1, backgroundColor: bg, padding: 20 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <Text style={{ color: text, fontSize: 20, fontWeight: '700' }}>Yeni Alışkanlık</Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)}><Feather name="x" size={24} color={muted} /></TouchableOpacity>
+            <TouchableOpacity onPress={() => setModalVisible(false)} accessibilityRole="button" accessibilityLabel="Modalı kapat" style={{ padding: 4 }}><Feather name="x" size={24} color={muted} accessibilityElementsHidden importantForAccessibility="no" /></TouchableOpacity>
           </View>
           <TextInput value={name} onChangeText={setName} placeholder="Alışkanlık adı..." placeholderTextColor={muted}
+            accessibilityLabel="Alışkanlık adı"
             style={{ backgroundColor: card, borderRadius: 14, padding: 16, color: text, fontSize: 16, marginBottom: 20, borderWidth: 1, borderColor: border }} />
           <Text style={{ color: muted, fontSize: 12, marginBottom: 12 }}>İKON SEÇ</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
+          <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
             {ICONS.map(ic => (
               <TouchableOpacity key={ic} onPress={() => setIcon(ic)}
+                accessibilityRole="radio" accessibilityLabel={`İkon ${ic}`} accessibilityState={{ selected: icon === ic }}
                 style={{ padding: 12, borderRadius: 12, backgroundColor: icon === ic ? ORANGE + '20' : card, borderWidth: 2, borderColor: icon === ic ? ORANGE : border }}>
-                <Text style={{ fontSize: 24 }}>{ic}</Text>
+                <Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 24 }}>{ic}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <TouchableOpacity onPress={handleAdd} style={{ backgroundColor: ORANGE, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
+          <TouchableOpacity onPress={handleAdd} accessibilityRole="button" accessibilityLabel="Alışkanlığı kaydet" style={{ backgroundColor: ORANGE, borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}>
             <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Kaydet</Text>
           </TouchableOpacity>
         </View>

@@ -4,7 +4,7 @@ import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useStore } from '../../src/store/store'
 
-const ORANGE = '#ea580c'
+const ORANGE = '#c2410c'
 const EMOTIONS = [
   { key: 'great', emoji: '😄', label: 'Harika', color: '#10b981' },
   { key: 'good', emoji: '🙂', label: 'İyi', color: '#3b82f6' },
@@ -71,7 +71,9 @@ export default function TodayScreen() {
           <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '500', marginBottom: 4 }}>
             {new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </Text>
-          <Text style={{ color: 'white', fontSize: 26, fontWeight: '800', marginBottom: 8 }}>{greeting} 👋</Text>
+          <Text style={{ color: 'white', fontSize: 26, fontWeight: '800', marginBottom: 8 }}>
+            {greeting} <Text accessibilityElementsHidden importantForAccessibility="no">👋</Text>
+          </Text>
           <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, lineHeight: 20, fontStyle: 'italic' }}>"{quote}"</Text>
         </View>
 
@@ -83,10 +85,11 @@ export default function TodayScreen() {
             { label: 'Seri', value: Math.max(0, ...habits.map(h => h.streak)), icon: '🔥' },
             { label: 'Alışkanlık', value: `${todayDone.size}/${activeHabits.length}`, icon: '⚡' },
           ].map(s => (
-            <View key={s.label} style={{ flex: 1, backgroundColor: card, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: border, alignItems: 'center' }}>
-              <Text style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</Text>
-              <Text style={{ color: ORANGE, fontSize: 18, fontWeight: '800' }}>{s.value}</Text>
-              <Text style={{ color: muted, fontSize: 10, marginTop: 2 }}>{s.label}</Text>
+            <View key={s.label} accessible accessibilityLabel={`${s.label}: ${s.value}`}
+              style={{ flex: 1, backgroundColor: card, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: border, alignItems: 'center' }}>
+              <Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</Text>
+              <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: ORANGE, fontSize: 18, fontWeight: '800' }}>{s.value}</Text>
+              <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: muted, fontSize: 10, marginTop: 2 }}>{s.label}</Text>
             </View>
           ))}
         </View>
@@ -104,16 +107,20 @@ export default function TodayScreen() {
                 <Text style={{ color: text, fontWeight: '700', fontSize: 16 }}>{EMOTIONS.find(e => e.key === todayEntry.emotion)?.label}</Text>
                 <Text style={{ color: muted, fontSize: 12 }}>Bugünkü duygu durumun kaydedildi</Text>
               </View>
-              <TouchableOpacity onPress={() => handleEmotionPick(todayEntry.emotion!)} style={{ marginLeft: 'auto' }}>
-                <Feather name="edit-2" size={16} color={muted} />
+              <TouchableOpacity onPress={() => handleEmotionPick(todayEntry.emotion!)}
+                accessibilityRole="button" accessibilityLabel="Duygu durumunu değiştir" style={{ marginLeft: 'auto', padding: 8 }}>
+                <Feather name="edit-2" size={16} color={muted} accessibilityElementsHidden importantForAccessibility="no" />
               </TouchableOpacity>
             </View>
           ) : (
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               {EMOTIONS.map(e => (
-                <TouchableOpacity key={e.key} onPress={() => handleEmotionPick(e.key)} style={{ alignItems: 'center', padding: 8 }}>
-                  <Text style={{ fontSize: 30 }}>{e.emoji}</Text>
-                  <Text style={{ color: muted, fontSize: 10, marginTop: 4 }}>{e.label}</Text>
+                <TouchableOpacity key={e.key} onPress={() => handleEmotionPick(e.key)}
+                  accessibilityRole="radio" accessibilityLabel={e.label}
+                  accessibilityState={{ selected: todayEntry?.emotion === e.key }}
+                  style={{ alignItems: 'center', padding: 8 }}>
+                  <Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 30 }}>{e.emoji}</Text>
+                  <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: muted, fontSize: 10, marginTop: 4 }}>{e.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -127,7 +134,9 @@ export default function TodayScreen() {
               <Text style={{ color: text, fontWeight: '700', fontSize: 15 }}>Alışkanlıklar</Text>
               <Text style={{ color: ORANGE, fontWeight: '800', fontSize: 16 }}>{todayDone.size}/{activeHabits.length}</Text>
             </View>
-            <View style={{ height: 8, backgroundColor: border, borderRadius: 4, overflow: 'hidden', marginBottom: 14 }}>
+            <View accessible accessibilityRole="progressbar" accessibilityLabel="Günlük alışkanlık ilerlemesi"
+              accessibilityValue={{ min: 0, max: 100, now: Math.round(completionPct) }}
+              style={{ height: 8, backgroundColor: border, borderRadius: 4, overflow: 'hidden', marginBottom: 14 }}>
               <View style={{ height: 8, width: `${completionPct}%` as any, backgroundColor: completionPct === 100 ? '#10b981' : ORANGE, borderRadius: 4 }} />
             </View>
             {completionPct === 100 && (
@@ -137,8 +146,10 @@ export default function TodayScreen() {
               const done = todayDone.has(h.id)
               return (
                 <TouchableOpacity key={h.id} onPress={() => handleHabitToggle(h.id)}
+                  accessibilityRole="checkbox" accessibilityLabel={h.name} accessibilityState={{ checked: done }}
+                  accessibilityHint={h.streak > 0 ? `${h.streak} günlük seri` : undefined}
                   style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: border }}>
-                  <Text style={{ fontSize: 22, marginRight: 12 }}>{h.icon}</Text>
+                  <Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 22, marginRight: 12 }}>{h.icon}</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: done ? muted : text, fontSize: 14, fontWeight: '600', textDecorationLine: done ? 'line-through' : 'none' }}>{h.name}</Text>
                     {h.streak > 0 && <Text style={{ color: '#f97316', fontSize: 11, marginTop: 2 }}>⚡ {h.streak} günlük seri</Text>}
@@ -157,10 +168,11 @@ export default function TodayScreen() {
           <Text style={{ color: muted, fontSize: 12, fontWeight: '600', marginBottom: 12 }}>⚡ HIZLI NOT</Text>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-end' }}>
             <TextInput value={quickNote} onChangeText={setQuickNote} placeholder="Aklındakini hızlıca yaz..." placeholderTextColor={muted}
-              multiline style={{ flex: 1, color: text, fontSize: 15, minHeight: 44, lineHeight: 22 }} />
+              accessibilityLabel="Hızlı not" multiline style={{ flex: 1, color: text, fontSize: 15, minHeight: 44, lineHeight: 22 }} />
             <TouchableOpacity onPress={handleQuickSave} disabled={!quickNote.trim()}
+              accessibilityRole="button" accessibilityLabel="Notu kaydet" accessibilityState={{ disabled: !quickNote.trim() }}
               style={{ backgroundColor: quickNote.trim() ? ORANGE : border, borderRadius: 12, padding: 12 }}>
-              <Feather name="send" size={18} color="white" />
+              <Feather name="send" size={18} color="white" accessibilityElementsHidden importantForAccessibility="no" />
             </TouchableOpacity>
           </View>
         </View>

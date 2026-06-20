@@ -1,11 +1,11 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, useColorScheme, Alert } from 'react-native'
-import { useState } from 'react'
+import { View, Text, TextInput, TouchableOpacity, ScrollView, useColorScheme, Alert, AccessibilityInfo } from 'react-native'
+import { useState, useEffect } from 'react'
 import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import * as DocumentPicker from 'expo-document-picker'
 import { useStore, Emotion, NoteAttachment } from '../../src/store/store'
 
-const ORANGE = '#ea580c'
+const ORANGE = '#c2410c'
 const EMOTIONS: { key: Emotion; emoji: string; label: string }[] = [
   { key: 'great', emoji: '😄', label: 'Harika' },
   { key: 'good', emoji: '🙂', label: 'İyi' },
@@ -43,6 +43,14 @@ export default function JournalScreen() {
   const [energy, setEnergy] = useState(existing?.energy ?? 3)
   const [attachments, setAttachments] = useState<NoteAttachment[]>(existing?.attachments ?? [])
   const [saved, setSaved] = useState(false)
+  const [reduceMotion, setReduceMotion] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    AccessibilityInfo.isReduceMotionEnabled().then(v => { if (mounted) setReduceMotion(v) })
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion)
+    return () => { mounted = false; sub.remove() }
+  }, [])
 
   const bg = isDark ? '#0f172a' : '#f8fafc'
   const card = isDark ? '#1e293b' : '#ffffff'
@@ -95,6 +103,7 @@ export default function JournalScreen() {
 
       {/* Title */}
       <TextInput value={title} onChangeText={setTitle} placeholder="Bugünün başlığı..." placeholderTextColor={muted}
+        accessibilityLabel="Günlük başlığı"
         style={{ fontSize: 22, fontWeight: '700', color: text, marginBottom: 16, padding: 0 }} />
 
       {/* Emotion */}
@@ -103,11 +112,12 @@ export default function JournalScreen() {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           {EMOTIONS.map(e => (
             <TouchableOpacity key={e.key} onPress={() => setEmotion(emotion === e.key ? undefined : e.key)}
+              accessibilityRole="radio" accessibilityLabel={e.label} accessibilityState={{ selected: emotion === e.key }}
               style={{ alignItems: 'center', padding: 8, borderRadius: 12,
                 backgroundColor: emotion === e.key ? ORANGE + '20' : 'transparent',
-                transform: [{ scale: emotion === e.key ? 1.1 : 1 }] }}>
-              <Text style={{ fontSize: 26 }}>{e.emoji}</Text>
-              <Text style={{ color: emotion === e.key ? ORANGE : muted, fontSize: 10, marginTop: 4 }}>{e.label}</Text>
+                transform: reduceMotion ? [] : [{ scale: emotion === e.key ? 1.1 : 1 }] }}>
+              <Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 26 }}>{e.emoji}</Text>
+              <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: emotion === e.key ? ORANGE : muted, fontSize: 10, marginTop: 4 }}>{e.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -119,9 +129,13 @@ export default function JournalScreen() {
           <Text style={{ color: muted, fontSize: 12 }}>ENERJİ SEVİYESİ</Text>
           <Text style={{ color: ORANGE, fontSize: 12, fontWeight: '700' }}>{energy}/5</Text>
         </View>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
           {[1, 2, 3, 4, 5].map(n => (
-            <TouchableOpacity key={n} onPress={() => setEnergy(n)} style={{ flex: 1, height: 10, borderRadius: 5, backgroundColor: n <= energy ? ORANGE : border }} />
+            <TouchableOpacity key={n} onPress={() => setEnergy(n)}
+              accessibilityRole="radio" accessibilityLabel={`Enerji ${n}`} accessibilityState={{ selected: n === energy }}
+              style={{ flex: 1, height: 44, justifyContent: 'center' }}>
+              <View style={{ height: 10, borderRadius: 5, backgroundColor: n <= energy ? ORANGE : border }} />
+            </TouchableOpacity>
           ))}
         </View>
       </View>
@@ -130,6 +144,7 @@ export default function JournalScreen() {
       <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: border, minHeight: 220 }}>
         <Text style={{ color: muted, fontSize: 12, marginBottom: 10 }}>📝 GÜNLÜK NOT</Text>
         <TextInput value={mainNote} onChangeText={setMainNote} multiline placeholder="Bugün ne oldu? Düşüncelerini, hislerini, gözlemlerini yaz..."
+          accessibilityLabel="Günlük not"
           placeholderTextColor={muted} style={{ color: text, fontSize: 15, lineHeight: 24, textAlignVertical: 'top', flex: 1 }} />
       </View>
 
@@ -137,9 +152,10 @@ export default function JournalScreen() {
       <Text style={{ color: muted, fontSize: 12, marginBottom: 10 }}>💡 YAZMANA YARDIMCI OLACAK SORULAR</Text>
       {prompts.map((p, i) => (
         <TouchableOpacity key={i} onPress={() => setMainNote(prev => prev ? prev + '\n\n' + p + '\n' : p + '\n')}
+          accessibilityRole="button" accessibilityLabel={`Soruyu ekle: ${p}`} accessibilityHint="Günlük notuna bu soruyu ekler"
           style={{ backgroundColor: card, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: border, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Feather name="corner-down-right" size={14} color={muted} />
-          <Text style={{ color: muted, flex: 1, fontSize: 14 }}>{p}</Text>
+          <Feather name="corner-down-right" size={14} color={muted} accessibilityElementsHidden importantForAccessibility="no" />
+          <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: muted, flex: 1, fontSize: 14 }}>{p}</Text>
         </TouchableOpacity>
       ))}
 
@@ -155,22 +171,24 @@ export default function JournalScreen() {
                   <Text style={{ color: text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{a.name}</Text>
                   <Text style={{ color: muted, fontSize: 11 }}>{fmtSize(a.size)}</Text>
                 </View>
-                <TouchableOpacity onPress={() => removeAttachment(a.id)}>
-                  <Feather name="x" size={18} color="#ef4444" />
+                <TouchableOpacity onPress={() => removeAttachment(a.id)} accessibilityRole="button" accessibilityLabel={`Eki kaldır: ${a.name}`} style={{ padding: 6 }}>
+                  <Feather name="x" size={18} color="#ef4444" accessibilityElementsHidden importantForAccessibility="no" />
                 </TouchableOpacity>
               </View>
             ))}
           </View>
         )}
-        <TouchableOpacity onPress={pickDocuments}
+        <TouchableOpacity onPress={pickDocuments} accessibilityRole="button" accessibilityLabel="Dosya ekle"
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 12, borderWidth: 2, borderColor: border, borderStyle: 'dashed' }}>
-          <Feather name="paperclip" size={16} color={muted} />
+          <Feather name="paperclip" size={16} color={muted} accessibilityElementsHidden importantForAccessibility="no" />
           <Text style={{ color: muted, fontSize: 14 }}>Dosya Ekle</Text>
         </TouchableOpacity>
       </View>
 
       {/* Save */}
-      <TouchableOpacity onPress={handleSave} style={{
+      <TouchableOpacity onPress={handleSave}
+        accessibilityRole="button" accessibilityLabel={saved ? 'Kaydedildi' : 'Günlüğü kaydet'}
+        style={{
         backgroundColor: saved ? '#10b981' : ORANGE, borderRadius: 16, paddingVertical: 16,
         alignItems: 'center', marginTop: 8,
         shadowColor: saved ? '#10b981' : ORANGE, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }
@@ -179,6 +197,12 @@ export default function JournalScreen() {
           {saved ? '✓ Kaydedildi' : 'Günlüğü Kaydet'}
         </Text>
       </TouchableOpacity>
+
+      {/* Live-region announcement for save status */}
+      <Text accessibilityLiveRegion="polite" accessibilityElementsHidden={!saved}
+        style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0 }}>
+        {saved ? 'Günlük kaydedildi' : ''}
+      </Text>
     </ScrollView>
   )
 }

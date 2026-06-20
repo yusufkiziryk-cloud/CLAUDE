@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react'
 import { Feather } from '@expo/vector-icons'
 import { useStore } from '../../src/store/store'
 
-const ORANGE = '#ea580c'
+const ORANGE = '#c2410c'
 
 async function callClaude(apiKey: string, system: string, user: string): Promise<string> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -80,10 +80,11 @@ export default function InsightsScreen() {
           { label: 'Aktif Seri', value: activeStreaks, icon: '🔥' },
           { label: 'En Uzun Seri', value: bestStreak, icon: '🏆' },
         ].map(s => (
-          <View key={s.label} style={{ flex: 1, minWidth: '45%', backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border, alignItems: 'center' }}>
-            <Text style={{ fontSize: 28, marginBottom: 6 }}>{s.icon}</Text>
-            <Text style={{ color: ORANGE, fontSize: 24, fontWeight: '800' }}>{s.value}</Text>
-            <Text style={{ color: muted, fontSize: 12, marginTop: 2, textAlign: 'center' }}>{s.label}</Text>
+          <View key={s.label} accessible accessibilityLabel={`${s.label}: ${s.value}`}
+            style={{ flex: 1, minWidth: '45%', backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border, alignItems: 'center' }}>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={{ fontSize: 28, marginBottom: 6 }}>{s.icon}</Text>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: ORANGE, fontSize: 24, fontWeight: '800' }}>{s.value}</Text>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: muted, fontSize: 12, marginTop: 2, textAlign: 'center' }}>{s.label}</Text>
           </View>
         ))}
       </View>
@@ -103,11 +104,14 @@ export default function InsightsScreen() {
               Claude AI notlarınızı analiz ederek kişisel bir yansıma oluşturacak.
             </Text>
             <TouchableOpacity onPress={generateReflection} disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel={loading ? 'Yansıma oluşturuluyor, lütfen bekleyin' : 'Yansıma oluştur'}
+              accessibilityState={{ busy: loading, disabled: loading }}
               style={{ backgroundColor: ORANGE, borderRadius: 14, paddingVertical: 14, alignItems: 'center',
                 shadowColor: ORANGE, shadowOpacity: 0.4, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}>
               {loading
-                ? <ActivityIndicator color="white" />
-                : <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>✨ Yansıma Oluştur</Text>
+                ? <ActivityIndicator color="white" accessibilityElementsHidden importantForAccessibility="no" />
+                : <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>✨ Yansıma Oluştur</Text>
               }
             </TouchableOpacity>
           </>
@@ -119,8 +123,10 @@ export default function InsightsScreen() {
         <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: border }}>
           <Text style={{ color: muted, fontSize: 12, marginBottom: 10 }}>CLAUDE API ANAHTARI</Text>
           <TextInput value={apiKeyInput} onChangeText={setApiKeyInput} placeholder="sk-ant-..." placeholderTextColor={muted}
+            accessibilityLabel="Claude API anahtarı"
             secureTextEntry style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', borderRadius: 10, padding: 12, color: text, fontSize: 13, fontFamily: 'monospace', marginBottom: 10, borderWidth: 1, borderColor: border }} />
           <TouchableOpacity onPress={() => { setClaudeApiKey(apiKeyInput.trim()); setShowKeyInput(false) }}
+            accessibilityRole="button" accessibilityLabel="API anahtarını kaydet"
             style={{ backgroundColor: ORANGE, borderRadius: 12, paddingVertical: 12, alignItems: 'center' }}>
             <Text style={{ color: 'white', fontWeight: '700' }}>Kaydet</Text>
           </TouchableOpacity>
@@ -137,9 +143,10 @@ export default function InsightsScreen() {
           {onThisDay.map((n, i) => {
             const year = new Date(n.createdAt).getFullYear()
             return (
-              <View key={n.id} style={{ borderLeftWidth: 2, borderLeftColor: ORANGE, paddingLeft: 12, marginBottom: i < onThisDay.length - 1 ? 14 : 0 }}>
-                <Text style={{ color: muted, fontSize: 11, marginBottom: 2 }}>{year} yılından</Text>
-                <Text style={{ color: text, fontWeight: '600', fontSize: 14 }}>{n.title}</Text>
+              <View key={n.id} accessible accessibilityLabel={`${year} yılından: ${n.title}`}
+                style={{ borderLeftWidth: 2, borderLeftColor: ORANGE, paddingLeft: 12, marginBottom: i < onThisDay.length - 1 ? 14 : 0 }}>
+                <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: muted, fontSize: 11, marginBottom: 2 }}>{year} yılından</Text>
+                <Text accessibilityElementsHidden importantForAccessibility="no" style={{ color: text, fontWeight: '600', fontSize: 14 }}>{n.title}</Text>
               </View>
             )
           })}
