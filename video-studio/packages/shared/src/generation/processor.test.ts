@@ -45,7 +45,7 @@ describe("processGenerationJob", () => {
     const asset = await storage.getAsset(done!.resultAssetIds[0]!);
     expect(asset?.provenance?.mock).toBe(true);
     expect(asset?.provenance?.providerId).toBe(MOCK_PROVIDER_ID);
-    expect(asset?.uri.startsWith("data:image/svg+xml")).toBe(true);
+    expect(asset?.uri.startsWith("data:image/png")).toBe(true);
   });
 
   it("aynı iş ikinci kez teslim edilirse yeniden işlemez (idempotent)", async () => {

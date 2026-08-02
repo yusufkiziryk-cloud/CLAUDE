@@ -7,8 +7,10 @@ import type {
   Project,
   PromptTemplate,
   PromptVersion,
+  RenderJob,
   Scene,
   Script,
+  Sequence,
 } from "@studio/domain";
 
 /**
@@ -54,6 +56,14 @@ export interface StorageDriver {
   listBibleCards(projectId: string): Promise<BibleCard[]>;
   updateBibleCard(id: string, patch: Partial<BibleCard>): Promise<BibleCard>;
   deleteBibleCard(id: string): Promise<boolean>;
+
+  // Timeline (Faz 4) — MVP'de proje başına tek ana sequence
+  getSequenceByProject(projectId: string): Promise<Sequence | null>;
+  saveSequence(sequence: Sequence): Promise<Sequence>;
+  createRenderJob(job: RenderJob): Promise<RenderJob>;
+  getRenderJob(id: string): Promise<RenderJob | null>;
+  listRenderJobs(projectId: string): Promise<RenderJob[]>;
+  updateRenderJob(id: string, patch: Partial<RenderJob>): Promise<RenderJob>;
 
   // Üretim işleri
   createGenerationJob(job: GenerationJob): Promise<GenerationJob>;

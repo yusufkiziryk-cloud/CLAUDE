@@ -14,6 +14,7 @@ import type {
 } from "@studio/provider-sdk";
 import { validateParams } from "@studio/provider-sdk";
 import { compileToText } from "@studio/prompt-engine";
+import { buildPlaceholderPng } from "./png.js";
 
 export const MOCK_PROVIDER_ID = "mock";
 
@@ -284,16 +285,17 @@ export class MockProviderAdapter implements MediaProviderAdapter {
 
   async normalizeResult(result: unknown): Promise<CanonicalGenerationResult> {
     const request = result as ProviderRequest;
-    const promptText = String(request.payload["promptText"] ?? "");
-    const svg = buildPlaceholderSvg(promptText, String(request.payload["aspectRatio"] ?? "16:9"));
+    // PNG (SVG değil): timeline/FFmpeg render hattıyla doğrudan uyumlu yer tutucu.
+    // MOCK/DEMO etiketi arayüzde provenance.mock üzerinden gösterilir.
+    const png = buildPlaceholderPng(640, 360);
     return {
       artifacts: [
         {
           kind: "image",
-          url: `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`,
-          mimeType: "image/svg+xml",
-          width: 1280,
-          height: 720,
+          url: `data:image/png;base64,${png.toString("base64")}`,
+          mimeType: "image/png",
+          width: 640,
+          height: 360,
         },
       ],
       provenance: {
@@ -309,18 +311,4 @@ export class MockProviderAdapter implements MediaProviderAdapter {
   }
 }
 
-function buildPlaceholderSvg(promptText: string, aspectRatio: string): string {
-  const escaped = promptText
-    .slice(0, 200)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
-  <rect width="1280" height="720" fill="#1a1a2e"/>
-  <rect x="24" y="24" width="220" height="56" rx="8" fill="#e94560"/>
-  <text x="134" y="60" font-family="sans-serif" font-size="28" font-weight="bold" fill="#fff" text-anchor="middle">MOCK / DEMO</text>
-  <text x="640" y="340" font-family="sans-serif" font-size="24" fill="#eee" text-anchor="middle">Bu bir yer tutucudur — gerçek AI üretimi değildir.</text>
-  <text x="640" y="390" font-family="sans-serif" font-size="16" fill="#aaa" text-anchor="middle">${escaped}</text>
-  <text x="640" y="680" font-family="sans-serif" font-size="14" fill="#666" text-anchor="middle">oran: ${aspectRatio}</text>
-</svg>`;
-}
+export { buildPlaceholderPng, encodePng } from "./png.js";

@@ -6,8 +6,10 @@ import type {
   Project,
   PromptTemplate,
   PromptVersion,
+  RenderJob,
   Scene,
   Script,
+  Sequence,
 } from "@studio/domain";
 import type { StorageDriver } from "./types.js";
 
@@ -162,6 +164,41 @@ export class MemoryStorageDriver implements StorageDriver {
 
   async deletePromptTemplate(id: string): Promise<boolean> {
     return this.templates.delete(id);
+  }
+
+  private readonly sequences = new Map<string, Sequence>(); // key: projectId
+  private readonly renderJobs = new Map<string, RenderJob>();
+
+  async getSequenceByProject(projectId: string): Promise<Sequence | null> {
+    return this.sequences.get(projectId) ?? null;
+  }
+
+  async saveSequence(sequence: Sequence): Promise<Sequence> {
+    this.sequences.set(sequence.projectId, sequence);
+    return sequence;
+  }
+
+  async createRenderJob(job: RenderJob): Promise<RenderJob> {
+    this.renderJobs.set(job.id, job);
+    return job;
+  }
+
+  async getRenderJob(id: string): Promise<RenderJob | null> {
+    return this.renderJobs.get(id) ?? null;
+  }
+
+  async listRenderJobs(projectId: string): Promise<RenderJob[]> {
+    return [...this.renderJobs.values()]
+      .filter((j) => j.projectId === projectId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async updateRenderJob(id: string, patch: Partial<RenderJob>): Promise<RenderJob> {
+    const current = this.renderJobs.get(id);
+    if (!current) throw new Error(`Render işi bulunamadı: ${id}`);
+    const next = { ...current, ...patch, updatedAt: new Date().toISOString() };
+    this.renderJobs.set(id, next);
+    return next;
   }
 
   async createGenerationJob(job: GenerationJob): Promise<GenerationJob> {

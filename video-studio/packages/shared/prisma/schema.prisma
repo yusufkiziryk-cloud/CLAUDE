@@ -132,6 +132,35 @@ model BibleCard {
   @@index([projectId])
 }
 
+model Sequence {
+  id        String   @id
+  projectId String   @unique
+  name      String
+  fps       Int      @default(24)
+  width     Int      @default(1280)
+  height    Int      @default(720)
+  /// TimelineTrack[] JSON
+  tracks    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RenderJob {
+  id         String    @id
+  projectId  String
+  sequenceId String
+  preset     String
+  status     String
+  progress   Int       @default(0)
+  error      Json?
+  outputPath String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  finishedAt DateTime?
+
+  @@index([projectId])
+}
+
 model PromptTemplate {
   id          String   @id
   name        String

@@ -27,17 +27,19 @@ describe("mock adaptörüne özgü davranış", () => {
     expect((await adapter.getStatus(job)).state).toBe("cancelled");
   });
 
-  it("yer tutucu görsel MOCK/DEMO ibaresi taşır", async () => {
+  it("yer tutucu geçerli bir PNG'dir ve mock provenance taşır", async () => {
     const adapter = new MockProviderAdapter({ completeAfterPolls: 1 });
     const compiled = adapter.compile(sampleGenerationRequest());
     const job = await adapter.submit(compiled, { idempotencyKey: "c2", correlationId: "y" });
     const status = await adapter.getStatus(job);
     const result = await adapter.normalizeResult(status.raw);
-    const svg = Buffer.from(
-      (result.artifacts[0]?.url ?? "").replace("data:image/svg+xml;base64,", ""),
+    expect(result.artifacts[0]?.mimeType).toBe("image/png");
+    const png = Buffer.from(
+      (result.artifacts[0]?.url ?? "").replace("data:image/png;base64,", ""),
       "base64",
-    ).toString("utf8");
-    expect(svg).toContain("MOCK / DEMO");
+    );
+    // PNG imzası: 89 50 4E 47
+    expect(png.subarray(0, 4)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
     expect(result.provenance.mock).toBe(true);
   });
 });

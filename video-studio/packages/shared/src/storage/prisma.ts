@@ -16,8 +16,12 @@ import {
   type Project,
   type PromptTemplate,
   type PromptVersion,
+  RenderJobSchema,
+  SequenceSchema,
+  type RenderJob,
   type Scene,
   type Script,
+  type Sequence,
 } from "@studio/domain";
 import type { StorageDriver } from "./types.js";
 
@@ -291,6 +295,69 @@ export class PrismaStorageDriver implements StorageDriver {
     }
   }
 
+  async getSequenceByProject(projectId: string): Promise<Sequence | null> {
+    const row = await this.db.sequence.findUnique({ where: { projectId } });
+    return row ? fromSequenceRow(row) : null;
+  }
+
+  async saveSequence(sequence: Sequence): Promise<Sequence> {
+    const data = {
+      name: sequence.name,
+      fps: sequence.fps,
+      width: sequence.width,
+      height: sequence.height,
+      tracks: sequence.tracks as object[],
+    };
+    const row = await this.db.sequence.upsert({
+      where: { projectId: sequence.projectId },
+      create: { id: sequence.id, projectId: sequence.projectId, ...data },
+      update: data,
+    });
+    return fromSequenceRow(row);
+  }
+
+  async createRenderJob(job: RenderJob): Promise<RenderJob> {
+    const row = await this.db.renderJob.create({
+      data: {
+        id: job.id,
+        projectId: job.projectId,
+        sequenceId: job.sequenceId,
+        preset: job.preset,
+        status: job.status,
+        progress: job.progress,
+        ...(job.error ? { error: job.error as object } : {}),
+        outputPath: job.outputPath ?? null,
+        createdAt: new Date(job.createdAt),
+        updatedAt: new Date(job.updatedAt),
+      },
+    });
+    return fromRenderJobRow(row);
+  }
+
+  async getRenderJob(id: string): Promise<RenderJob | null> {
+    const row = await this.db.renderJob.findUnique({ where: { id } });
+    return row ? fromRenderJobRow(row) : null;
+  }
+
+  async listRenderJobs(projectId: string): Promise<RenderJob[]> {
+    const rows = await this.db.renderJob.findMany({
+      where: { projectId },
+      orderBy: { createdAt: "desc" },
+    });
+    return rows.map(fromRenderJobRow);
+  }
+
+  async updateRenderJob(id: string, patch: Partial<RenderJob>): Promise<RenderJob> {
+    const data: Record<string, unknown> = {};
+    if (patch.status !== undefined) data["status"] = patch.status;
+    if (patch.progress !== undefined) data["progress"] = Math.round(patch.progress);
+    if (patch.error !== undefined) data["error"] = patch.error as object;
+    if (patch.outputPath !== undefined) data["outputPath"] = patch.outputPath;
+    if (patch.finishedAt !== undefined) data["finishedAt"] = new Date(patch.finishedAt);
+    const row = await this.db.renderJob.update({ where: { id }, data });
+    return fromRenderJobRow(row);
+  }
+
   async createGenerationJob(job: GenerationJob): Promise<GenerationJob> {
     const row = await this.db.generationJob.create({ data: toJobRow(job) });
     return fromJobRow(row);
@@ -337,6 +404,38 @@ type BriefRow = Awaited<ReturnType<PrismaClient["creativeBrief"]["create"]>>;
 type ScriptRow = Awaited<ReturnType<PrismaClient["script"]["create"]>>;
 type SceneRow = Awaited<ReturnType<PrismaClient["scene"]["create"]>>;
 type BibleRow = Awaited<ReturnType<PrismaClient["bibleCard"]["create"]>>;
+type SequenceRow = Awaited<ReturnType<PrismaClient["sequence"]["create"]>>;
+type RenderJobRow = Awaited<ReturnType<PrismaClient["renderJob"]["create"]>>;
+
+function fromSequenceRow(row: SequenceRow): Sequence {
+  return SequenceSchema.parse({
+    id: row.id,
+    projectId: row.projectId,
+    name: row.name,
+    fps: row.fps,
+    width: row.width,
+    height: row.height,
+    tracks: row.tracks,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  });
+}
+
+function fromRenderJobRow(row: RenderJobRow): RenderJob {
+  return RenderJobSchema.parse({
+    id: row.id,
+    projectId: row.projectId,
+    sequenceId: row.sequenceId,
+    preset: row.preset,
+    status: row.status,
+    progress: row.progress,
+    error: row.error ?? undefined,
+    outputPath: row.outputPath ?? undefined,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    finishedAt: row.finishedAt ? row.finishedAt.toISOString() : undefined,
+  });
+}
 
 function fromBriefRow(row: BriefRow): CreativeBrief {
   return CreativeBriefSchema.parse({

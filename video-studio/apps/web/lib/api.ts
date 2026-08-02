@@ -10,8 +10,10 @@ import type {
   Project,
   PromptTemplate,
   PromptVersion,
+  RenderJob,
   Scene,
   Script,
+  Sequence,
   ScriptFormat,
   UpdateSceneInput,
   UpsertBriefInput,
@@ -19,7 +21,7 @@ import type {
 } from "@studio/domain";
 import type { EstimateResponse, ProviderManifest } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export interface ApiErrorBody {
   code: string;
@@ -91,6 +93,20 @@ export const api = {
 
   listAssets: (projectId: string) => request<{ assets: Asset[] }>(`/projects/${projectId}/assets`),
   getAsset: (id: string) => request<Asset>(`/assets/${id}`),
+
+  // ---- Faz 4: timeline + render ----
+  getSequence: (projectId: string) => request<Sequence>(`/projects/${projectId}/sequence`),
+  saveSequence: (projectId: string, sequence: Sequence) =>
+    request<Sequence>(`/projects/${projectId}/sequence`, {
+      method: "PUT",
+      body: JSON.stringify({ sequence }),
+    }),
+  startRender: (projectId: string, preset: "480p" | "720p" | "1080p") =>
+    request<RenderJob>(`/projects/${projectId}/render`, {
+      method: "POST",
+      body: JSON.stringify({ preset }),
+    }),
+  getRenderJob: (id: string) => request<RenderJob>(`/render-jobs/${id}`),
 
   listPromptVersions: (projectId: string) =>
     request<{ promptVersions: PromptVersion[] }>(`/projects/${projectId}/prompts`),

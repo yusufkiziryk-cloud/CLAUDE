@@ -117,7 +117,7 @@ describe("API uçtan uca (memory sürücüleri)", () => {
     const assets = await app.inject({ method: "GET", url: `/projects/${projectId}/assets` });
     const asset = assets.json().assets[0];
     expect(asset.provenance.mock).toBe(true);
-    expect(asset.uri).toMatch(/^data:image\/svg\+xml/);
+    expect(asset.uri).toMatch(/^data:image\/png/);
   });
 
   it("aynı idempotency key ikinci istekte aynı işi döner (202 değil 200)", async () => {

@@ -48,12 +48,14 @@ export default function ProjectStudioPage({ params }: { params: Promise<{ id: st
         <Badge variant="info">{project.aspectRatio}</Badge>
         <Badge variant="neutral">{project.resolution}</Badge>
         <Badge variant="neutral">hedef {project.targetDurationSec} sn</Badge>
-        <a
-          href={`/projects/${id}/senaryo`}
-          className="ml-auto text-sm text-indigo-400 hover:underline"
-        >
-          Senaryo & Storyboard →
-        </a>
+        <span className="ml-auto flex gap-4">
+          <a href={`/projects/${id}/senaryo`} className="text-sm text-indigo-400 hover:underline">
+            Senaryo & Storyboard →
+          </a>
+          <a href={`/projects/${id}/kurgu`} className="text-sm text-indigo-400 hover:underline">
+            Kurgu & Dışa Aktar →
+          </a>
+        </span>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

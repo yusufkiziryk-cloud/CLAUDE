@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Projeler
             </Link>
             <span className="ml-auto rounded bg-zinc-700 px-2 py-0.5 text-xs font-semibold text-zinc-200">
-              Faz 3 — anahtarsız modda senaryo üretici şablon taslağıdır (LLM değil)
+              Faz 4 — kurgu + FFmpeg dışa aktarma aktif (anahtarsız mod: MOCK + şablon)
             </span>
           </nav>
         </header>
