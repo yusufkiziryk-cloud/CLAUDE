@@ -22,8 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="text-sm text-zinc-300 hover:text-white">
               Projeler
             </Link>
-            <span className="ml-auto rounded bg-pink-700 px-2 py-0.5 text-xs font-semibold text-white">
-              Faz 1 — yalnızca MOCK sağlayıcı
+            <span className="ml-auto rounded bg-zinc-700 px-2 py-0.5 text-xs font-semibold text-zinc-200">
+              Faz 2 — gerçek sağlayıcılar için .env'e API anahtarı ekleyin
             </span>
           </nav>
         </header>

@@ -30,6 +30,8 @@ export const CanonicalGenerationRequest = z.object({
   prompt: VideoPromptSchema,
   providerId: z.string().min(1),
   modelId: z.string().min(1),
+  /** Modele özgü ayarlar (manifest.params'ta beyan edilenler); bilinmeyen anahtar 'unsupported' sayılır. */
+  params: z.record(z.union([z.string(), z.number(), z.boolean()])).default({}),
 });
 export type CanonicalGenerationRequest = z.infer<typeof CanonicalGenerationRequest>;
 
@@ -48,7 +50,8 @@ export const CostEstimateSchema = z.object({
   amount: z.number().nonnegative(),
   /** Fiyat bilgisinin kaynağı ve tarihi — belirsiz fiyat kesinmiş gibi gösterilmez. */
   source: z.string(),
-  asOf: z.string().datetime(),
+  /** Fiyatın doğrulandığı tarih (ISO tarih veya tarih-saat). */
+  asOf: z.string().min(1),
   isExact: z.boolean().default(false),
 });
 export type CostEstimate = z.infer<typeof CostEstimateSchema>;

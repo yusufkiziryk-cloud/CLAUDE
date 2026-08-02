@@ -8,6 +8,7 @@ export function sampleGenerationRequest(
     capability: "textToVideo",
     providerId: "mock",
     modelId: "mock-video-fast",
+    params: {},
     prompt: VideoPromptSchema.parse({
       subject: { description: "Gün batımında sahilde koşan bir köpek" },
       scene: { environment: "kumsal", timeOfDay: "gün-batımı" },

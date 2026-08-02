@@ -3,10 +3,12 @@ import {
   AssetSchema,
   GenerationJobSchema,
   ProjectSchema,
+  PromptTemplateSchema,
   PromptVersionSchema,
   type Asset,
   type GenerationJob,
   type Project,
+  type PromptTemplate,
   type PromptVersion,
 } from "@studio/domain";
 import type { StorageDriver } from "./types.js";
@@ -110,6 +112,34 @@ export class PrismaStorageDriver implements StorageDriver {
     return rows.map(fromAssetRow);
   }
 
+  async createPromptTemplate(template: PromptTemplate): Promise<PromptTemplate> {
+    const row = await this.db.promptTemplate.create({
+      data: {
+        id: template.id,
+        name: template.name,
+        description: template.description ?? null,
+        body: template.body as object,
+        createdAt: new Date(template.createdAt),
+        updatedAt: new Date(template.updatedAt),
+      },
+    });
+    return fromTemplateRow(row);
+  }
+
+  async listPromptTemplates(): Promise<PromptTemplate[]> {
+    const rows = await this.db.promptTemplate.findMany({ orderBy: { createdAt: "desc" } });
+    return rows.map(fromTemplateRow);
+  }
+
+  async deletePromptTemplate(id: string): Promise<boolean> {
+    try {
+      await this.db.promptTemplate.delete({ where: { id } });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async createGenerationJob(job: GenerationJob): Promise<GenerationJob> {
     const row = await this.db.generationJob.create({ data: toJobRow(job) });
     return fromJobRow(row);
@@ -151,6 +181,18 @@ export class PrismaStorageDriver implements StorageDriver {
 }
 
 type ProjectRow = Awaited<ReturnType<PrismaClient["project"]["create"]>>;
+type TemplateRow = Awaited<ReturnType<PrismaClient["promptTemplate"]["create"]>>;
+
+function fromTemplateRow(row: TemplateRow): PromptTemplate {
+  return PromptTemplateSchema.parse({
+    id: row.id,
+    name: row.name,
+    description: row.description ?? undefined,
+    body: row.body,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  });
+}
 type PromptVersionRow = Awaited<ReturnType<PrismaClient["promptVersion"]["create"]>>;
 type AssetRow = Awaited<ReturnType<PrismaClient["asset"]["create"]>>;
 type JobRow = Awaited<ReturnType<PrismaClient["generationJob"]["create"]>>;

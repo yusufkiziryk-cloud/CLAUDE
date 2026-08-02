@@ -3,6 +3,7 @@ import type {
   GenerationJob,
   GenerationJobStatus,
   Project,
+  PromptTemplate,
   PromptVersion,
 } from "@studio/domain";
 
@@ -28,6 +29,11 @@ export interface StorageDriver {
   createAsset(asset: Asset): Promise<Asset>;
   getAsset(id: string): Promise<Asset | null>;
   listAssets(projectId: string): Promise<Asset[]>;
+
+  // Prompt şablonları (kütüphane)
+  createPromptTemplate(template: PromptTemplate): Promise<PromptTemplate>;
+  listPromptTemplates(): Promise<PromptTemplate[]>;
+  deletePromptTemplate(id: string): Promise<boolean>;
 
   // Üretim işleri
   createGenerationJob(job: GenerationJob): Promise<GenerationJob>;

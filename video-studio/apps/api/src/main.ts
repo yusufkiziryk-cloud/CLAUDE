@@ -1,6 +1,9 @@
 import { ProviderRegistry } from "@studio/provider-sdk";
-import { MockProviderAdapter, MOCK_PROVIDER_ID } from "@studio/provider-mock";
-import { MemoryStorageDriver, type StorageDriver } from "@studio/shared";
+import {
+  MemoryStorageDriver,
+  registerConfiguredProviders,
+  type StorageDriver,
+} from "@studio/shared";
 import { loadEnv } from "./env.js";
 import { buildServer } from "./server.js";
 import { MemoryGenerationQueue, RedisGenerationQueue, type GenerationQueue } from "./queue.js";
@@ -21,8 +24,11 @@ async function main(): Promise<void> {
   }
 
   const registry = new ProviderRegistry();
-  registry.register(MOCK_PROVIDER_ID, new MockProviderAdapter());
-  // Faz 2: gerçek sağlayıcı adaptörleri (fal.ai, OpenAI) burada kaydolacak.
+  const providers = registerConfiguredProviders(registry, {
+    FAL_API_KEY: process.env["FAL_API_KEY"],
+    OPENAI_API_KEY: process.env["OPENAI_API_KEY"],
+  });
+  console.log(`[providers] kayıtlı sağlayıcılar: ${providers.registered.join(", ")}`);
 
   let queue: GenerationQueue;
   if (env.QUEUE_DRIVER === "redis") {

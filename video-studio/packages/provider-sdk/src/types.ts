@@ -27,7 +27,8 @@ export const ModelManifestSchema = z.object({
   inputs: z.object({
     types: z.array(z.enum(["text", "image", "video", "audio", "mask"])),
     mimeTypes: z.array(z.string()),
-    maxBytes: z.number().int().positive(),
+    /** 0 = dosya girdisi yok (yalnızca metin). */
+    maxBytes: z.number().int().nonnegative(),
   }),
   options: z.object({
     durationsSec: z.array(z.number().positive()),

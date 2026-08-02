@@ -1,4 +1,4 @@
-import type { Asset, GenerationJob, Project, PromptVersion } from "@studio/domain";
+import type { Asset, GenerationJob, Project, PromptTemplate, PromptVersion } from "@studio/domain";
 import type { StorageDriver } from "./types.js";
 
 /** Harici servis gerektirmeyen geliştirme/test sürücüsü. Süreç yeniden başlayınca veri silinir. */
@@ -60,6 +60,21 @@ export class MemoryStorageDriver implements StorageDriver {
     return [...this.assets.values()]
       .filter((a) => a.projectId === projectId && a.deletedAt === null)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  private readonly templates = new Map<string, PromptTemplate>();
+
+  async createPromptTemplate(template: PromptTemplate): Promise<PromptTemplate> {
+    this.templates.set(template.id, template);
+    return template;
+  }
+
+  async listPromptTemplates(): Promise<PromptTemplate[]> {
+    return [...this.templates.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async deletePromptTemplate(id: string): Promise<boolean> {
+    return this.templates.delete(id);
   }
 
   async createGenerationJob(job: GenerationJob): Promise<GenerationJob> {

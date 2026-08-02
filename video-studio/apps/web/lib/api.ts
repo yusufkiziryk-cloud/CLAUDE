@@ -4,10 +4,11 @@ import type {
   CreateProjectInput,
   GenerationJob,
   Project,
+  PromptTemplate,
   PromptVersion,
   VideoPromptInput,
 } from "@studio/domain";
-import type { ProviderManifest } from "./types";
+import type { EstimateResponse, ProviderManifest } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -48,6 +49,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }))) as ApiErrorBody;
     throw new ApiError(response.status, body);
   }
+  if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
 
@@ -79,4 +81,18 @@ export const api = {
     request<GenerationJob>(`/generations/${id}/cancel`, { method: "POST" }),
 
   listAssets: (projectId: string) => request<{ assets: Asset[] }>(`/projects/${projectId}/assets`),
+
+  listPromptVersions: (projectId: string) =>
+    request<{ promptVersions: PromptVersion[] }>(`/projects/${projectId}/prompts`),
+
+  estimate: (generationRequest: CanonicalGenerationRequest) =>
+    request<EstimateResponse>("/estimate", {
+      method: "POST",
+      body: JSON.stringify({ request: generationRequest }),
+    }),
+
+  listTemplates: () => request<{ templates: PromptTemplate[] }>("/templates"),
+  createTemplate: (input: { name: string; description?: string; body: VideoPromptInput }) =>
+    request<PromptTemplate>("/templates", { method: "POST", body: JSON.stringify(input) }),
+  deleteTemplate: (id: string) => request<void>(`/templates/${id}`, { method: "DELETE" }),
 };

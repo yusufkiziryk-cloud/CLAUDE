@@ -4,10 +4,12 @@ import { z, ZodError } from "zod";
 import {
   CanonicalGenerationRequest,
   CreateProjectInput,
+  CreatePromptTemplateInput,
   VideoPromptSchema,
   newId,
   type GenerationJob,
   type Project,
+  type PromptTemplate,
   type PromptVersion,
 } from "@studio/domain";
 import type { ProviderRegistry } from "@studio/provider-sdk";
@@ -140,6 +142,52 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     const asset = await storage.getAsset(id);
     if (!asset) return notFound(reply, "Varlık bulunamadı.");
     return asset;
+  });
+
+  // ---- Prompt şablonları (kütüphane) ----
+  app.post("/templates", async (request, reply) => {
+    const input = CreatePromptTemplateInput.parse(request.body);
+    const now = new Date().toISOString();
+    const template: PromptTemplate = {
+      id: newId("tpl"),
+      name: input.name,
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      body: input.body,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await storage.createPromptTemplate(template);
+    return reply.status(201).send(template);
+  });
+
+  app.get("/templates", async () => ({ templates: await storage.listPromptTemplates() }));
+
+  app.delete("/templates/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const deleted = await storage.deletePromptTemplate(id);
+    if (!deleted) return notFound(reply, "Şablon bulunamadı.");
+    return reply.status(204).send();
+  });
+
+  // ---- Üretim öncesi doğrulama + maliyet tahmini ----
+  app.post("/estimate", async (request, reply) => {
+    const input = z.object({ request: CanonicalGenerationRequest }).parse(request.body);
+    let adapter;
+    try {
+      adapter = registry.get(input.request.providerId);
+    } catch {
+      return reply.status(404).send({
+        code: "PROVIDER_NOT_CONFIGURED",
+        userMessage:
+          `'${input.request.providerId}' sağlayıcısı bu sunucuda yapılandırılmamış ` +
+          "(API anahtarı eksik olabilir — .env dosyasını kontrol edin).",
+        retryable: false,
+        correlationId: request.id,
+      });
+    }
+    const validation = adapter.validate(input.request);
+    const estimate = validation.ok ? await adapter.estimate(input.request) : null;
+    return { validation, estimate };
   });
 
   // ---- Üretim işleri ----

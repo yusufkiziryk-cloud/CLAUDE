@@ -12,6 +12,7 @@ import type {
   ValidationIssue,
   ValidationResult,
 } from "@studio/provider-sdk";
+import { validateParams } from "@studio/provider-sdk";
 import { compileToText } from "@studio/prompt-engine";
 
 export const MOCK_PROVIDER_ID = "mock";
@@ -139,6 +140,7 @@ export class MockProviderAdapter implements MediaProviderAdapter {
         kind: "unsupported",
       });
     }
+    issues.push(...validateParams(request.params, model.params));
     const { output } = request.prompt;
     if (!model.options.durationsSec.includes(output.durationSec)) {
       issues.push({

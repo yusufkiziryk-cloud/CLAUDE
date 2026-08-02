@@ -1,8 +1,7 @@
 import { Worker } from "bullmq";
 import { z } from "zod";
 import { ProviderRegistry } from "@studio/provider-sdk";
-import { MockProviderAdapter, MOCK_PROVIDER_ID } from "@studio/provider-mock";
-import { processGenerationJob } from "@studio/shared";
+import { processGenerationJob, registerConfiguredProviders } from "@studio/shared";
 
 /**
  * Ayrı üretim işçisi süreci (QUEUE_DRIVER=redis modu).
@@ -24,8 +23,10 @@ async function main(): Promise<void> {
   const storage = new PrismaStorageDriver();
 
   const registry = new ProviderRegistry();
-  registry.register(MOCK_PROVIDER_ID, new MockProviderAdapter());
-  // Faz 2: gerçek sağlayıcı adaptörleri burada da kaydolacak.
+  registerConfiguredProviders(registry, {
+    FAL_API_KEY: process.env["FAL_API_KEY"],
+    OPENAI_API_KEY: process.env["OPENAI_API_KEY"],
+  });
 
   const worker = new Worker<{ jobId: string }>(
     GENERATION_QUEUE_NAME,
