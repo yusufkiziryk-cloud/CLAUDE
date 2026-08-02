@@ -1,7 +1,9 @@
 import { Queue } from "bullmq";
 import { processGenerationJob, type ProcessorDeps } from "@studio/shared";
+import { executeRenderJob, type RenderExecutorDeps } from "@studio/shared";
 
 export const GENERATION_QUEUE_NAME = "generation";
+export const RENDER_QUEUE_NAME = "render";
 
 /** Kuyruk soyutlaması: API job'ı yalnızca 'enqueue' eder, işleme yerini bilmez. */
 export interface GenerationQueue {
@@ -36,6 +38,62 @@ export class MemoryGenerationQueue implements GenerationQueue {
 
   async close(): Promise<void> {
     await this.drain();
+  }
+}
+
+/** Render kuyruğu soyutlaması: API render'ı yalnızca kuyruğa bırakır. */
+export interface RenderQueue {
+  enqueue(jobId: string): Promise<void>;
+  close(): Promise<void>;
+}
+
+/** Süreç içi render kuyruğu (QUEUE_DRIVER=memory): API sürecinde çalışır. */
+export class MemoryRenderQueue implements RenderQueue {
+  private readonly pending = new Set<Promise<void>>();
+
+  constructor(private readonly deps: RenderExecutorDeps) {}
+
+  async enqueue(jobId: string): Promise<void> {
+    const run = (async () => {
+      const job = await this.deps.storage.getRenderJob(jobId);
+      const sequence = job ? await this.deps.storage.getSequenceByProject(job.projectId) : null;
+      if (job && sequence) await executeRenderJob(job, sequence, this.deps);
+    })().catch((error) => console.error("Render kuyruğu hatası:", jobId, error));
+    this.pending.add(run);
+    void run.finally(() => this.pending.delete(run));
+  }
+
+  async drain(): Promise<void> {
+    while (this.pending.size > 0) await Promise.allSettled([...this.pending]);
+  }
+
+  async close(): Promise<void> {
+    await this.drain();
+  }
+}
+
+/** BullMQ render üreticisi (QUEUE_DRIVER=redis): işleme apps/worker'da. */
+export class RedisRenderQueue implements RenderQueue {
+  private readonly queue: Queue;
+
+  constructor(redisUrl: string) {
+    this.queue = new Queue(RENDER_QUEUE_NAME, {
+      connection: { url: redisUrl },
+      defaultJobOptions: {
+        attempts: 2,
+        backoff: { type: "exponential", delay: 3000 },
+        removeOnComplete: { age: 24 * 3600 },
+        removeOnFail: false,
+      },
+    });
+  }
+
+  async enqueue(jobId: string): Promise<void> {
+    await this.queue.add("render", { jobId }, { jobId });
+  }
+
+  async close(): Promise<void> {
+    await this.queue.close();
   }
 }
 

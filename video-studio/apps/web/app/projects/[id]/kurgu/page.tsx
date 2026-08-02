@@ -24,7 +24,7 @@ import {
   Select,
   TextInput,
 } from "@studio/ui";
-import { API_URL, api, ApiError } from "@/lib/api";
+import { API_URL, api, ApiError, resolveAssetUrl, uploadAsset } from "@/lib/api";
 
 const PX_PER_SEC = 40;
 
@@ -249,7 +249,11 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
                   className="flex items-center gap-2 rounded border border-zinc-800 p-1.5"
                 >
                   {asset.mimeType.startsWith("image/") ? (
-                    <img src={asset.uri} alt="" className="h-8 w-14 rounded object-cover" />
+                    <img
+                      src={resolveAssetUrl(asset.uri)}
+                      alt=""
+                      className="h-8 w-14 rounded object-cover"
+                    />
                   ) : (
                     <span className="text-lg">{asset.kind === "audio" ? "🎵" : "🎬"}</span>
                   )}
@@ -268,6 +272,28 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
               ))}
             </ul>
           )}
+          <div className="mt-3">
+            <Field label="Medya yükle (PNG, JPEG, MP4, MP3, WAV)">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,video/mp4,video/webm,audio/mpeg,audio/wav"
+                className="w-full text-xs text-zinc-400 file:mr-2 file:rounded file:border-0 file:bg-zinc-700 file:px-2 file:py-1 file:text-xs file:text-zinc-100"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setError(null);
+                  try {
+                    await uploadAsset(id, file);
+                    setAssets((await api.listAssets(id)).assets);
+                  } catch (err) {
+                    setError(err instanceof ApiError ? err.body.userMessage : String(err));
+                  } finally {
+                    e.target.value = "";
+                  }
+                }}
+              />
+            </Field>
+          </div>
           <div className="mt-3 flex items-end gap-2">
             <div className="flex-1">
               <Field label="Metin / altyazı klibi">

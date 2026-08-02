@@ -347,6 +347,21 @@ export class PrismaStorageDriver implements StorageDriver {
     return rows.map(fromRenderJobRow);
   }
 
+  async listRenderJobsByStatus(status: RenderJob["status"]): Promise<RenderJob[]> {
+    const rows = await this.db.renderJob.findMany({ where: { status } });
+    return rows.map(fromRenderJobRow);
+  }
+
+  async listGenerationJobsByStatus(status: GenerationJob["status"]): Promise<GenerationJob[]> {
+    const rows = await this.db.generationJob.findMany({ where: { status } });
+    return rows.map(fromJobRow);
+  }
+
+  async findSceneByStoryboardJob(jobId: string): Promise<Scene | null> {
+    const row = await this.db.scene.findFirst({ where: { storyboardJobId: jobId } });
+    return row ? fromSceneRow(row) : null;
+  }
+
   async updateRenderJob(id: string, patch: Partial<RenderJob>): Promise<RenderJob> {
     const data: Record<string, unknown> = {};
     if (patch.status !== undefined) data["status"] = patch.status;

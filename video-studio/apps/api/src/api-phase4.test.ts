@@ -11,7 +11,7 @@ import { addClip } from "@studio/timeline-engine";
 import type { Sequence } from "@studio/domain";
 import { buildServer } from "./server.js";
 import { MemoryGenerationQueue } from "./queue.js";
-import { ffmpegAvailable } from "./render.js";
+import { ffmpegAvailable } from "@studio/shared";
 
 let app: FastifyInstance;
 let storage: MemoryStorageDriver;

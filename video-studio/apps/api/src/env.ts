@@ -4,8 +4,13 @@ const EnvSchema = z
   .object({
     STORAGE_DRIVER: z.enum(["memory", "prisma"]).default("memory"),
     QUEUE_DRIVER: z.enum(["memory", "redis"]).default("memory"),
+    OBJECT_STORE: z.enum(["disk", "s3"]).default("disk"),
     DATABASE_URL: z.string().optional(),
     REDIS_URL: z.string().optional(),
+    S3_ENDPOINT: z.string().optional(),
+    S3_ACCESS_KEY: z.string().optional(),
+    S3_SECRET_KEY: z.string().optional(),
+    S3_BUCKET: z.string().optional(),
     API_PORT: z.coerce.number().int().positive().default(4000),
     API_HOST: z.string().default("127.0.0.1"),
   })
@@ -20,6 +25,16 @@ const EnvSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "QUEUE_DRIVER=redis için REDIS_URL zorunludur.",
+      });
+    }
+    if (
+      env.OBJECT_STORE === "s3" &&
+      (!env.S3_ENDPOINT || !env.S3_ACCESS_KEY || !env.S3_SECRET_KEY || !env.S3_BUCKET)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "OBJECT_STORE=s3 için S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET zorunludur.",
       });
     }
     if (env.QUEUE_DRIVER === "redis" && env.STORAGE_DRIVER === "memory") {

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ContinuityIssue, Scene, Script } from "@studio/domain";
 import { Badge, Button, Card, EmptyState, ErrorNote, Field, Select } from "@studio/ui";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, resolveAssetUrl } from "@/lib/api";
 import type { ProviderManifest } from "@/lib/types";
 
 /** Senaryo üretimi + sahne planı + storyboard + tutarlılık paneli. */
@@ -61,8 +61,8 @@ export function SceneBoard({ projectId, refreshKey }: { projectId: string; refre
       for (const scene of pending) {
         try {
           const job = await api.getGeneration(scene.storyboardJobId as string);
-          if (job.status === "succeeded" && job.resultAssetIds[0]) {
-            await api.updateScene(scene.id, { storyboardAssetId: job.resultAssetIds[0] });
+          if (job.status === "succeeded") {
+            // Varlık sunucu tarafında sahneye bağlanır (Faz 5); yalnızca tazeleriz.
             await refresh();
           } else if (["failed", "expired", "cancelled"].includes(job.status)) {
             setError(job.error?.userMessage ?? "Storyboard üretimi başarısız oldu.");
@@ -277,7 +277,7 @@ function StoryboardThumb({ assetId }: { assetId: string }) {
   useEffect(() => {
     api
       .getAsset(assetId)
-      .then((a) => setUri(a.uri))
+      .then((a) => setUri(resolveAssetUrl(a.uri)))
       .catch(() => {});
   }, [assetId]);
   if (!uri) return null;

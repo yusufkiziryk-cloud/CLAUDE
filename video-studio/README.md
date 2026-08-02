@@ -1,11 +1,12 @@
 # 🎬 AI Video Üretim ve Kurgu Stüdyosu
 
 Türkçe öncelikli, web + Windows masaüstü hedefli yapay zekâ video üretim ve kurgu
-stüdyosu. **Şu an Faz 4 tamamlandı**: çok kanallı timeline editörü (video/ses/metin track'leri,
-trim/böl/taşı, undo/redo komut mimarisi) ve FFmpeg ile gerçek MP4 dışa aktarma
-(doğrulanmış render graph → argüman dizisi, shell birleştirme yok). Önceki fazlar:
-brief→senaryo→storyboard zinciri (Faz 3), prompt stüdyosu v2 + fal.ai/OpenAI
-adaptörleri (Faz 2), mock üretim hattı (Faz 1).
+stüdyosu. **Şu an Faz 5 tamamlandı**: nesne depolama soyutlaması (yerel disk / S3-MinIO),
+medya yükleme, üretim VE render işlerinin ayrı worker sürecinde koşması
+(BullMQ + Redis), render iptali, açılışta crash recovery ve yapılandırılmış log.
+Tam yığın (PostgreSQL + Redis + ayrı worker) canlı doğrulandı. Önceki fazlar:
+timeline + FFmpeg dışa aktarma (Faz 4), senaryo/storyboard (Faz 3), prompt
+stüdyosu v2 + gerçek adaptörler (Faz 2), mock üretim hattı (Faz 1).
 
 > Faz planı ve mimari için: [`../docs/video-studio/FAZ0-KESIF-VE-TASARIM.md`](../docs/video-studio/FAZ0-KESIF-VE-TASARIM.md)
 > Mimari kararlar için: [`docs/adr/`](docs/adr/)

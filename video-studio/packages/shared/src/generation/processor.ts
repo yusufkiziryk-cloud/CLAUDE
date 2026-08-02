@@ -5,16 +5,26 @@ import {
   type ProviderRegistry,
 } from "@studio/provider-sdk";
 import type { StorageDriver } from "../storage/types.js";
+import { extFromMime, type ObjectStore } from "../objectstore/types.js";
 
 export interface ProcessorDeps {
   storage: StorageDriver;
   registry: ProviderRegistry;
+  /**
+   * Verilirse üretim çıktıları nesne deposuna yazılır ve varlık URI'si /files/*
+   * olur; verilmezse data URI olarak saklanır (eski davranış, testler için).
+   */
+  objectStore?: ObjectStore;
   /** Sağlayıcı durum sorguları arasındaki bekleme (test için düşürülebilir). */
   pollIntervalMs?: number;
   /** Bu sayıda sorgudan sonra iş 'expired' sayılır. */
   maxPolls?: number;
   logger?: (message: string, meta?: Record<string, unknown>) => void;
 }
+
+/** Sağlayıcı sonuç URL'lerini indirirken üst sınırlar (kaynak tükenmesi koruması). */
+const DOWNLOAD_TIMEOUT_MS = 120_000;
+const DOWNLOAD_MAX_BYTES = 200 * 1024 * 1024;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -60,7 +70,14 @@ export async function processGenerationJob(jobId: string, deps: ProcessorDeps): 
 
       if (status.state === "succeeded") {
         const result = await adapter.normalizeResult(status.raw);
-        const assets = await persistArtifacts(job, result, storage);
+        const assets = await persistArtifacts(job, result, storage, deps.objectStore);
+
+        // Sunucu tarafı bağlama: bu iş bir sahnenin storyboard'uysa varlığı sahneye yaz.
+        const scene = await storage.findSceneByStoryboardJob(jobId);
+        if (scene && assets[0]) {
+          await storage.updateScene(scene.id, { storyboardAssetId: assets[0].id });
+          log("Storyboard varlığı sahneye bağlandı", { jobId, sceneId: scene.id });
+        }
         await storage.updateGenerationJob(jobId, {
           status: "succeeded",
           progress: 100,
@@ -113,17 +130,31 @@ async function persistArtifacts(
   job: GenerationJob,
   result: CanonicalGenerationResult,
   storage: StorageDriver,
+  objectStore?: ObjectStore,
 ): Promise<Asset[]> {
   const assets: Asset[] = [];
   for (const [index, artifact] of result.artifacts.entries()) {
+    const assetId = newId("ast");
+    let uri = artifact.url;
+    let sizeBytes = estimateSizeBytes(artifact.url);
+
+    if (objectStore) {
+      const bytes = await artifactBytes(artifact.url);
+      const ext = extFromMime(artifact.mimeType) ?? "bin";
+      const key = `assets/${assetId}.${ext}`;
+      await objectStore.put(key, bytes, artifact.mimeType);
+      uri = objectStore.publicPath(key);
+      sizeBytes = bytes.length;
+    }
+
     const asset: Asset = {
-      id: newId("ast"),
+      id: assetId,
       projectId: job.projectId,
       kind: artifact.kind,
       name: `Üretim ${job.id.slice(-8)} — çıktı ${index + 1}`,
-      uri: artifact.url,
+      uri,
       mimeType: artifact.mimeType,
-      sizeBytes: estimateSizeBytes(artifact.url),
+      sizeBytes,
       ...(artifact.durationSec !== undefined ? { durationSec: artifact.durationSec } : {}),
       ...(artifact.width !== undefined ? { width: artifact.width } : {}),
       ...(artifact.height !== undefined ? { height: artifact.height } : {}),
@@ -134,6 +165,29 @@ async function persistArtifacts(
     assets.push(await storage.createAsset(asset));
   }
   return assets;
+}
+
+/** Artifact içeriğini alır: data URI çözülür; sağlayıcı URL'i sınırlı indirme ile çekilir. */
+async function artifactBytes(url: string): Promise<Buffer> {
+  if (url.startsWith("data:")) {
+    return Buffer.from(url.split(",")[1] ?? "", "base64");
+  }
+  if (!/^https:\/\//.test(url)) {
+    throw new Error(`Desteklenmeyen artifact URL şeması: ${url.slice(0, 30)}`);
+  }
+  const response = await fetch(url, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) });
+  if (!response.ok) {
+    throw new Error(`Sağlayıcı çıktısı indirilemedi: HTTP ${response.status}`);
+  }
+  const length = Number(response.headers.get("content-length") ?? 0);
+  if (length > DOWNLOAD_MAX_BYTES) {
+    throw new Error(`Sağlayıcı çıktısı boyut sınırını aşıyor (${length} bayt).`);
+  }
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (bytes.length > DOWNLOAD_MAX_BYTES) {
+    throw new Error(`Sağlayıcı çıktısı boyut sınırını aşıyor (${bytes.length} bayt).`);
+  }
+  return bytes;
 }
 
 function estimateSizeBytes(url: string): number {

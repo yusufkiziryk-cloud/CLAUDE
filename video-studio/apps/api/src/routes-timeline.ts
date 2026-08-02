@@ -6,11 +6,13 @@ import { z } from "zod";
 import { SequenceSchema, newId, type RenderJob } from "@studio/domain";
 import { createDefaultSequence } from "@studio/timeline-engine";
 import type { StorageDriver } from "@studio/shared";
-import { executeRenderJob, ffmpegAvailable } from "./render.js";
+import { ffmpegAvailable } from "@studio/shared";
+import type { RenderQueue } from "./queue.js";
 
 export interface TimelineRouteDeps {
   storage: StorageDriver;
   rendersDir: string;
+  renderQueue: RenderQueue;
 }
 
 const notFound = (
@@ -19,7 +21,7 @@ const notFound = (
 ) => reply.status(404).send({ code: "NOT_FOUND", userMessage: message, retryable: false });
 
 export function registerTimelineRoutes(app: FastifyInstance, deps: TimelineRouteDeps): void {
-  const { storage, rendersDir } = deps;
+  const { storage, rendersDir, renderQueue } = deps;
 
   // ---- Sequence (proje başına tek ana kurgu) ----
   app.get("/projects/:id/sequence", async (request, reply) => {
@@ -81,9 +83,26 @@ export function registerTimelineRoutes(app: FastifyInstance, deps: TimelineRoute
       updatedAt: now,
     };
     await storage.createRenderJob(job);
-    // Faz 4: API süreci içinde asenkron çalışır; ayrı render worker Faz 5'te.
-    void executeRenderJob(job, sequence, { storage, rendersDir }).catch(() => {});
+    await renderQueue.enqueue(job.id);
     return reply.status(202).send(job);
+  });
+
+  app.post("/render-jobs/:id/cancel", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const job = await storage.getRenderJob(id);
+    if (!job) return notFound(reply, "Render işi bulunamadı.");
+    if (job.status === "succeeded" || job.status === "failed") {
+      return reply.status(409).send({
+        code: "ALREADY_FINISHED",
+        userMessage: "Bu iş zaten tamamlanmış; iptal edilemez.",
+        retryable: false,
+      });
+    }
+    // Durum 'cancelled' yapılır; çalışan ffmpeg süreci bunu 1 sn içinde görüp durur.
+    return storage.updateRenderJob(id, {
+      status: "cancelled",
+      finishedAt: new Date().toISOString(),
+    });
   });
 
   app.get("/render-jobs/:id", async (request, reply) => {

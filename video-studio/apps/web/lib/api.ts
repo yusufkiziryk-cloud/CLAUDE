@@ -23,6 +23,29 @@ import type { EstimateResponse, ProviderManifest } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
+/** Varlık URI'sini görüntülenebilir URL'e çevirir (nesne deposu yolları API'den servis edilir). */
+export function resolveAssetUrl(uri: string): string {
+  return uri.startsWith("data:") ? uri : `${API_URL}${uri}`;
+}
+
+/** Medya dosyası yükler (multipart). */
+export async function uploadAsset(projectId: string, file: File): Promise<Asset> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch(`${API_URL}/projects/${projectId}/assets`, {
+    method: "POST",
+    body: form,
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({
+      code: "UNKNOWN",
+      userMessage: "Yükleme başarısız oldu.",
+    }))) as ApiErrorBody;
+    throw new ApiError(response.status, body);
+  }
+  return (await response.json()) as Asset;
+}
+
 export interface ApiErrorBody {
   code: string;
   userMessage: string;

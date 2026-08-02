@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Asset } from "@studio/domain";
 import { Badge, Card, EmptyState } from "@studio/ui";
-import { api } from "@/lib/api";
+import { api, resolveAssetUrl } from "@/lib/api";
 
 export function Gallery({ projectId, refreshKey }: { projectId: string; refreshKey: number }) {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -30,7 +30,7 @@ export function Gallery({ projectId, refreshKey }: { projectId: string; refreshK
             <figure key={asset.id} className="overflow-hidden rounded-md border border-zinc-700">
               {asset.mimeType.startsWith("image/") ? (
                 /* data: URI'ler next/image ile kullanılamaz; Faz 1'de düz img yeterli */
-                <img src={asset.uri} alt={asset.name} className="w-full" />
+                <img src={resolveAssetUrl(asset.uri)} alt={asset.name} className="w-full" />
               ) : (
                 <div className="p-4 text-xs text-zinc-400">{asset.mimeType}</div>
               )}

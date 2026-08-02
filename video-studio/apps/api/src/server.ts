@@ -13,11 +13,12 @@ import {
   type PromptVersion,
 } from "@studio/domain";
 import type { ProviderRegistry } from "@studio/provider-sdk";
-import type { StorageDriver } from "@studio/shared";
+import { LocalDiskObjectStore, type ObjectStore, type StorageDriver } from "@studio/shared";
 import type { ScriptGenerator } from "@studio/creative-engine";
-import type { GenerationQueue } from "./queue.js";
+import { MemoryRenderQueue, type GenerationQueue, type RenderQueue } from "./queue.js";
 import { registerCreativeRoutes } from "./routes-creative.js";
 import { registerTimelineRoutes } from "./routes-timeline.js";
+import { registerFileRoutes } from "./routes-files.js";
 
 export interface ServerDeps {
   storage: StorageDriver;
@@ -26,6 +27,12 @@ export interface ServerDeps {
   scriptGenerator: ScriptGenerator;
   /** Render çıktılarının yazılacağı dizin (varsayılan: ./data/renders). */
   rendersDir?: string;
+  /** Varlık nesne deposu (varsayılan: yerel disk ./data/objects). */
+  objectStore?: ObjectStore;
+  /** Render kuyruğu (varsayılan: süreç içi). */
+  renderQueue?: RenderQueue;
+  /** Yapılandırılmış log (pino) — testlerde kapalı tutulur. */
+  enableLogger?: boolean;
 }
 
 const CreatePromptVersionBody = z.object({
@@ -43,12 +50,26 @@ const CreateGenerationBody = z.object({
 
 export function buildServer(deps: ServerDeps): FastifyInstance {
   const { storage, registry, queue, scriptGenerator } = deps;
-  const app = Fastify({ logger: false });
-  registerCreativeRoutes(app, { storage, registry, queue, scriptGenerator });
-  registerTimelineRoutes(app, {
-    storage,
-    rendersDir: deps.rendersDir ?? `${process.cwd()}/data/renders`,
+  const rendersDir = deps.rendersDir ?? `${process.cwd()}/data/renders`;
+  const objectStore = deps.objectStore ?? new LocalDiskObjectStore(`${process.cwd()}/data/objects`);
+  const renderQueue =
+    deps.renderQueue ?? new MemoryRenderQueue({ storage, rendersDir, objectStore });
+
+  const app = Fastify({
+    // Gözlemlenebilirlik: yapılandırılmış log + hassas başlık redaksiyonu.
+    logger: deps.enableLogger
+      ? {
+          level: process.env["LOG_LEVEL"] ?? "info",
+          redact: {
+            paths: ["req.headers.authorization", "req.headers.cookie", 'req.headers["x-api-key"]'],
+            censor: "[GİZLİ]",
+          },
+        }
+      : false,
   });
+  registerCreativeRoutes(app, { storage, registry, queue, scriptGenerator });
+  registerTimelineRoutes(app, { storage, rendersDir, renderQueue });
+  registerFileRoutes(app, { storage, objectStore });
 
   void app.register(cors, {
     // Faz 1 geliştirme modu: yerel web istemcisi. Üretim sertleştirmesi Faz 8'dedir.

@@ -193,6 +193,21 @@ export class MemoryStorageDriver implements StorageDriver {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  async listRenderJobsByStatus(status: RenderJob["status"]): Promise<RenderJob[]> {
+    return [...this.renderJobs.values()].filter((j) => j.status === status);
+  }
+
+  async listGenerationJobsByStatus(status: GenerationJob["status"]): Promise<GenerationJob[]> {
+    return [...this.jobs.values()].filter((j) => j.status === status);
+  }
+
+  async findSceneByStoryboardJob(jobId: string): Promise<Scene | null> {
+    for (const scene of this.scenes.values()) {
+      if (scene.storyboardJobId === jobId) return scene;
+    }
+    return null;
+  }
+
   async updateRenderJob(id: string, patch: Partial<RenderJob>): Promise<RenderJob> {
     const current = this.renderJobs.get(id);
     if (!current) throw new Error(`Render işi bulunamadı: ${id}`);

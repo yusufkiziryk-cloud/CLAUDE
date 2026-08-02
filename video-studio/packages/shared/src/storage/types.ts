@@ -63,7 +63,12 @@ export interface StorageDriver {
   createRenderJob(job: RenderJob): Promise<RenderJob>;
   getRenderJob(id: string): Promise<RenderJob | null>;
   listRenderJobs(projectId: string): Promise<RenderJob[]>;
+  listRenderJobsByStatus(status: RenderJob["status"]): Promise<RenderJob[]>;
   updateRenderJob(id: string, patch: Partial<RenderJob>): Promise<RenderJob>;
+
+  // Crash recovery + sunucu tarafı bağlama
+  listGenerationJobsByStatus(status: GenerationJobStatus): Promise<GenerationJob[]>;
+  findSceneByStoryboardJob(jobId: string): Promise<Scene | null>;
 
   // Üretim işleri
   createGenerationJob(job: GenerationJob): Promise<GenerationJob>;

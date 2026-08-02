@@ -1,7 +1,11 @@
 import { ProviderRegistry } from "@studio/provider-sdk";
 import {
+  LocalDiskObjectStore,
   MemoryStorageDriver,
+  S3ObjectStore,
+  recoverInterruptedJobs,
   registerConfiguredProviders,
+  type ObjectStore,
   type StorageDriver,
 } from "@studio/shared";
 import {
@@ -11,7 +15,14 @@ import {
 } from "@studio/creative-engine";
 import { loadEnv } from "./env.js";
 import { buildServer } from "./server.js";
-import { MemoryGenerationQueue, RedisGenerationQueue, type GenerationQueue } from "./queue.js";
+import {
+  MemoryGenerationQueue,
+  MemoryRenderQueue,
+  RedisGenerationQueue,
+  RedisRenderQueue,
+  type GenerationQueue,
+  type RenderQueue,
+} from "./queue.js";
 
 async function main(): Promise<void> {
   const env = loadEnv();
@@ -28,6 +39,26 @@ async function main(): Promise<void> {
     );
   }
 
+  const dataDir = process.env["DATA_DIR"] ?? `${process.cwd()}/data`;
+  let objectStore: ObjectStore;
+  if (env.OBJECT_STORE === "s3") {
+    objectStore = new S3ObjectStore({
+      endpoint: env.S3_ENDPOINT as string,
+      accessKeyId: env.S3_ACCESS_KEY as string,
+      secretAccessKey: env.S3_SECRET_KEY as string,
+      bucket: env.S3_BUCKET as string,
+    });
+    console.log(`[objects] S3/MinIO deposu aktif: ${env.S3_ENDPOINT}/${env.S3_BUCKET}`);
+  } else {
+    objectStore = new LocalDiskObjectStore(`${dataDir}/objects`);
+    console.log(`[objects] yerel disk deposu: ${dataDir}/objects`);
+    if (env.QUEUE_DRIVER === "redis") {
+      console.warn(
+        "[objects] UYARI: redis kuyruğu + disk deposu yalnızca API ve worker AYNI makinede ve aynı DATA_DIR ile çalışırken doğrudur; dağıtık kurulumda OBJECT_STORE=s3 kullanın.",
+      );
+    }
+  }
+
   const registry = new ProviderRegistry();
   const providers = registerConfiguredProviders(registry, {
     FAL_API_KEY: process.env["FAL_API_KEY"],
@@ -35,14 +66,18 @@ async function main(): Promise<void> {
   });
   console.log(`[providers] kayıtlı sağlayıcılar: ${providers.registered.join(", ")}`);
 
+  const rendersDir = `${dataDir}/renders`;
   let queue: GenerationQueue;
+  let renderQueue: RenderQueue;
   if (env.QUEUE_DRIVER === "redis") {
     queue = new RedisGenerationQueue(env.REDIS_URL as string);
+    renderQueue = new RedisRenderQueue(env.REDIS_URL as string);
     console.log(
-      "[queue] BullMQ/Redis kuyruğu aktif — apps/worker sürecinin çalıştığından emin olun.",
+      "[queue] BullMQ/Redis kuyrukları aktif (üretim + render) — apps/worker sürecinin çalıştığından emin olun.",
     );
   } else {
-    queue = new MemoryGenerationQueue({ storage, registry });
+    queue = new MemoryGenerationQueue({ storage, registry, objectStore });
+    renderQueue = new MemoryRenderQueue({ storage, rendersDir, objectStore });
     console.warn("[dev] QUEUE_DRIVER=memory: işler API süreci içinde işleniyor.");
   }
 
@@ -59,11 +94,25 @@ async function main(): Promise<void> {
     );
   }
 
-  const app = buildServer({ storage, registry, queue, scriptGenerator });
+  // Crash recovery: önceki çalışmadan 'running' kalmış işler retryable failed yapılır.
+  // (redis modunda bu işi worker da yapar; işlem idempotenttir.)
+  await recoverInterruptedJobs(storage, console.warn);
+
+  const app = buildServer({
+    storage,
+    registry,
+    queue,
+    scriptGenerator,
+    objectStore,
+    renderQueue,
+    rendersDir,
+    enableLogger: true,
+  });
 
   const shutdown = async () => {
     await app.close();
     await queue.close();
+    await renderQueue.close();
     process.exit(0);
   };
   process.on("SIGINT", shutdown);
