@@ -9,3 +9,4 @@ coverage/
 .env.*.local
 /data/
 apps/desktop/src-tauri/target/
+dump.rdb
