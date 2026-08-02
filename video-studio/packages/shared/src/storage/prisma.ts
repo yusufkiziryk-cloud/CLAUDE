@@ -237,6 +237,8 @@ export class PrismaStorageDriver implements StorageDriver {
       "characterNames",
       "storyboardJobId",
       "storyboardAssetId",
+      "narrationJobId",
+      "narrationAssetId",
     ] as const) {
       if (patch[key] !== undefined) data[key] = patch[key];
     }
@@ -359,6 +361,11 @@ export class PrismaStorageDriver implements StorageDriver {
 
   async findSceneByStoryboardJob(jobId: string): Promise<Scene | null> {
     const row = await this.db.scene.findFirst({ where: { storyboardJobId: jobId } });
+    return row ? fromSceneRow(row) : null;
+  }
+
+  async findSceneByNarrationJob(jobId: string): Promise<Scene | null> {
+    const row = await this.db.scene.findFirst({ where: { narrationJobId: jobId } });
     return row ? fromSceneRow(row) : null;
   }
 
@@ -497,6 +504,8 @@ function toSceneRow(s: Scene) {
     prompt: s.prompt as object,
     storyboardJobId: s.storyboardJobId ?? null,
     storyboardAssetId: s.storyboardAssetId ?? null,
+    narrationJobId: s.narrationJobId ?? null,
+    narrationAssetId: s.narrationAssetId ?? null,
     createdAt: new Date(s.createdAt),
     updatedAt: new Date(s.updatedAt),
   };
@@ -518,6 +527,8 @@ function fromSceneRow(row: SceneRow): Scene {
     prompt: row.prompt,
     storyboardJobId: row.storyboardJobId ?? undefined,
     storyboardAssetId: row.storyboardAssetId ?? undefined,
+    narrationJobId: row.narrationJobId ?? undefined,
+    narrationAssetId: row.narrationAssetId ?? undefined,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   });

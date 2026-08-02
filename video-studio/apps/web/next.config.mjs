@@ -5,6 +5,7 @@ const nextConfig = {
     "@studio/domain",
     "@studio/prompt-engine",
     "@studio/timeline-engine",
+    "@studio/captions",
   ],
 };
 

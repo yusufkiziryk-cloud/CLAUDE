@@ -72,11 +72,17 @@ export async function processGenerationJob(jobId: string, deps: ProcessorDeps): 
         const result = await adapter.normalizeResult(status.raw);
         const assets = await persistArtifacts(job, result, storage, deps.objectStore);
 
-        // Sunucu tarafı bağlama: bu iş bir sahnenin storyboard'uysa varlığı sahneye yaz.
-        const scene = await storage.findSceneByStoryboardJob(jobId);
-        if (scene && assets[0]) {
-          await storage.updateScene(scene.id, { storyboardAssetId: assets[0].id });
-          log("Storyboard varlığı sahneye bağlandı", { jobId, sceneId: scene.id });
+        // Sunucu tarafı bağlama: bu iş bir sahnenin storyboard'u veya seslendirmesiyse
+        // üretilen varlık sahneye yazılır.
+        const storyboardScene = await storage.findSceneByStoryboardJob(jobId);
+        if (storyboardScene && assets[0]) {
+          await storage.updateScene(storyboardScene.id, { storyboardAssetId: assets[0].id });
+          log("Storyboard varlığı sahneye bağlandı", { jobId, sceneId: storyboardScene.id });
+        }
+        const narrationScene = await storage.findSceneByNarrationJob(jobId);
+        if (narrationScene && assets[0]) {
+          await storage.updateScene(narrationScene.id, { narrationAssetId: assets[0].id });
+          log("Seslendirme varlığı sahneye bağlandı", { jobId, sceneId: narrationScene.id });
         }
         await storage.updateGenerationJob(jobId, {
           status: "succeeded",

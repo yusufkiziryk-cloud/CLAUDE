@@ -1,12 +1,13 @@
 # 🎬 AI Video Üretim ve Kurgu Stüdyosu
 
 Türkçe öncelikli, web + Windows masaüstü hedefli yapay zekâ video üretim ve kurgu
-stüdyosu. **Şu an Faz 5 tamamlandı**: nesne depolama soyutlaması (yerel disk / S3-MinIO),
-medya yükleme, üretim VE render işlerinin ayrı worker sürecinde koşması
-(BullMQ + Redis), render iptali, açılışta crash recovery ve yapılandırılmış log.
-Tam yığın (PostgreSQL + Redis + ayrı worker) canlı doğrulandı. Önceki fazlar:
-timeline + FFmpeg dışa aktarma (Faz 4), senaryo/storyboard (Faz 3), prompt
-stüdyosu v2 + gerçek adaptörler (Faz 2), mock üretim hattı (Faz 1).
+stüdyosu. **Şu an Faz 6 tamamlandı**: sahne başına seslendirme (TTS — anahtarsızda gerçek
+WAV üreten MOCK, OPENAI_API_KEY ile gpt-4o-mini-tts), sahnelerden tek tıkla
+animatic kurgusu (storyboard + anlatıcı sesi + başlıklar → timeline), SRT/VTT
+altyazı motoru + editörü (sahnelerden üretim, içe/dışa aktarma, metin track'ine
+uygulama), Whisper transkripsiyon ucu ve lip-sync/avatar için rıza politikası.
+Önceki fazlar: bulut depolama + işçi ayrımı (Faz 5), timeline + FFmpeg (Faz 4),
+senaryo/storyboard (Faz 3), prompt stüdyosu + gerçek adaptörler (Faz 2).
 
 > Faz planı ve mimari için: [`../docs/video-studio/FAZ0-KESIF-VE-TASARIM.md`](../docs/video-studio/FAZ0-KESIF-VE-TASARIM.md)
 > Mimari kararlar için: [`docs/adr/`](docs/adr/)

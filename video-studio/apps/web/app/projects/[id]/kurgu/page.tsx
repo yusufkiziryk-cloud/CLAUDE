@@ -25,6 +25,8 @@ import {
   TextInput,
 } from "@studio/ui";
 import { API_URL, api, ApiError, resolveAssetUrl, uploadAsset } from "@/lib/api";
+import { CaptionPanel } from "@/components/caption-panel";
+import type { CaptionCue } from "@studio/captions";
 
 const PX_PER_SEC = 40;
 
@@ -146,6 +148,29 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
         assetId: asset.id,
       }),
     );
+  }
+
+  function applyCaptions(cues: CaptionCue[]) {
+    if (!sequence) return;
+    const track = sequence.tracks.find((t) => t.kind === "text");
+    if (!track) return setError("Metin track'i bulunamadı.");
+    apply((s) => {
+      // Tek geri-alınabilir adım: mevcut metin klipleri temizlenir, cue'lar eklenir.
+      let next = s;
+      const current = next.tracks.find((t) => t.id === track.id)!;
+      for (const clip of [...current.clips]) {
+        next = removeClip(next, track.id, clip.id);
+      }
+      for (const cue of cues) {
+        next = addClip(next, {
+          trackId: track.id,
+          startSec: cue.startSec,
+          durationSec: Math.max(0.2, cue.endSec - cue.startSec),
+          text: cue.text,
+        });
+      }
+      return next;
+    });
   }
 
   function addTextClip() {
@@ -396,6 +421,8 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
           </div>
         </Card>
       </div>
+
+      <CaptionPanel projectId={id} onApply={applyCaptions} />
     </div>
   );
 }

@@ -162,6 +162,25 @@ export const api = {
   listScenes: (projectId: string) => request<{ scenes: Scene[] }>(`/projects/${projectId}/scenes`),
   updateScene: (sceneId: string, patch: UpdateSceneInput) =>
     request<Scene>(`/scenes/${sceneId}`, { method: "PATCH", body: JSON.stringify(patch) }),
+  createNarration: (sceneId: string, providerId: string, modelId: string) =>
+    request<GenerationJob>(`/scenes/${sceneId}/narration`, {
+      method: "POST",
+      body: JSON.stringify({ providerId, modelId }),
+    }),
+  createAnimatic: (projectId: string) =>
+    request<{ sequence: Sequence; warnings: string[] }>(
+      `/projects/${projectId}/sequence/from-scenes`,
+      { method: "POST", body: JSON.stringify({}) },
+    ),
+  transcribeAsset: (assetId: string, language?: string) =>
+    request<{
+      text: string;
+      cues: { startSec: number; endSec: number; text: string }[];
+      engine: string;
+    }>(`/assets/${assetId}/transcribe`, {
+      method: "POST",
+      body: JSON.stringify(language ? { language } : {}),
+    }),
   createStoryboard: (sceneId: string, providerId: string, modelId: string) =>
     request<GenerationJob>(`/scenes/${sceneId}/storyboard`, {
       method: "POST",

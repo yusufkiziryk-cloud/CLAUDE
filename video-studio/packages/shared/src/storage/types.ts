@@ -69,6 +69,7 @@ export interface StorageDriver {
   // Crash recovery + sunucu tarafı bağlama
   listGenerationJobsByStatus(status: GenerationJobStatus): Promise<GenerationJob[]>;
   findSceneByStoryboardJob(jobId: string): Promise<Scene | null>;
+  findSceneByNarrationJob(jobId: string): Promise<Scene | null>;
 
   // Üretim işleri
   createGenerationJob(job: GenerationJob): Promise<GenerationJob>;

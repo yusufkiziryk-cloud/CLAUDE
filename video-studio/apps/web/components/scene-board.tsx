@@ -30,6 +30,18 @@ export function SceneBoard({ projectId, refreshKey }: { projectId: string; refre
   const [imageModelId, setImageModelId] = useState("");
   const imageModel = imageModels.find((m) => m.id === imageModelId) ?? imageModels[0];
 
+  const ttsModels = useMemo(
+    () =>
+      providers.flatMap((p) =>
+        p.models
+          .filter((m) => m.capabilities.includes("textToSpeech"))
+          .map((m) => ({ ...m, providerMock: p.mock })),
+      ),
+    [providers],
+  );
+  const ttsModel = ttsModels[0];
+  const [animaticResult, setAnimaticResult] = useState<string[] | null>(null);
+
   const refresh = useCallback(async () => {
     try {
       const [scriptsRes, scenesRes, continuityRes] = await Promise.all([
@@ -54,23 +66,30 @@ export function SceneBoard({ projectId, refreshKey }: { projectId: string; refre
   }, [refresh, refreshKey]);
 
   // Storyboard job'ı süren sahneler varken canlı takip; biten job'ın varlığı sahneye bağlanır.
-  const pending = scenes.filter((s) => s.storyboardJobId && !s.storyboardAssetId);
+  const pending = scenes.filter(
+    (s) => (s.storyboardJobId && !s.storyboardAssetId) || (s.narrationJobId && !s.narrationAssetId),
+  );
   useEffect(() => {
     if (pending.length === 0) return;
     const timer = setInterval(async () => {
       for (const scene of pending) {
-        try {
-          const job = await api.getGeneration(scene.storyboardJobId as string);
-          if (job.status === "succeeded") {
-            // Varlık sunucu tarafında sahneye bağlanır (Faz 5); yalnızca tazeleriz.
-            await refresh();
-          } else if (["failed", "expired", "cancelled"].includes(job.status)) {
-            setError(job.error?.userMessage ?? "Storyboard üretimi başarısız oldu.");
-            await api.updateScene(scene.id, { storyboardJobId: "" });
-            await refresh();
+        const jobIds = [
+          scene.storyboardAssetId ? null : scene.storyboardJobId,
+          scene.narrationAssetId ? null : scene.narrationJobId,
+        ].filter(Boolean) as string[];
+        for (const jobId of jobIds) {
+          try {
+            const job = await api.getGeneration(jobId);
+            if (job.status === "succeeded") {
+              // Varlık sunucu tarafında sahneye bağlanır; yalnızca tazeleriz.
+              await refresh();
+            } else if (["failed", "expired", "cancelled"].includes(job.status)) {
+              setError(job.error?.userMessage ?? "Üretim başarısız oldu.");
+              await refresh();
+            }
+          } catch {
+            // geçici hata
           }
-        } catch {
-          // geçici hata
         }
       }
     }, 1500);
@@ -164,6 +183,37 @@ export function SceneBoard({ projectId, refreshKey }: { projectId: string; refre
           />
         ) : (
           <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                disabled={busy !== null}
+                onClick={() =>
+                  void run("animatic", async () => {
+                    const result = await api.createAnimatic(projectId);
+                    setAnimaticResult(result.warnings);
+                  })
+                }
+              >
+                {busy === "animatic" ? "Oluşturuluyor…" : "🎞 Animatic Oluştur (Kurgu'ya gönder)"}
+              </Button>
+              {animaticResult !== null ? (
+                <a
+                  href={`/projects/${projectId}/kurgu`}
+                  className="text-xs text-indigo-400 hover:underline"
+                >
+                  Kurgu sayfasını aç →
+                </a>
+              ) : null}
+            </div>
+            {animaticResult !== null && animaticResult.length > 0 ? (
+              <ul className="space-y-0.5">
+                {animaticResult.map((w) => (
+                  <li key={w} className="text-xs text-amber-400">
+                    ⚠ {w}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <div className="flex items-center gap-2 text-xs text-zinc-400">
               <span>Storyboard modeli:</span>
               <Select
@@ -229,9 +279,30 @@ export function SceneBoard({ projectId, refreshKey }: { projectId: string; refre
                         ? "Üretiliyor…"
                         : "🎬 Storyboard"}
                     </Button>
+                    <Button
+                      variant="secondary"
+                      className="shrink-0 px-2 py-1 text-xs"
+                      disabled={
+                        !ttsModel ||
+                        busy !== null ||
+                        Boolean(scene.narrationJobId && !scene.narrationAssetId)
+                      }
+                      onClick={() =>
+                        void run("tts", () =>
+                          api.createNarration(scene.id, ttsModel!.providerId, ttsModel!.id),
+                        )
+                      }
+                    >
+                      {scene.narrationJobId && !scene.narrationAssetId
+                        ? "Üretiliyor…"
+                        : "🎙 Seslendir"}
+                    </Button>
                   </div>
                   {scene.storyboardAssetId ? (
                     <StoryboardThumb assetId={scene.storyboardAssetId} />
+                  ) : null}
+                  {scene.narrationAssetId ? (
+                    <NarrationPlayer assetId={scene.narrationAssetId} />
                   ) : null}
                 </li>
               ))}
@@ -270,6 +341,18 @@ export function SceneBoard({ projectId, refreshKey }: { projectId: string; refre
       </Card>
     </div>
   );
+}
+
+function NarrationPlayer({ assetId }: { assetId: string }) {
+  const [uri, setUri] = useState<string | null>(null);
+  useEffect(() => {
+    api
+      .getAsset(assetId)
+      .then((a) => setUri(resolveAssetUrl(a.uri)))
+      .catch(() => {});
+  }, [assetId]);
+  if (!uri) return null;
+  return <audio src={uri} controls className="mt-2 h-8 w-full" aria-label="Sahne seslendirmesi" />;
 }
 
 function StoryboardThumb({ assetId }: { assetId: string }) {

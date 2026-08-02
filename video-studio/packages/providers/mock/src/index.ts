@@ -15,6 +15,7 @@ import type {
 import { validateParams } from "@studio/provider-sdk";
 import { compileToText } from "@studio/prompt-engine";
 import { buildPlaceholderPng } from "./png.js";
+import { buildMockMusicWav, buildMockNarrationWav } from "./wav.js";
 
 export const MOCK_PROVIDER_ID = "mock";
 
@@ -94,6 +95,59 @@ const MANIFEST: ProviderManifest = {
       },
       delivery: "polling",
       safety: { restrictions: ["Gerçek üretim yapmaz; yalnızca akış testi içindir."] },
+    },
+    {
+      id: "mock-tts",
+      displayName: "Mock Seslendirme — TTS (DEMO)",
+      providerId: MOCK_PROVIDER_ID,
+      apiVersion: "mock-v1",
+      capabilities: ["textToSpeech"],
+      inputs: { types: ["text"], mimeTypes: [], maxBytes: 0 },
+      options: { durationsSec: [], resolutions: [], fps: [], aspectRatios: [] },
+      promptLimits: { maxChars: 4096, negativePrompt: false },
+      params: {
+        voice: {
+          type: "enum",
+          values: ["mock-kadin", "mock-erkek"],
+          default: "mock-kadin",
+          description: "Ses karakteri (demo)",
+        },
+      },
+      limits: { concurrency: 8, rateLimitPerMin: 120 },
+      pricing: {
+        unit: "character",
+        estimatedUsd: 0,
+        asOf: "2026-08-02",
+        source: "MOCK — ücretsiz demo, gerçek fiyat değildir",
+      },
+      delivery: "polling",
+      safety: {
+        restrictions: [
+          "Gerçek konuşma sentezi YAPMAZ; kelime ritminde bip sesi üretir (akış testi).",
+        ],
+      },
+    },
+    {
+      id: "mock-music",
+      displayName: "Mock Müzik (DEMO)",
+      providerId: MOCK_PROVIDER_ID,
+      apiVersion: "mock-v1",
+      capabilities: ["musicGeneration"],
+      inputs: { types: ["text"], mimeTypes: [], maxBytes: 0 },
+      options: { durationsSec: [], resolutions: [], fps: [], aspectRatios: [] },
+      promptLimits: { maxChars: 2000, negativePrompt: false },
+      params: {},
+      limits: { concurrency: 8, rateLimitPerMin: 120 },
+      pricing: {
+        unit: "second",
+        estimatedUsd: 0,
+        asOf: "2026-08-02",
+        source: "MOCK — ücretsiz demo, gerçek fiyat değildir",
+      },
+      delivery: "polling",
+      safety: {
+        restrictions: ["Gerçek müzik üretimi YAPMAZ; basit arpej döngüsü üretir (akış testi)."],
+      },
     },
     {
       id: "mock-image",
@@ -199,6 +253,16 @@ export class MockProviderAdapter implements MediaProviderAdapter {
         kind: "unsupported",
       });
     }
+    if (request.modelId === "mock-tts") {
+      const speech = request.prompt.audio.narration ?? request.prompt.audio.dialogue ?? "";
+      if (speech.trim().length === 0) {
+        issues.push({
+          field: "audio.narration",
+          message: "Seslendirme için 'anlatıcı' veya 'diyalog' metni gerekli.",
+          kind: "missing",
+        });
+      }
+    }
     const text = compileToText(request.prompt);
     if (text.length > model.promptLimits.maxChars) {
       issues.push({
@@ -231,6 +295,9 @@ export class MockProviderAdapter implements MediaProviderAdapter {
         aspectRatio: request.prompt.output.aspectRatio,
         resolution: request.prompt.output.resolution,
         fps: request.prompt.output.fps,
+        ...(request.modelId === "mock-tts"
+          ? { speechText: request.prompt.audio.narration ?? request.prompt.audio.dialogue ?? "" }
+          : {}),
         ...(request.prompt.output.seed !== undefined ? { seed: request.prompt.output.seed } : {}),
       },
     };
@@ -285,6 +352,34 @@ export class MockProviderAdapter implements MediaProviderAdapter {
 
   async normalizeResult(result: unknown): Promise<CanonicalGenerationResult> {
     const request = result as ProviderRequest;
+
+    // Ses modelleri: GERÇEK çalınabilir WAV üretir (içerik açıkça sentetiktir).
+    if (request.modelId === "mock-tts" || request.modelId === "mock-music") {
+      const { wav, durationSec } =
+        request.modelId === "mock-tts"
+          ? buildMockNarrationWav(String(request.payload["speechText"] ?? "mock"))
+          : buildMockMusicWav(Number(request.payload["durationSec"] ?? 8));
+      return {
+        artifacts: [
+          {
+            kind: "audio",
+            url: `data:audio/wav;base64,${wav.toString("base64")}`,
+            mimeType: "audio/wav",
+            durationSec,
+          },
+        ],
+        provenance: {
+          providerId: MOCK_PROVIDER_ID,
+          modelId: request.modelId,
+          parameters: { durationSec },
+          costUsd: 0,
+          generatedAt: new Date().toISOString(),
+          mock: true,
+        },
+        actualCostUsd: 0,
+      };
+    }
+
     // PNG (SVG değil): timeline/FFmpeg render hattıyla doğrudan uyumlu yer tutucu.
     // MOCK/DEMO etiketi arayüzde provenance.mock üzerinden gösterilir.
     const png = buildPlaceholderPng(640, 360);
@@ -312,3 +407,4 @@ export class MockProviderAdapter implements MediaProviderAdapter {
 }
 
 export { buildPlaceholderPng, encodePng } from "./png.js";
+export { buildMockMusicWav, buildMockNarrationWav } from "./wav.js";

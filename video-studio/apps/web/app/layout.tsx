@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Projeler
             </Link>
             <span className="ml-auto rounded bg-zinc-700 px-2 py-0.5 text-xs font-semibold text-zinc-200">
-              Faz 5 — bulut depolama + ayrı işçi süreçleri hazır
+              Faz 6 — seslendirme, animatic ve altyazılar hazır (anahtarsız mod: MOCK)
             </span>
           </nav>
         </header>

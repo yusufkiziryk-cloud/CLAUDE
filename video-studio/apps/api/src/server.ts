@@ -13,12 +13,19 @@ import {
   type PromptVersion,
 } from "@studio/domain";
 import type { ProviderRegistry } from "@studio/provider-sdk";
-import { LocalDiskObjectStore, type ObjectStore, type StorageDriver } from "@studio/shared";
+import {
+  LocalDiskObjectStore,
+  MockTranscriber,
+  type ObjectStore,
+  type StorageDriver,
+  type Transcriber,
+} from "@studio/shared";
 import type { ScriptGenerator } from "@studio/creative-engine";
 import { MemoryRenderQueue, type GenerationQueue, type RenderQueue } from "./queue.js";
 import { registerCreativeRoutes } from "./routes-creative.js";
 import { registerTimelineRoutes } from "./routes-timeline.js";
 import { registerFileRoutes } from "./routes-files.js";
+import { registerAudioRoutes } from "./routes-audio.js";
 
 export interface ServerDeps {
   storage: StorageDriver;
@@ -33,6 +40,8 @@ export interface ServerDeps {
   renderQueue?: RenderQueue;
   /** Yapılandırılmış log (pino) — testlerde kapalı tutulur. */
   enableLogger?: boolean;
+  /** Transkripsiyon motoru (varsayılan: MOCK — arayüzde açıkça etiketlenir). */
+  transcriber?: Transcriber;
 }
 
 const CreatePromptVersionBody = z.object({
@@ -70,6 +79,13 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   registerCreativeRoutes(app, { storage, registry, queue, scriptGenerator });
   registerTimelineRoutes(app, { storage, rendersDir, renderQueue });
   registerFileRoutes(app, { storage, objectStore });
+  registerAudioRoutes(app, {
+    storage,
+    registry,
+    queue,
+    objectStore,
+    transcriber: deps.transcriber ?? new MockTranscriber(),
+  });
 
   void app.register(cors, {
     // Faz 1 geliştirme modu: yerel web istemcisi. Üretim sertleştirmesi Faz 8'dedir.
@@ -233,6 +249,21 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     const idempotencyKey = input.idempotencyKey ?? newId("idem");
     const existing = await storage.findJobByIdempotencyKey(idempotencyKey);
     if (existing) return reply.status(200).send(existing);
+
+    // Politika katmanı: dudak senkronu / avatar üretimi, gerçek kişi kötüye
+    // kullanımına açık olduğundan açık rıza onayı olmadan ÇALIŞTIRILMAZ.
+    if (["lipSync", "avatarVideo"].includes(input.request.capability)) {
+      if (input.request.params["consentConfirmed"] !== true) {
+        return reply.status(403).send({
+          code: "CONSENT_REQUIRED",
+          userMessage:
+            "Dudak senkronu/avatar üretimi için ilgili kişilerin açık rızasının alındığını onaylamanız gerekir (params.consentConfirmed=true).",
+          retryable: false,
+          correlationId: request.id,
+        });
+      }
+      delete input.request.params["consentConfirmed"];
+    }
 
     const adapter = registry.get(input.request.providerId);
     const validation = adapter.validate(input.request);

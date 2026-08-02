@@ -81,6 +81,8 @@ export const SceneSchema = z.object({
   prompt: VideoPromptSchema,
   storyboardJobId: z.string().optional(),
   storyboardAssetId: z.string().optional(),
+  narrationJobId: z.string().optional(),
+  narrationAssetId: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -96,6 +98,8 @@ export const UpdateSceneInput = z.object({
   characterNames: z.array(z.string().max(200)).optional(),
   storyboardJobId: z.string().optional(),
   storyboardAssetId: z.string().optional(),
+  narrationJobId: z.string().optional(),
+  narrationAssetId: z.string().optional(),
 });
 export type UpdateSceneInput = z.infer<typeof UpdateSceneInput>;
 

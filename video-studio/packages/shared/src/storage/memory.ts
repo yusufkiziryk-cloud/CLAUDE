@@ -208,6 +208,13 @@ export class MemoryStorageDriver implements StorageDriver {
     return null;
   }
 
+  async findSceneByNarrationJob(jobId: string): Promise<Scene | null> {
+    for (const scene of this.scenes.values()) {
+      if (scene.narrationJobId === jobId) return scene;
+    }
+    return null;
+  }
+
   async updateRenderJob(id: string, patch: Partial<RenderJob>): Promise<RenderJob> {
     const current = this.renderJobs.get(id);
     if (!current) throw new Error(`Render işi bulunamadı: ${id}`);

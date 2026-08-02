@@ -2,6 +2,8 @@ import { ProviderRegistry } from "@studio/provider-sdk";
 import {
   LocalDiskObjectStore,
   MemoryStorageDriver,
+  MockTranscriber,
+  OpenAITranscriber,
   S3ObjectStore,
   recoverInterruptedJobs,
   registerConfiguredProviders,
@@ -94,6 +96,13 @@ async function main(): Promise<void> {
     );
   }
 
+  const transcriber = openaiKey
+    ? new OpenAITranscriber({ apiKey: openaiKey })
+    : new MockTranscriber();
+  if (!openaiKey) {
+    console.warn("[stt] OPENAI_API_KEY yok → transkripsiyon MOCK (gerçek konuşma tanıma değil).");
+  }
+
   // Crash recovery: önceki çalışmadan 'running' kalmış işler retryable failed yapılır.
   // (redis modunda bu işi worker da yapar; işlem idempotenttir.)
   await recoverInterruptedJobs(storage, console.warn);
@@ -106,6 +115,7 @@ async function main(): Promise<void> {
     objectStore,
     renderQueue,
     rendersDir,
+    transcriber,
     enableLogger: true,
   });
 
