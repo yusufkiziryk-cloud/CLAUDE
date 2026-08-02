@@ -1,10 +1,14 @@
 import type {
   Asset,
+  BibleCard,
+  CreativeBrief,
   GenerationJob,
   GenerationJobStatus,
   Project,
   PromptTemplate,
   PromptVersion,
+  Scene,
+  Script,
 } from "@studio/domain";
 
 /**
@@ -34,6 +38,22 @@ export interface StorageDriver {
   createPromptTemplate(template: PromptTemplate): Promise<PromptTemplate>;
   listPromptTemplates(): Promise<PromptTemplate[]>;
   deletePromptTemplate(id: string): Promise<boolean>;
+
+  // Yaratıcı ön prodüksiyon (Faz 3)
+  upsertBrief(brief: CreativeBrief): Promise<CreativeBrief>;
+  getBrief(projectId: string): Promise<CreativeBrief | null>;
+  createScript(script: Script): Promise<Script>;
+  listScripts(projectId: string): Promise<Script[]>;
+  getScript(id: string): Promise<Script | null>;
+  /** Bir senaryonun sahne setini atomik olarak değiştirir (yeniden planlama). */
+  replaceScenes(scriptId: string, scenes: Scene[]): Promise<Scene[]>;
+  listScenes(projectId: string): Promise<Scene[]>;
+  getScene(id: string): Promise<Scene | null>;
+  updateScene(id: string, patch: Partial<Scene>): Promise<Scene>;
+  createBibleCard(card: BibleCard): Promise<BibleCard>;
+  listBibleCards(projectId: string): Promise<BibleCard[]>;
+  updateBibleCard(id: string, patch: Partial<BibleCard>): Promise<BibleCard>;
+  deleteBibleCard(id: string): Promise<boolean>;
 
   // Üretim işleri
   createGenerationJob(job: GenerationJob): Promise<GenerationJob>;

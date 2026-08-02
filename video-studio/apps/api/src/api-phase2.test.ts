@@ -4,6 +4,7 @@ import { ProviderRegistry } from "@studio/provider-sdk";
 import { MockProviderAdapter, MOCK_PROVIDER_ID } from "@studio/provider-mock";
 import { MemoryStorageDriver } from "@studio/shared";
 import { sampleGenerationRequest } from "@studio/test-utils";
+import { TemplateScriptGenerator } from "@studio/creative-engine";
 import { buildServer } from "./server.js";
 import { MemoryGenerationQueue } from "./queue.js";
 
@@ -17,6 +18,7 @@ beforeEach(() => {
     storage,
     registry,
     queue: new MemoryGenerationQueue({ storage, registry, pollIntervalMs: 1 }),
+    scriptGenerator: new TemplateScriptGenerator(),
   });
 });
 

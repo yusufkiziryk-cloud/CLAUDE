@@ -1,15 +1,23 @@
 import { PrismaClient } from "@prisma/client";
 import {
   AssetSchema,
+  BibleCardSchema,
+  CreativeBriefSchema,
   GenerationJobSchema,
   ProjectSchema,
   PromptTemplateSchema,
   PromptVersionSchema,
+  SceneSchema,
+  ScriptSchema,
   type Asset,
+  type BibleCard,
+  type CreativeBrief,
   type GenerationJob,
   type Project,
   type PromptTemplate,
   type PromptVersion,
+  type Scene,
+  type Script,
 } from "@studio/domain";
 import type { StorageDriver } from "./types.js";
 
@@ -140,6 +148,149 @@ export class PrismaStorageDriver implements StorageDriver {
     }
   }
 
+  async upsertBrief(brief: CreativeBrief): Promise<CreativeBrief> {
+    const data = {
+      audience: brief.audience,
+      goal: brief.goal,
+      tone: brief.tone,
+      platform: brief.platform,
+      cta: brief.cta ?? null,
+      keyMessages: brief.keyMessages,
+      notes: brief.notes ?? null,
+    };
+    const row = await this.db.creativeBrief.upsert({
+      where: { projectId: brief.projectId },
+      create: { id: brief.id, projectId: brief.projectId, ...data },
+      update: data,
+    });
+    return fromBriefRow(row);
+  }
+
+  async getBrief(projectId: string): Promise<CreativeBrief | null> {
+    const row = await this.db.creativeBrief.findUnique({ where: { projectId } });
+    return row ? fromBriefRow(row) : null;
+  }
+
+  async createScript(script: Script): Promise<Script> {
+    const row = await this.db.script.create({
+      data: {
+        id: script.id,
+        projectId: script.projectId,
+        briefId: script.briefId ?? null,
+        format: script.format,
+        generator: script.generator,
+        title: script.title,
+        sections: script.sections as object[],
+        createdAt: new Date(script.createdAt),
+      },
+    });
+    return fromScriptRow(row);
+  }
+
+  async listScripts(projectId: string): Promise<Script[]> {
+    const rows = await this.db.script.findMany({
+      where: { projectId },
+      orderBy: { createdAt: "desc" },
+    });
+    return rows.map(fromScriptRow);
+  }
+
+  async getScript(id: string): Promise<Script | null> {
+    const row = await this.db.script.findUnique({ where: { id } });
+    return row ? fromScriptRow(row) : null;
+  }
+
+  async replaceScenes(scriptId: string, scenes: Scene[]): Promise<Scene[]> {
+    await this.db.$transaction([
+      this.db.scene.deleteMany({ where: { scriptId } }),
+      this.db.scene.createMany({ data: scenes.map(toSceneRow) }),
+    ]);
+    return scenes;
+  }
+
+  async listScenes(projectId: string): Promise<Scene[]> {
+    const rows = await this.db.scene.findMany({
+      where: { projectId },
+      orderBy: { order: "asc" },
+    });
+    return rows.map(fromSceneRow);
+  }
+
+  async getScene(id: string): Promise<Scene | null> {
+    const row = await this.db.scene.findUnique({ where: { id } });
+    return row ? fromSceneRow(row) : null;
+  }
+
+  async updateScene(id: string, patch: Partial<Scene>): Promise<Scene> {
+    const data: Record<string, unknown> = {};
+    for (const key of [
+      "title",
+      "summary",
+      "narration",
+      "durationSec",
+      "locationName",
+      "timeOfDay",
+      "characterNames",
+      "storyboardJobId",
+      "storyboardAssetId",
+    ] as const) {
+      if (patch[key] !== undefined) data[key] = patch[key];
+    }
+    if (patch.prompt !== undefined) data["prompt"] = patch.prompt as object;
+    const row = await this.db.scene.update({ where: { id }, data });
+    return fromSceneRow(row);
+  }
+
+  async createBibleCard(card: BibleCard): Promise<BibleCard> {
+    const row = await this.db.bibleCard.create({
+      data: {
+        id: card.id,
+        projectId: card.projectId,
+        kind: card.kind,
+        name: card.name,
+        description: card.description,
+        promptFragment: card.promptFragment ?? null,
+        isRealPerson: card.isRealPerson,
+        consentConfirmed: card.consentConfirmed,
+        createdAt: new Date(card.createdAt),
+        updatedAt: new Date(card.updatedAt),
+      },
+    });
+    return fromBibleRow(row);
+  }
+
+  async listBibleCards(projectId: string): Promise<BibleCard[]> {
+    const rows = await this.db.bibleCard.findMany({
+      where: { projectId },
+      orderBy: { name: "asc" },
+    });
+    return rows.map(fromBibleRow);
+  }
+
+  async updateBibleCard(id: string, patch: Partial<BibleCard>): Promise<BibleCard> {
+    const data: Record<string, unknown> = {};
+    for (const key of [
+      "name",
+      "description",
+      "promptFragment",
+      "isRealPerson",
+      "consentConfirmed",
+    ] as const) {
+      if (patch[key] !== undefined) data[key] = patch[key];
+    }
+    const row = await this.db.bibleCard.update({ where: { id }, data });
+    return fromBibleRow(row);
+  }
+
+  async deleteBibleCard(id: string): Promise<boolean> {
+    try {
+      await this.db.bibleCard.delete({ where: { id } });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async createGenerationJob(job: GenerationJob): Promise<GenerationJob> {
     const row = await this.db.generationJob.create({ data: toJobRow(job) });
     return fromJobRow(row);
@@ -182,6 +333,96 @@ export class PrismaStorageDriver implements StorageDriver {
 
 type ProjectRow = Awaited<ReturnType<PrismaClient["project"]["create"]>>;
 type TemplateRow = Awaited<ReturnType<PrismaClient["promptTemplate"]["create"]>>;
+type BriefRow = Awaited<ReturnType<PrismaClient["creativeBrief"]["create"]>>;
+type ScriptRow = Awaited<ReturnType<PrismaClient["script"]["create"]>>;
+type SceneRow = Awaited<ReturnType<PrismaClient["scene"]["create"]>>;
+type BibleRow = Awaited<ReturnType<PrismaClient["bibleCard"]["create"]>>;
+
+function fromBriefRow(row: BriefRow): CreativeBrief {
+  return CreativeBriefSchema.parse({
+    id: row.id,
+    projectId: row.projectId,
+    audience: row.audience,
+    goal: row.goal,
+    tone: row.tone,
+    platform: row.platform,
+    cta: row.cta ?? undefined,
+    keyMessages: row.keyMessages,
+    notes: row.notes ?? undefined,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  });
+}
+
+function fromScriptRow(row: ScriptRow): Script {
+  return ScriptSchema.parse({
+    id: row.id,
+    projectId: row.projectId,
+    briefId: row.briefId ?? undefined,
+    format: row.format,
+    generator: row.generator,
+    title: row.title,
+    sections: row.sections,
+    createdAt: row.createdAt.toISOString(),
+  });
+}
+
+function toSceneRow(s: Scene) {
+  return {
+    id: s.id,
+    projectId: s.projectId,
+    scriptId: s.scriptId,
+    order: s.order,
+    title: s.title,
+    summary: s.summary,
+    narration: s.narration,
+    durationSec: s.durationSec,
+    locationName: s.locationName ?? null,
+    timeOfDay: s.timeOfDay ?? null,
+    characterNames: s.characterNames,
+    prompt: s.prompt as object,
+    storyboardJobId: s.storyboardJobId ?? null,
+    storyboardAssetId: s.storyboardAssetId ?? null,
+    createdAt: new Date(s.createdAt),
+    updatedAt: new Date(s.updatedAt),
+  };
+}
+
+function fromSceneRow(row: SceneRow): Scene {
+  return SceneSchema.parse({
+    id: row.id,
+    projectId: row.projectId,
+    scriptId: row.scriptId,
+    order: row.order,
+    title: row.title,
+    summary: row.summary,
+    narration: row.narration,
+    durationSec: row.durationSec,
+    locationName: row.locationName ?? undefined,
+    timeOfDay: row.timeOfDay ?? undefined,
+    characterNames: row.characterNames,
+    prompt: row.prompt,
+    storyboardJobId: row.storyboardJobId ?? undefined,
+    storyboardAssetId: row.storyboardAssetId ?? undefined,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  });
+}
+
+function fromBibleRow(row: BibleRow): BibleCard {
+  return BibleCardSchema.parse({
+    id: row.id,
+    projectId: row.projectId,
+    kind: row.kind,
+    name: row.name,
+    description: row.description,
+    promptFragment: row.promptFragment ?? undefined,
+    isRealPerson: row.isRealPerson,
+    consentConfirmed: row.consentConfirmed,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  });
+}
 
 function fromTemplateRow(row: TemplateRow): PromptTemplate {
   return PromptTemplateSchema.parse({

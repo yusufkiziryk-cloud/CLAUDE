@@ -64,6 +64,74 @@ model Asset {
   @@index([projectId])
 }
 
+model CreativeBrief {
+  id          String   @id
+  projectId   String   @unique
+  audience    String
+  goal        String
+  tone        String
+  platform    String
+  cta         String?
+  /// string[] JSON
+  keyMessages Json
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Script {
+  id        String   @id
+  projectId String
+  briefId   String?
+  format    String
+  generator String
+  title     String
+  /// ScriptSection[] JSON
+  sections  Json
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model Scene {
+  id                String   @id
+  projectId         String
+  scriptId          String
+  order             Int
+  title             String
+  summary           String
+  narration         String
+  durationSec       Float
+  locationName      String?
+  timeOfDay         String?
+  /// string[] JSON
+  characterNames    Json
+  /// VideoPrompt JSON
+  prompt            Json
+  storyboardJobId   String?
+  storyboardAssetId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([projectId, order])
+  @@index([scriptId])
+}
+
+model BibleCard {
+  id               String   @id
+  projectId        String
+  kind             String
+  name             String
+  description      String
+  promptFragment   String?
+  isRealPerson     Boolean  @default(false)
+  consentConfirmed Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([projectId])
+}
+
 model PromptTemplate {
   id          String   @id
   name        String

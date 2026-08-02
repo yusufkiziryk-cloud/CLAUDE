@@ -28,6 +28,9 @@ importers:
       "@fastify/cors":
         specifier: ^10.0.2
         version: 10.1.0
+      "@studio/creative-engine":
+        specifier: workspace:*
+        version: link:../../packages/creative-engine
       "@studio/domain":
         specifier: workspace:*
         version: link:../../packages/domain
@@ -160,6 +163,34 @@ importers:
       tsx:
         specifier: ^4.19.2
         version: 4.23.1
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.20.0
+        version: 8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+      vitest:
+        specifier: ^3.0.4
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0)
+
+  packages/creative-engine:
+    dependencies:
+      "@studio/domain":
+        specifier: workspace:*
+        version: link:../domain
+      "@studio/prompt-engine":
+        specifier: workspace:*
+        version: link:../prompt-engine
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      "@types/node":
+        specifier: ^22.10.0
+        version: 22.20.1
+      eslint:
+        specifier: ^9.18.0
+        version: 9.39.5(jiti@2.7.0)
       typescript:
         specifier: ^5.7.3
         version: 5.9.3

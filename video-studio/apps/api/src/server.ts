@@ -14,12 +14,15 @@ import {
 } from "@studio/domain";
 import type { ProviderRegistry } from "@studio/provider-sdk";
 import type { StorageDriver } from "@studio/shared";
+import type { ScriptGenerator } from "@studio/creative-engine";
 import type { GenerationQueue } from "./queue.js";
+import { registerCreativeRoutes } from "./routes-creative.js";
 
 export interface ServerDeps {
   storage: StorageDriver;
   registry: ProviderRegistry;
   queue: GenerationQueue;
+  scriptGenerator: ScriptGenerator;
 }
 
 const CreatePromptVersionBody = z.object({
@@ -36,8 +39,9 @@ const CreateGenerationBody = z.object({
 });
 
 export function buildServer(deps: ServerDeps): FastifyInstance {
-  const { storage, registry, queue } = deps;
+  const { storage, registry, queue, scriptGenerator } = deps;
   const app = Fastify({ logger: false });
+  registerCreativeRoutes(app, { storage, registry, queue, scriptGenerator });
 
   void app.register(cors, {
     // Faz 1 geliştirme modu: yerel web istemcisi. Üretim sertleştirmesi Faz 8'dedir.

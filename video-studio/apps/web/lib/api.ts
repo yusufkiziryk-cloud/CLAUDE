@@ -1,11 +1,20 @@
 import type {
   Asset,
+  BibleCard,
   CanonicalGenerationRequest,
+  ContinuityIssue,
+  CreateBibleCardInput,
   CreateProjectInput,
+  CreativeBrief,
   GenerationJob,
   Project,
   PromptTemplate,
   PromptVersion,
+  Scene,
+  Script,
+  ScriptFormat,
+  UpdateSceneInput,
+  UpsertBriefInput,
   VideoPromptInput,
 } from "@studio/domain";
 import type { EstimateResponse, ProviderManifest } from "./types";
@@ -81,6 +90,7 @@ export const api = {
     request<GenerationJob>(`/generations/${id}/cancel`, { method: "POST" }),
 
   listAssets: (projectId: string) => request<{ assets: Asset[] }>(`/projects/${projectId}/assets`),
+  getAsset: (id: string) => request<Asset>(`/assets/${id}`),
 
   listPromptVersions: (projectId: string) =>
     request<{ promptVersions: PromptVersion[] }>(`/projects/${projectId}/prompts`),
@@ -90,6 +100,46 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ request: generationRequest }),
     }),
+
+  // ---- Faz 3: ön prodüksiyon ----
+  getBrief: (projectId: string) => request<CreativeBrief>(`/projects/${projectId}/brief`),
+  upsertBrief: (projectId: string, input: UpsertBriefInput) =>
+    request<CreativeBrief>(`/projects/${projectId}/brief`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+    }),
+  generateScript: (projectId: string, format: ScriptFormat) =>
+    request<Script>(`/projects/${projectId}/script`, {
+      method: "POST",
+      body: JSON.stringify({ format }),
+    }),
+  listScripts: (projectId: string) =>
+    request<{ scripts: Script[] }>(`/projects/${projectId}/scripts`),
+  planScenes: (scriptId: string) =>
+    request<{ scenes: Scene[] }>(`/scripts/${scriptId}/scenes`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    }),
+  listScenes: (projectId: string) => request<{ scenes: Scene[] }>(`/projects/${projectId}/scenes`),
+  updateScene: (sceneId: string, patch: UpdateSceneInput) =>
+    request<Scene>(`/scenes/${sceneId}`, { method: "PATCH", body: JSON.stringify(patch) }),
+  createStoryboard: (sceneId: string, providerId: string, modelId: string) =>
+    request<GenerationJob>(`/scenes/${sceneId}/storyboard`, {
+      method: "POST",
+      body: JSON.stringify({ providerId, modelId }),
+    }),
+  listBibleCards: (projectId: string) =>
+    request<{ cards: BibleCard[] }>(`/projects/${projectId}/bible`),
+  createBibleCard: (projectId: string, input: CreateBibleCardInput) =>
+    request<BibleCard>(`/projects/${projectId}/bible`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  updateBibleCard: (id: string, patch: Partial<CreateBibleCardInput>) =>
+    request<BibleCard>(`/bible/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
+  deleteBibleCard: (id: string) => request<void>(`/bible/${id}`, { method: "DELETE" }),
+  getContinuity: (projectId: string) =>
+    request<{ issues: ContinuityIssue[] }>(`/projects/${projectId}/continuity`),
 
   listTemplates: () => request<{ templates: PromptTemplate[] }>("/templates"),
   createTemplate: (input: { name: string; description?: string; body: VideoPromptInput }) =>

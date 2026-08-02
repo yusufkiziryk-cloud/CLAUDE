@@ -4,6 +4,11 @@ import {
   registerConfiguredProviders,
   type StorageDriver,
 } from "@studio/shared";
+import {
+  OpenAIScriptGenerator,
+  TemplateScriptGenerator,
+  type ScriptGenerator,
+} from "@studio/creative-engine";
 import { loadEnv } from "./env.js";
 import { buildServer } from "./server.js";
 import { MemoryGenerationQueue, RedisGenerationQueue, type GenerationQueue } from "./queue.js";
@@ -41,7 +46,20 @@ async function main(): Promise<void> {
     console.warn("[dev] QUEUE_DRIVER=memory: işler API süreci içinde işleniyor.");
   }
 
-  const app = buildServer({ storage, registry, queue });
+  // Senaryo üretici: OpenAI anahtarı varsa gerçek LLM; yoksa açıkça etiketli şablon taslağı.
+  let scriptGenerator: ScriptGenerator;
+  const openaiKey = process.env["OPENAI_API_KEY"];
+  if (openaiKey) {
+    scriptGenerator = new OpenAIScriptGenerator({ apiKey: openaiKey });
+    console.log("[script] OpenAI senaryo üretici aktif (gpt-4o-mini).");
+  } else {
+    scriptGenerator = new TemplateScriptGenerator();
+    console.warn(
+      "[script] OPENAI_API_KEY yok → şablon tabanlı taslak üretici kullanılacak (LLM DEĞİL, arayüzde etiketlenir).",
+    );
+  }
+
+  const app = buildServer({ storage, registry, queue, scriptGenerator });
 
   const shutdown = async () => {
     await app.close();

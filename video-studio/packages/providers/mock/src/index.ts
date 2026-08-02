@@ -94,6 +94,31 @@ const MANIFEST: ProviderManifest = {
       delivery: "polling",
       safety: { restrictions: ["Gerçek üretim yapmaz; yalnızca akış testi içindir."] },
     },
+    {
+      id: "mock-image",
+      displayName: "Mock Görsel — Storyboard (DEMO)",
+      providerId: MOCK_PROVIDER_ID,
+      apiVersion: "mock-v1",
+      capabilities: ["textToImage"],
+      inputs: { types: ["text"], mimeTypes: [], maxBytes: 0 },
+      options: {
+        durationsSec: [],
+        resolutions: [],
+        fps: [],
+        aspectRatios: ["16:9", "9:16", "1:1"],
+      },
+      promptLimits: { maxChars: 2000, negativePrompt: true },
+      params: {},
+      limits: { concurrency: 8, rateLimitPerMin: 120 },
+      pricing: {
+        unit: "video",
+        estimatedUsd: 0,
+        asOf: "2026-08-02",
+        source: "MOCK — ücretsiz demo, gerçek fiyat değildir",
+      },
+      delivery: "polling",
+      safety: { restrictions: ["Gerçek üretim yapmaz; storyboard akış testi içindir."] },
+    },
   ],
 };
 
@@ -142,21 +167,31 @@ export class MockProviderAdapter implements MediaProviderAdapter {
     }
     issues.push(...validateParams(request.params, model.params));
     const { output } = request.prompt;
-    if (!model.options.durationsSec.includes(output.durationSec)) {
+    // Boş seçenek listesi "bu boyut bu model için anlamsız" demektir; kontrol atlanır.
+    if (
+      model.options.durationsSec.length > 0 &&
+      !model.options.durationsSec.includes(output.durationSec)
+    ) {
       issues.push({
         field: "output.durationSec",
         message: `Desteklenen süreler: ${model.options.durationsSec.join(", ")} sn.`,
         kind: "unsupported",
       });
     }
-    if (!model.options.aspectRatios.includes(output.aspectRatio)) {
+    if (
+      model.options.aspectRatios.length > 0 &&
+      !model.options.aspectRatios.includes(output.aspectRatio)
+    ) {
       issues.push({
         field: "output.aspectRatio",
         message: `Desteklenen oranlar: ${model.options.aspectRatios.join(", ")}.`,
         kind: "unsupported",
       });
     }
-    if (!model.options.resolutions.includes(output.resolution)) {
+    if (
+      model.options.resolutions.length > 0 &&
+      !model.options.resolutions.includes(output.resolution)
+    ) {
       issues.push({
         field: "output.resolution",
         message: `Desteklenen çözünürlükler: ${model.options.resolutions.join(", ")}.`,

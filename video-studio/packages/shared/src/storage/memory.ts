@@ -1,4 +1,14 @@
-import type { Asset, GenerationJob, Project, PromptTemplate, PromptVersion } from "@studio/domain";
+import type {
+  Asset,
+  BibleCard,
+  CreativeBrief,
+  GenerationJob,
+  Project,
+  PromptTemplate,
+  PromptVersion,
+  Scene,
+  Script,
+} from "@studio/domain";
 import type { StorageDriver } from "./types.js";
 
 /** Harici servis gerektirmeyen geliştirme/test sürücüsü. Süreç yeniden başlayınca veri silinir. */
@@ -63,6 +73,83 @@ export class MemoryStorageDriver implements StorageDriver {
   }
 
   private readonly templates = new Map<string, PromptTemplate>();
+  private readonly briefs = new Map<string, CreativeBrief>(); // key: projectId
+  private readonly scripts = new Map<string, Script>();
+  private readonly scenes = new Map<string, Scene>();
+  private readonly bibleCards = new Map<string, BibleCard>();
+
+  async upsertBrief(brief: CreativeBrief): Promise<CreativeBrief> {
+    this.briefs.set(brief.projectId, brief);
+    return brief;
+  }
+
+  async getBrief(projectId: string): Promise<CreativeBrief | null> {
+    return this.briefs.get(projectId) ?? null;
+  }
+
+  async createScript(script: Script): Promise<Script> {
+    this.scripts.set(script.id, script);
+    return script;
+  }
+
+  async listScripts(projectId: string): Promise<Script[]> {
+    return [...this.scripts.values()]
+      .filter((s) => s.projectId === projectId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async getScript(id: string): Promise<Script | null> {
+    return this.scripts.get(id) ?? null;
+  }
+
+  async replaceScenes(scriptId: string, scenes: Scene[]): Promise<Scene[]> {
+    for (const [id, scene] of this.scenes) {
+      if (scene.scriptId === scriptId) this.scenes.delete(id);
+    }
+    for (const scene of scenes) this.scenes.set(scene.id, scene);
+    return scenes;
+  }
+
+  async listScenes(projectId: string): Promise<Scene[]> {
+    return [...this.scenes.values()]
+      .filter((s) => s.projectId === projectId)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  async getScene(id: string): Promise<Scene | null> {
+    return this.scenes.get(id) ?? null;
+  }
+
+  async updateScene(id: string, patch: Partial<Scene>): Promise<Scene> {
+    const current = this.scenes.get(id);
+    if (!current) throw new Error(`Sahne bulunamadı: ${id}`);
+    const next = { ...current, ...patch, updatedAt: new Date().toISOString() };
+    this.scenes.set(id, next);
+    return next;
+  }
+
+  async createBibleCard(card: BibleCard): Promise<BibleCard> {
+    this.bibleCards.set(card.id, card);
+    return card;
+  }
+
+  async listBibleCards(projectId: string): Promise<BibleCard[]> {
+    return [...this.bibleCards.values()]
+      .filter((c) => c.projectId === projectId)
+      .sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  }
+
+  async updateBibleCard(id: string, patch: Partial<BibleCard>): Promise<BibleCard> {
+    const current = this.bibleCards.get(id);
+    if (!current) throw new Error(`Kart bulunamadı: ${id}`);
+    const next = { ...current, ...patch, updatedAt: new Date().toISOString() };
+    this.bibleCards.set(id, next);
+    return next;
+  }
+
+  async deleteBibleCard(id: string): Promise<boolean> {
+    return this.bibleCards.delete(id);
+  }
 
   async createPromptTemplate(template: PromptTemplate): Promise<PromptTemplate> {
     this.templates.set(template.id, template);

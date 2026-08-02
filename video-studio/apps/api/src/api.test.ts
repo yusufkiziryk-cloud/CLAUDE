@@ -4,6 +4,7 @@ import { ProviderRegistry } from "@studio/provider-sdk";
 import { MockProviderAdapter, MOCK_PROVIDER_ID } from "@studio/provider-mock";
 import { MemoryStorageDriver } from "@studio/shared";
 import { sampleGenerationRequest } from "@studio/test-utils";
+import { TemplateScriptGenerator } from "@studio/creative-engine";
 import { buildServer } from "./server.js";
 import { MemoryGenerationQueue } from "./queue.js";
 
@@ -15,7 +16,7 @@ beforeEach(() => {
   const registry = new ProviderRegistry();
   registry.register(MOCK_PROVIDER_ID, new MockProviderAdapter({ completeAfterPolls: 2 }));
   queue = new MemoryGenerationQueue({ storage, registry, pollIntervalMs: 1 });
-  app = buildServer({ storage, registry, queue });
+  app = buildServer({ storage, registry, queue, scriptGenerator: new TemplateScriptGenerator() });
 });
 
 afterEach(async () => {

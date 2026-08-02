@@ -4,3 +4,4 @@ export * from "./prompt.js";
 export * from "./asset.js";
 export * from "./generation.js";
 export * from "./template.js";
+export * from "./creative.js";
