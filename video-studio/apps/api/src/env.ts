@@ -21,6 +21,8 @@ const EnvSchema = z
     UPLOAD_MAX_MB: z.coerce.number().int().positive().default(200),
     /** Bitmiş iş/varlık saklama süresi (gün). Tanımsız → süpürme KAPALI. */
     DATA_RETENTION_DAYS: z.coerce.number().int().positive().optional(),
+    /** Tanımlıysa API parola korumalıdır (min 8 karakter). Tanımsız → açık geliştirme modu. */
+    AUTH_PASSWORD: z.string().min(8, "AUTH_PASSWORD en az 8 karakter olmalıdır.").optional(),
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === "prisma" && !env.DATABASE_URL) {

@@ -67,6 +67,7 @@ async function main(): Promise<void> {
     FAL_API_KEY: process.env["FAL_API_KEY"],
     OPENAI_API_KEY: process.env["OPENAI_API_KEY"],
     REPLICATE_API_TOKEN: process.env["REPLICATE_API_TOKEN"],
+    REPLICATE_MODELS: process.env["REPLICATE_MODELS"],
     ELEVENLABS_API_KEY: process.env["ELEVENLABS_API_KEY"],
   });
   console.log(`[providers] kayıtlı sağlayıcılar: ${providers.registered.join(", ")}`);
@@ -144,7 +145,15 @@ async function main(): Promise<void> {
     corsOrigin: env.WEB_ORIGIN,
     rateLimitPerMin: env.RATE_LIMIT_PER_MIN === 0 ? false : env.RATE_LIMIT_PER_MIN,
     maxUploadBytes: env.UPLOAD_MAX_MB * 1024 * 1024,
+    ...(env.AUTH_PASSWORD !== undefined ? { authPassword: env.AUTH_PASSWORD } : {}),
   });
+  if (env.AUTH_PASSWORD) {
+    console.log("[auth] parola koruması AÇIK (AUTH_PASSWORD tanımlı; oturum 12 saat).");
+  } else {
+    console.warn(
+      "[auth] AUTH_PASSWORD tanımsız → API KİMLİKSİZ geliştirme modunda. İnternete açmayın!",
+    );
+  }
   if (env.RATE_LIMIT_PER_MIN === 0) {
     console.warn("[security] RATE_LIMIT_PER_MIN=0: istek sınırı KAPALI (yalnızca güvenilir ağda).");
   }

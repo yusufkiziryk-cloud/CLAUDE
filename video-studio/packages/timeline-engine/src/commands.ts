@@ -57,7 +57,14 @@ function sortClips(track: TimelineTrack): void {
 
 export function addTrack(sequence: Sequence, kind: TrackKind, name: string): Sequence {
   const next = clone(sequence);
-  next.tracks.push({ id: newId("trk"), kind, name, order: next.tracks.length, clips: [] });
+  next.tracks.push({
+    id: newId("trk"),
+    kind,
+    name,
+    order: next.tracks.length,
+    duck: false,
+    clips: [],
+  });
   return touch(next);
 }
 

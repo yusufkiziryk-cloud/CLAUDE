@@ -23,6 +23,35 @@ import type { EstimateResponse, ProjectAnalytics, ProviderManifest } from "./typ
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
+// ---- Oturum (API'de AUTH_PASSWORD tanımlıysa) ----
+// Token localStorage'da tutulur: tek kullanıcılı yerel araç için pragmatik seçim;
+// riskleri docs/SECURITY.md'de belgelidir. API anahtarları ASLA istemciye inmez.
+const TOKEN_KEY = "studio_session_token";
+
+export function getAuthToken(): string | null {
+  return typeof window === "undefined" ? null : window.localStorage.getItem(TOKEN_KEY);
+}
+
+export function setAuthToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  if (token) window.localStorage.setItem(TOKEN_KEY, token);
+  else window.localStorage.removeItem(TOKEN_KEY);
+}
+
+function authHeaders(): Record<string, string> {
+  const token = getAuthToken();
+  return token ? { authorization: `Bearer ${token}` } : {};
+}
+
+/** 401 → oturum düşmüş: token temizlenir ve giriş sayfasına yönlendirilir. */
+function handleUnauthorized(): void {
+  if (typeof window === "undefined") return;
+  setAuthToken(null);
+  if (!window.location.pathname.startsWith("/giris")) {
+    window.location.href = "/giris";
+  }
+}
+
 /** Varlık URI'sini görüntülenebilir URL'e çevirir (nesne deposu yolları API'den servis edilir). */
 export function resolveAssetUrl(uri: string): string {
   return uri.startsWith("data:") ? uri : `${API_URL}${uri}`;
@@ -34,9 +63,11 @@ export async function uploadAsset(projectId: string, file: File): Promise<Asset>
   form.append("file", file);
   const response = await fetch(`${API_URL}/projects/${projectId}/assets`, {
     method: "POST",
+    headers: authHeaders(),
     body: form,
   });
   if (!response.ok) {
+    if (response.status === 401) handleUnauthorized();
     const body = (await response.json().catch(() => ({
       code: "UNKNOWN",
       userMessage: "Yükleme başarısız oldu.",
@@ -68,7 +99,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     response = await fetch(`${API_URL}${path}`, {
       ...init,
-      headers: { "content-type": "application/json", ...init?.headers },
+      headers: { "content-type": "application/json", ...authHeaders(), ...init?.headers },
     });
   } catch {
     throw new ApiError(0, {
@@ -76,6 +107,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       userMessage: `API'ye ulaşılamıyor (${API_URL}). API sürecinin çalıştığından emin olun.`,
     });
   }
+  if (response.status === 401 && path !== "/auth/login") handleUnauthorized();
   if (!response.ok) {
     const body = (await response.json().catch(() => ({
       code: "UNKNOWN",
@@ -88,6 +120,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  login: (password: string) =>
+    request<{ token: string; expiresInSec: number }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ password }),
+    }),
+
   listProjects: () => request<{ projects: Project[] }>("/projects"),
   getProject: (id: string) => request<Project>(`/projects/${id}`),
   createProject: (input: CreateProjectInput) =>

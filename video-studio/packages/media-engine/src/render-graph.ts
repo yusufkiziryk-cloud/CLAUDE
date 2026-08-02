@@ -60,8 +60,12 @@ export function buildRenderGraph(
   const videoClips = [...(videoTracks[0]?.clips ?? [])].sort((a, b) => a.startSec - b.startSec);
   const audioClips = sequence.tracks
     .filter((t) => t.kind === "audio")
-    .flatMap((t) => t.clips)
-    .sort((a, b) => a.startSec - b.startSec);
+    .flatMap((t) => t.clips.map((clip) => ({ clip, duck: t.duck })))
+    .sort((a, b) => a.clip.startSec - b.clip.startSec);
+  // Ducking: kısılmayan ses kliplerinin (anlatım/diyalog) çaldığı aralıklar.
+  const speechIntervals: [number, number][] = audioClips
+    .filter((a) => !a.duck)
+    .map((a) => [a.clip.startSec, a.clip.startSec + a.clip.durationSec]);
   const textClips = sequence.tracks.filter((t) => t.kind === "text").flatMap((t) => t.clips);
 
   const { width, height, fps } = options;
@@ -114,10 +118,11 @@ export function buildRenderGraph(
   }
   filters.push(`[${lastVideoLabel}]format=yuv420p${textFilterChain}[vout]`);
 
-  // Ses: klipler adelay+volume ile karıştırılır; hiç yoksa sessizlik üretilir
+  // Ses: klipler adelay+volume ile karıştırılır; hiç yoksa sessizlik üretilir.
+  // duck=true track'lerin klipleri, konuşma aralıklarında %30 seviyeye kısılır.
   if (audioClips.length > 0) {
     const audioLabels: string[] = [];
-    for (const [i, clip] of audioClips.entries()) {
+    for (const [i, { clip, duck }] of audioClips.entries()) {
       const file = requireAsset(assetFiles, clip, "ses");
       if (!SUPPORTED_AUDIO.includes(file.mimeType)) {
         throw new RenderGraphError(`Desteklenmeyen ses türü: ${file.mimeType} (klip ${clip.id}).`);
@@ -126,7 +131,7 @@ export function buildRenderGraph(
       const delayMs = Math.round(clip.startSec * 1000);
       const label = `a${i}`;
       filters.push(
-        `[${inputIndex}:a]volume=${clip.volume.toFixed(2)},adelay=${delayMs}|${delayMs}[${label}]`,
+        `[${inputIndex}:a]${volumeFilter(clip, duck, speechIntervals)},adelay=${delayMs}|${delayMs}[${label}]`,
       );
       audioLabels.push(`[${label}]`);
       inputIndex += 1;
@@ -166,6 +171,38 @@ export function buildRenderGraph(
   ];
 
   return { args, durationSec };
+}
+
+/** Kısılma (%30) çarpanı: müzik konuşmayı bastırmasın diye. */
+const DUCK_FACTOR = 0.3;
+
+/**
+ * Klibin volume filtresi. duck=true ise konuşma aralıklarıyla çakışan bölümlerde
+ * ses `volume * DUCK_FACTOR`a iner. adelay ÖNCE uygulanmadığından aralıklar
+ * klip-yerel zamana çevrilir (t=0 klibin başıdır).
+ */
+function volumeFilter(
+  clip: TimelineClip,
+  duck: boolean,
+  speechIntervals: [number, number][],
+): string {
+  const base = `volume=${clip.volume.toFixed(2)}`;
+  if (!duck) return base;
+  const local = speechIntervals
+    .map(
+      ([start, end]) =>
+        [Math.max(0, start - clip.startSec), Math.min(clip.durationSec, end - clip.startSec)] as [
+          number,
+          number,
+        ],
+    )
+    .filter(([start, end]) => end > start);
+  if (local.length === 0) return base;
+  const condition = local
+    .map(([start, end]) => `between(t,${start.toFixed(3)},${end.toFixed(3)})`)
+    .join("+");
+  const ducked = (clip.volume * DUCK_FACTOR).toFixed(3);
+  return `volume='if(${condition},${ducked},${clip.volume.toFixed(3)})':eval=frame`;
 }
 
 function requireAsset(

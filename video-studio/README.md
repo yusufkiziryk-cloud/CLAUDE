@@ -11,9 +11,15 @@ dokümanları ([docs/RELEASE.md](docs/RELEASE.md), [docs/SECURITY.md](docs/SECUR
 ses/animatic/altyazı (Faz 6), bulut depolama + işçi ayrımı (Faz 5), timeline +
 FFmpeg (Faz 4), senaryo/storyboard (Faz 3), prompt stüdyosu + gerçek adaptörler (Faz 2).
 
-> ⚠ API'de henüz kimlik doğrulama yoktur (tek kullanıcılı yerel mod).
-> İnternete açmadan önce [docs/SECURITY.md](docs/SECURITY.md) bölümündeki
-> "Bilinen sınırlar" listesi tamamlanmalıdır.
+**V1 dalgası da tamamlandı**: opsiyonel parola koruması (`AUTH_PASSWORD` +
+`/giris` sayfası, Bearer oturum token'ı), müzik ducking'i (ses track'inde
+"kıs 🎚" — anlatım çalarken FFmpeg ile %30'a iner), sesten hizalı altyazı
+("🎧 Sesten Üret (STT)" — transkripsiyon cue'ları editöre yüklenir), dinamik
+katalog (ElevenLabs hesap sesleri `GET /v1/voices`'tan; `REPLICATE_MODELS` ile
+kullanıcı tanımlı modeller) ve CI bağımlılık denetimi (`pnpm audit`, temiz).
+
+> ⚠ Tek parola = tek kullanıcı. İnternete açmadan önce
+> [docs/SECURITY.md](docs/SECURITY.md) "Bilinen sınırlar" bölümünü değerlendirin.
 
 > Faz planı ve mimari için: [`../docs/video-studio/FAZ0-KESIF-VE-TASARIM.md`](../docs/video-studio/FAZ0-KESIF-VE-TASARIM.md)
 > Mimari kararlar için: [`docs/adr/`](docs/adr/)

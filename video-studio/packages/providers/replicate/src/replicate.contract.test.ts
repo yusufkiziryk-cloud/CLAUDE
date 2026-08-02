@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { runProviderContractSuite, sampleGenerationRequest } from "@studio/test-utils";
 import type { CanonicalGenerationRequest } from "@studio/domain";
-import { ReplicateProviderAdapter } from "./index.js";
+import {
+  DEFAULT_REPLICATE_MODELS,
+  ReplicateProviderAdapter,
+  parseReplicateModelsEnv,
+} from "./index.js";
 
 /** Fixture'lar resmî OpenAPI spec'e göre yazıldı; testler AĞSIZ çalışır. */
 function fakeReplicateFetch(): typeof fetch {
@@ -74,6 +78,28 @@ describe("replicate adaptörüne özgü davranış", () => {
     expect(headers["Authorization"]).toBe("Bearer gizli");
     const body = JSON.parse(String(calls[0]?.init?.body)) as { input: Record<string, unknown> };
     expect(Object.keys(body.input)).toEqual(["prompt"]);
+  });
+
+  it("REPLICATE_MODELS env'i katalog girdisine çevrilir; geçersiz girdiler atılır", () => {
+    const models = parseReplicateModelsEnv("stability-ai/stable-video, bozuk!!girdi ,a/b");
+    expect(models.map((m) => m.id)).toEqual(["stability-ai/stable-video", "a/b"]);
+    expect(models[0]?.estimatedUsdPerRun).toBe(0); // fiyat uydurulmaz
+    expect(models[0]?.durationsSec).toEqual([]); // süre bilinmez → denetlenmez
+    expect(parseReplicateModelsEnv(undefined)).toEqual([]);
+  });
+
+  it("kullanıcı tanımlı model manifestte görünür ve süresi ne olursa olsun doğrulanır", async () => {
+    const adapter = new ReplicateProviderAdapter({
+      apiToken: "k",
+      fetchImpl: fakeReplicateFetch(),
+      models: [...DEFAULT_REPLICATE_MODELS, ...parseReplicateModelsEnv("acme/video-gen")],
+    });
+    const manifest = await adapter.manifest();
+    expect(manifest.models.map((m) => m.id)).toContain("acme/video-gen");
+
+    const req = replicateRequest({ modelId: "acme/video-gen" });
+    req.prompt.output.durationSec = 12; // varsayılan katalogda geçersiz olurdu
+    expect(adapter.validate(req).ok).toBe(true);
   });
 
   it("çıktı dizisi ve iç içe nesnelerden URL'ler savunmacı toplanır", async () => {

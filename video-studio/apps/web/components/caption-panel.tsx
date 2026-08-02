@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { Asset } from "@studio/domain";
 import { cuesFromScenes, parseCaptions, toSrt, toVtt, type CaptionCue } from "@studio/captions";
-import { Badge, Button, Card, EmptyState, ErrorNote, TextInput } from "@studio/ui";
+import { Badge, Button, Card, EmptyState, ErrorNote, Select, TextInput } from "@studio/ui";
 import { api } from "@/lib/api";
 
 function download(fileName: string, content: string) {
@@ -26,6 +27,40 @@ export function CaptionPanel({
   const [cues, setCues] = useState<CaptionCue[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Sesten hizalı altyazı (STT): projedeki ses varlıkları + kullanılan motor
+  const [audioAssets, setAudioAssets] = useState<Asset[]>([]);
+  const [selectedAudioId, setSelectedAudioId] = useState("");
+  const [sttEngine, setSttEngine] = useState<string | null>(null);
+  const [transcribing, setTranscribing] = useState(false);
+
+  useEffect(() => {
+    api
+      .listAssets(projectId)
+      .then(({ assets }) => {
+        const audio = assets.filter((a) => a.kind === "audio");
+        setAudioAssets(audio);
+        if (audio[0]) setSelectedAudioId(audio[0].id);
+      })
+      .catch(() => {
+        // ses listesi yüklenemedi; STT düğmesi devre dışı kalır
+      });
+  }, [projectId]);
+
+  async function transcribeFromAudio() {
+    if (!selectedAudioId) return;
+    setError(null);
+    setTranscribing(true);
+    try {
+      const result = await api.transcribeAsset(selectedAudioId, "tr");
+      setCues(result.cues.map((c) => ({ startSec: c.startSec, endSec: c.endSec, text: c.text })));
+      setWarnings([]);
+      setSttEngine(result.engine);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setTranscribing(false);
+    }
+  }
 
   async function generateFromScenes() {
     setError(null);
@@ -118,6 +153,41 @@ export function CaptionPanel({
           "Sahnelerden Üret" senaryo metninden türetir (ses dökümü değildir); süreler kelime
           sayısıyla orantılanır.
         </p>
+
+        {/* Sesten hizalı altyazı: transkripsiyon cue'ları zaman damgalıdır */}
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 p-2">
+          <Select
+            aria-label="Transkripsiyon için ses varlığı"
+            value={selectedAudioId}
+            onChange={(e) => setSelectedAudioId(e.target.value)}
+            disabled={audioAssets.length === 0}
+            className="max-w-56 text-xs"
+          >
+            {audioAssets.length === 0 ? <option value="">Ses varlığı yok</option> : null}
+            {audioAssets.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </Select>
+          <Button
+            variant="secondary"
+            className="px-2 py-1 text-xs"
+            disabled={!selectedAudioId || transcribing}
+            onClick={() => void transcribeFromAudio()}
+          >
+            {transcribing ? "Çözümleniyor…" : "🎧 Sesten Üret (STT)"}
+          </Button>
+          {sttEngine ? (
+            sttEngine.toLowerCase().includes("mock") ? (
+              <span className="flex items-center gap-1 text-xs text-zinc-400">
+                <Badge variant="mock">MOCK / DEMO</Badge> gerçek konuşma tanıma değil ({sttEngine})
+              </span>
+            ) : (
+              <span className="text-xs text-zinc-400">motor: {sttEngine}</span>
+            )
+          ) : null}
+        </div>
 
         {error ? <ErrorNote message={error} /> : null}
         {warnings.map((w) => (

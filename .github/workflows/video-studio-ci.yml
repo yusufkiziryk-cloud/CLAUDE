@@ -46,3 +46,7 @@ jobs:
 
       - name: Format kontrolü
         run: pnpm format:check
+
+      - name: Bağımlılık güvenlik denetimi
+        # Yüksek ve üzeri açıklarda CI kırmızı olur; düşük/orta rapor edilir ama engellemez.
+        run: pnpm audit --audit-level high

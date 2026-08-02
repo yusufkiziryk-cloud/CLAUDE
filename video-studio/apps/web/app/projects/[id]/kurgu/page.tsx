@@ -234,7 +234,29 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
             </div>
             {sequence.tracks.map((track) => (
               <div key={track.id} className="mb-1 flex items-center gap-2">
-                <span className="w-16 shrink-0 text-xs text-zinc-400">{track.name}</span>
+                <span className="w-16 shrink-0 text-xs text-zinc-400">
+                  {track.name}
+                  {track.kind === "audio" ? (
+                    <label
+                      className="mt-0.5 flex items-center gap-1 text-[10px] text-zinc-400"
+                      title="Açıkken bu track, diğer ses track'lerinde konuşma çalarken otomatik kısılır (müzik için)."
+                    >
+                      <input
+                        type="checkbox"
+                        checked={track.duck}
+                        onChange={(e) =>
+                          apply((s) => ({
+                            ...s,
+                            tracks: s.tracks.map((t) =>
+                              t.id === track.id ? { ...t, duck: e.target.checked } : t,
+                            ),
+                          }))
+                        }
+                      />
+                      kıs 🎚
+                    </label>
+                  ) : null}
+                </span>
                 <div className="relative h-12 flex-1 rounded bg-zinc-900">
                   {track.clips.map((clip) => (
                     <button

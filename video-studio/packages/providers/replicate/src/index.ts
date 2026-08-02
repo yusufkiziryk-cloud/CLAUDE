@@ -62,6 +62,32 @@ export const DEFAULT_REPLICATE_MODELS: ReplicateModelConfig[] = [
   },
 ];
 
+/**
+ * REPLICATE_MODELS env değerini ("owner/name,owner2/name2") katalog girdilerine çevirir.
+ * Bilinmeyen alanlar UYDURULMAZ: süre listesi boş (denetlenmez), fiyat 0 + "elle doğrulayın".
+ */
+export function parseReplicateModelsEnv(spec: string | undefined): ReplicateModelConfig[] {
+  if (!spec) return [];
+  return spec
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => /^[\w.-]+\/[\w.-]+$/.test(s))
+    .map((id) => ({
+      id,
+      displayName: `${id} (Replicate) — kullanıcı tanımlı`,
+      capabilities: ["textToVideo"],
+      durationsSec: [],
+      aspectRatios: [],
+      maxPromptChars: 2000,
+      estimatedUsdPerRun: 0,
+      pricingAsOf: "bilinmiyor",
+      notes: [
+        "REPLICATE_MODELS ile eklendi: girdi şemasını ve fiyatı model sayfasından doğrulayın.",
+        "Yalnızca 'prompt' alanı gönderilir; ek parametre desteklenmez.",
+      ],
+    }));
+}
+
 interface ReplicatePrediction {
   id: string;
   status: "starting" | "processing" | "succeeded" | "failed" | "canceled" | "aborted";
@@ -154,7 +180,11 @@ export class ReplicateProviderAdapter implements MediaProviderAdapter {
       });
     }
     issues.push(...validateParams(request.params, {}));
-    if (!model.durationsSec.includes(request.prompt.output.durationSec)) {
+    // Kullanıcı tanımlı modellerde (REPLICATE_MODELS) süre listesi bilinmez → denetlenmez.
+    if (
+      model.durationsSec.length > 0 &&
+      !model.durationsSec.includes(request.prompt.output.durationSec)
+    ) {
       issues.push({
         field: "output.durationSec",
         message: `Bu model sabit süre üretir: ${model.durationsSec.join(", ")} sn.`,

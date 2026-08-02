@@ -92,6 +92,7 @@ describe("purgeExpiredData (veri saklama)", () => {
           kind: "video",
           name: "Video",
           order: 0,
+          duck: false,
           clips: [
             {
               id: "c1",

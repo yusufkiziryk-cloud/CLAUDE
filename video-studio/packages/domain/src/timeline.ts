@@ -31,6 +31,8 @@ export const TimelineTrackSchema = z.object({
   kind: TrackKind,
   name: z.string().min(1).max(100),
   order: z.number().int().nonnegative(),
+  /** true ise (ör. müzik) diğer ses track'lerinde konuşma çalarken bu track kısılır. */
+  duck: z.boolean().default(false),
   clips: z.array(TimelineClipSchema).default([]),
 });
 export type TimelineTrack = z.infer<typeof TimelineTrackSchema>;

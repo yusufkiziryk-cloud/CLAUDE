@@ -57,6 +57,7 @@ async function main(): Promise<void> {
     FAL_API_KEY: process.env["FAL_API_KEY"],
     OPENAI_API_KEY: process.env["OPENAI_API_KEY"],
     REPLICATE_API_TOKEN: process.env["REPLICATE_API_TOKEN"],
+    REPLICATE_MODELS: process.env["REPLICATE_MODELS"],
     ELEVENLABS_API_KEY: process.env["ELEVENLABS_API_KEY"],
   });
 

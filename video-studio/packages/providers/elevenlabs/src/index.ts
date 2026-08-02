@@ -61,7 +61,41 @@ export class ElevenLabsProviderAdapter implements MediaProviderAdapter {
     this.baseUrl = options.baseUrl ?? "https://api.elevenlabs.io";
   }
 
+  /**
+   * Hesabınızdaki sesleri resmî GET /v1/voices ucundan çeker (spec ile doğrulandı:
+   * yanıt `{voices: [{voice_id, name, ...}]}`). Ulaşılamazsa statik hazır seslere
+   * düşer — dinamik liste yalnızca arayüz kolaylığıdır, sahte katalog üretilmez.
+   */
+  private async voiceParamSpec(): Promise<ParamSpec> {
+    try {
+      const response = await this.fetchImpl(`${this.baseUrl}/v1/voices`, {
+        headers: { "xi-api-key": this.apiKey },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const body = (await response.json()) as {
+        voices?: { voice_id?: string; name?: string }[];
+      };
+      const voices = (body.voices ?? []).filter(
+        (v): v is { voice_id: string; name?: string } => typeof v.voice_id === "string",
+      );
+      if (voices.length === 0) throw new Error("ses listesi boş");
+      const names = voices
+        .slice(0, 5)
+        .map((v) => v.name ?? v.voice_id)
+        .join(", ");
+      return {
+        type: "enum",
+        values: voices.map((v) => v.voice_id),
+        default: voices[0]?.voice_id as string,
+        description: `Hesabınızdaki ElevenLabs sesleri: ${names}${voices.length > 5 ? ", …" : ""}`,
+      };
+    } catch {
+      return TTS_PARAMS["voiceId"] as ParamSpec; // statik hazır sesler
+    }
+  }
+
   async manifest(): Promise<ProviderManifest> {
+    const voiceId = await this.voiceParamSpec();
     return {
       providerId: ELEVENLABS_PROVIDER_ID,
       displayName: "ElevenLabs (ses)",
@@ -77,7 +111,7 @@ export class ElevenLabsProviderAdapter implements MediaProviderAdapter {
           inputs: { types: ["text"], mimeTypes: [], maxBytes: 0 },
           options: { durationsSec: [], resolutions: [], fps: [], aspectRatios: [] },
           promptLimits: { maxChars: 5000, negativePrompt: false },
-          params: TTS_PARAMS,
+          params: { ...TTS_PARAMS, voiceId },
           limits: { concurrency: 4, rateLimitPerMin: 60 },
           pricing: {
             unit: "character",

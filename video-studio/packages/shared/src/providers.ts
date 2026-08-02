@@ -2,13 +2,20 @@ import type { ProviderRegistry } from "@studio/provider-sdk";
 import { MockProviderAdapter, MOCK_PROVIDER_ID } from "@studio/provider-mock";
 import { FalProviderAdapter, FAL_PROVIDER_ID } from "@studio/provider-fal";
 import { OpenAIProviderAdapter, OPENAI_PROVIDER_ID } from "@studio/provider-openai";
-import { ReplicateProviderAdapter, REPLICATE_PROVIDER_ID } from "@studio/provider-replicate";
+import {
+  DEFAULT_REPLICATE_MODELS,
+  parseReplicateModelsEnv,
+  ReplicateProviderAdapter,
+  REPLICATE_PROVIDER_ID,
+} from "@studio/provider-replicate";
 import { ElevenLabsProviderAdapter, ELEVENLABS_PROVIDER_ID } from "@studio/provider-elevenlabs";
 
 export interface ProviderKeys {
   FAL_API_KEY?: string | undefined;
   OPENAI_API_KEY?: string | undefined;
   REPLICATE_API_TOKEN?: string | undefined;
+  /** Ek Replicate modelleri: "owner/name,owner2/name2" (fiyat/şema elle doğrulanır). */
+  REPLICATE_MODELS?: string | undefined;
   ELEVENLABS_API_KEY?: string | undefined;
 }
 
@@ -50,11 +57,20 @@ export function registerConfiguredProviders(
   }
 
   if (keys.REPLICATE_API_TOKEN) {
+    const extraModels = parseReplicateModelsEnv(keys.REPLICATE_MODELS);
     registry.register(
       REPLICATE_PROVIDER_ID,
-      new ReplicateProviderAdapter({ apiToken: keys.REPLICATE_API_TOKEN }),
+      new ReplicateProviderAdapter({
+        apiToken: keys.REPLICATE_API_TOKEN,
+        models: [...DEFAULT_REPLICATE_MODELS, ...extraModels],
+      }),
     );
     registered.push(REPLICATE_PROVIDER_ID);
+    if (extraModels.length > 0) {
+      log(
+        `[providers] REPLICATE_MODELS: ${extraModels.length} kullanıcı tanımlı model eklendi (şema/fiyat elle doğrulanmalı).`,
+      );
+    }
   } else {
     missingKeys.push("REPLICATE_API_TOKEN");
     log("[providers] REPLICATE_API_TOKEN tanımlı değil → Replicate kayıtlı DEĞİL.");

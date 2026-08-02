@@ -76,6 +76,81 @@ describe("buildRenderGraph", () => {
     expect(problems.some((p) => p.includes("kayıp medya") || p.includes("Kayıp"))).toBe(true);
   });
 
+  it("duck=true müzik track'i konuşma aralıklarında %30'a kısılır", () => {
+    let s = createDefaultSequence("prj_1");
+    const video = s.tracks.find((t) => t.kind === "video")!;
+    const voice = s.tracks.find((t) => t.kind === "audio")!;
+    s = addClip(s, { trackId: video.id, startSec: 0, durationSec: 10, assetId: "img1" });
+    s = addClip(s, { trackId: voice.id, startSec: 2, durationSec: 4, assetId: "voice1" });
+    s = {
+      ...s,
+      tracks: [
+        ...s.tracks,
+        {
+          id: "trk_muzik",
+          kind: "audio" as const,
+          name: "Müzik",
+          order: 9,
+          duck: true,
+          clips: [
+            { id: "clp_m1", assetId: "music1", startSec: 0, durationSec: 10, inSec: 0, volume: 1 },
+          ],
+        },
+      ],
+    };
+    const files: Map<string, RenderAssetFile> = new Map([
+      ["img1", { path: "/tmp/x.png", mimeType: "image/png" }],
+      ["voice1", { path: "/tmp/v.wav", mimeType: "audio/wav" }],
+      ["music1", { path: "/tmp/m.wav", mimeType: "audio/wav" }],
+    ]);
+    const graph = buildRenderGraph(s, files, {
+      width: 320,
+      height: 180,
+      fps: 24,
+      outputPath: "/tmp/o.mp4",
+    });
+    const filter = graph.args[graph.args.indexOf("-filter_complex") + 1]!;
+    // Müzik: konuşma aralığı [2,6] boyunca kısılır (klip-yerel zaman)
+    expect(filter).toContain("volume='if(between(t,2.000,6.000),0.300,1.000)':eval=frame");
+    // Anlatım klibi normal seviyede kalır
+    expect(filter).toContain("volume=1.00,adelay=2000|2000");
+  });
+
+  it("duck track'i tek başınaysa (konuşma yok) normal seviyede çalar", () => {
+    let s = createDefaultSequence("prj_1");
+    const video = s.tracks.find((t) => t.kind === "video")!;
+    s = addClip(s, { trackId: video.id, startSec: 0, durationSec: 5, assetId: "img1" });
+    s = {
+      ...s,
+      tracks: [
+        ...s.tracks,
+        {
+          id: "trk_muzik",
+          kind: "audio" as const,
+          name: "Müzik",
+          order: 9,
+          duck: true,
+          clips: [
+            { id: "clp_m1", assetId: "music1", startSec: 0, durationSec: 5, inSec: 0, volume: 1 },
+          ],
+        },
+      ],
+    };
+    const files: Map<string, RenderAssetFile> = new Map([
+      ["img1", { path: "/tmp/x.png", mimeType: "image/png" }],
+      ["music1", { path: "/tmp/m.wav", mimeType: "audio/wav" }],
+    ]);
+    const graph = buildRenderGraph(s, files, {
+      width: 320,
+      height: 180,
+      fps: 24,
+      outputPath: "/tmp/o.mp4",
+    });
+    const filter = graph.args[graph.args.indexOf("-filter_complex") + 1]!;
+    expect(filter).not.toContain("eval=frame");
+    expect(filter).toContain("volume=1.00,adelay=0|0");
+  });
+
   it("drawtext kaçışı tehlikeli karakterleri etkisizleştirir", () => {
     const escaped = escapeDrawText("a:b,c'd%e");
     expect(escaped).not.toContain("a:b");

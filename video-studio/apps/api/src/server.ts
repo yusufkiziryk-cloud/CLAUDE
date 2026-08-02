@@ -1,3 +1,4 @@
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
@@ -51,6 +52,8 @@ export interface ServerDeps {
   bodyLimitBytes?: number;
   /** Tek dosya yükleme üst sınırı (bayt). Varsayılan 200 MiB. */
   maxUploadBytes?: number;
+  /** Tanımlıysa tüm uçlar (health/login/medya hariç) Bearer oturum token'ı ister. */
+  authPassword?: string;
 }
 
 const CreatePromptVersionBody = z.object({
@@ -114,9 +117,14 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
       entry.count += 1;
       if (entry.count > max) {
         const afterSec = Math.max(1, Math.ceil((entry.resetAt - now) / 1000));
+        // Bu kanca CORS eklentisinden ÖNCE koşar; başlık olmadan tarayıcı yanıtı
+        // "ağ hatası" olarak gizler. İzinli origin'i elle ekleriz.
+        const origin =
+          typeof deps.corsOrigin === "string" ? deps.corsOrigin : (request.headers.origin ?? "*");
         return reply
           .status(429)
           .header("retry-after", String(afterSec))
+          .header("access-control-allow-origin", origin)
           .send({
             code: "RATE_LIMITED",
             userMessage: `Çok fazla istek gönderildi; lütfen ${afterSec} saniye sonra tekrar deneyin.`,
@@ -127,6 +135,60 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
       }
     });
   }
+
+  // Kimlik doğrulama (opsiyonel): authPassword tanımlıysa tüm uçlar oturum ister.
+  // Oturumlar süreç içidir (API tek süreçtir; worker HTTP servis etmez).
+  if (deps.authPassword) {
+    const password = Buffer.from(deps.authPassword);
+    const sessions = new Map<string, number>(); // token → geçerlilik sonu (ms)
+    const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+
+    app.post("/auth/login", async (request, reply) => {
+      const body = z.object({ password: z.string().min(1) }).parse(request.body);
+      const given = Buffer.from(body.password);
+      const ok = given.length === password.length && timingSafeEqual(given, password);
+      if (!ok) {
+        return reply.status(401).send({
+          code: "INVALID_CREDENTIALS",
+          userMessage: "Parola hatalı.",
+          retryable: false,
+          correlationId: request.id,
+        });
+      }
+      const token = randomBytes(32).toString("hex");
+      sessions.set(token, Date.now() + SESSION_TTL_MS);
+      return { token, expiresInSec: SESSION_TTL_MS / 1000 };
+    });
+
+    // preHandler: CORS eklentisinin onRequest kancasından SONRA koşar; böylece
+    // 401 yanıtı da CORS başlıkları taşır ve tarayıcıda okunabilir kalır.
+    app.addHook("preHandler", async (request, reply) => {
+      if (request.method === "OPTIONS") return; // CORS preflight kimliksizdir
+      const path = request.url.split("?")[0] ?? "";
+      if (path === "/health" || path === "/auth/login") return;
+      // Medya <img>/<audio>/<video> etiketleriyle başlıksız yüklenir; anahtarlar
+      // tahmin edilemez kimlikler içerir — imzalı URL'ler yol haritasında (SECURITY.md).
+      if (
+        request.method === "GET" &&
+        (path.startsWith("/files/") || path.startsWith("/renders/"))
+      ) {
+        return;
+      }
+      const header = request.headers.authorization;
+      const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
+      const expiresAt = token ? sessions.get(token) : undefined;
+      if (!token || expiresAt === undefined || expiresAt < Date.now()) {
+        if (token) sessions.delete(token);
+        return reply.status(401).send({
+          code: "UNAUTHORIZED",
+          userMessage: "Oturum gerekli: parolayla giriş yapın.",
+          retryable: false,
+          correlationId: request.id,
+        });
+      }
+    });
+  }
+
   registerCreativeRoutes(app, { storage, registry, queue, scriptGenerator });
   registerTimelineRoutes(app, { storage, rendersDir, renderQueue });
   registerFileRoutes(app, {

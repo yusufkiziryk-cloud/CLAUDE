@@ -62,6 +62,43 @@ describe("elevenlabs adaptörüne özgü davranış", () => {
     expect(headers["xi-api-key"]).toBe("gizli");
   });
 
+  it("GET /v1/voices başarılıysa manifest voiceId enum'u hesaptaki seslerle dolar", async () => {
+    const withVoices = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/v1/voices")) {
+        const headers = init?.headers as Record<string, string>;
+        expect(headers["xi-api-key"]).toBe("test");
+        return new Response(
+          JSON.stringify({
+            voices: [
+              { voice_id: "v-tr-1", name: "Deniz" },
+              { voice_id: "v-tr-2", name: "Rüzgar" },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response("not found", { status: 404 });
+    }) as typeof fetch;
+    const adapter = new ElevenLabsProviderAdapter({ apiKey: "test", fetchImpl: withVoices });
+    const manifest = await adapter.manifest();
+    const spec = manifest.models[0]?.params["voiceId"];
+    expect(spec?.type).toBe("enum");
+    expect(spec?.values).toEqual(["v-tr-1", "v-tr-2"]);
+    expect(spec?.default).toBe("v-tr-1");
+  });
+
+  it("ses listesi ulaşılamazsa manifest statik hazır seslere düşer", async () => {
+    const adapter = new ElevenLabsProviderAdapter({
+      apiKey: "test",
+      fetchImpl: fakeElevenLabsFetch(), // /v1/voices → 404
+    });
+    const manifest = await adapter.manifest();
+    const spec = manifest.models[0]?.params["voiceId"];
+    expect(spec?.type).toBe("string");
+    expect(spec?.default).toBe("21m00Tcm4TlvDq8ikWAM");
+  });
+
   it("anlatıcı metni yoksa missing doğrulaması döner; sonuç mp3 data URI olur", async () => {
     const adapter = new ElevenLabsProviderAdapter({
       apiKey: "k",

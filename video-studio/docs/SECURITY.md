@@ -20,16 +20,27 @@ Bu belge Faz 8'de yapılan güvenlik gözden geçirmesinin sonucunu, alınan
 | Artefakt indirme        | Üretim işlemcisi sağlayıcıdan dönen artefakt URL'lerini boyut sınırıyla indirir; sınırsız bellek tüketimi engellenir.                                                                                                |
 | İdempotency             | Aynı `idempotencyKey` ikinci kez ücret/iş oluşturmaz (adaptörlerde ve API'de).                                                                                                                                       |
 
-## Bilinen sınırlar (üretime çıkmadan yapılmalı)
+## Kimlik doğrulama (V1)
 
-1. **Kimlik doğrulama YOK** — API tek kullanıcılı geliştirme modundadır
-   (`DEV_USER_EMAIL`). İnternete açmadan önce gerçek auth (ör. OIDC) ve
-   yetkilendirme katmanı eklenmelidir. `API_HOST` varsayılanı bilinçli olarak
-   `127.0.0.1`'dir.
-2. **Rate limit süreç içidir** — yatay ölçeklemede Redis tabanlı sayaç gerekir.
-3. **`/files/*` erişim denetimi yok** — anahtarı bilen herkes dosyayı okuyabilir
-   (anahtarlar tahmin edilemez kimlikler içerir; yine de auth ile birlikte
-   imzalı URL'lere geçilmelidir).
+`AUTH_PASSWORD` env'i doluysa API parola korumalıdır: `POST /auth/login`
+(timing-safe karşılaştırma) 12 saatlik oturum token'ı döner; tüm uçlar
+`Authorization: Bearer <token>` ister. Muaf: `/health`, `/auth/login`,
+`GET /files/*`, `GET /renders/*` (medya etiketleri başlık gönderemez). Web
+arayüzü `/giris` sayfasıyla oturum açar, 401'de otomatik yönlendirilir.
+Tanımsızsa API kimliksiz geliştirme modundadır (açılışta uyarı basılır).
+
+## Bilinen sınırlar (üretime çıkmadan değerlendirin)
+
+1. **Tek parola = tek kullanıcı** — rol/izin modeli yok; oturumlar süreç içi
+   (yeniden başlatmada düşer); web token'ı localStorage'dadır (XSS'e karşı
+   httpOnly çerezden zayıf). Çok kullanıcılı/İnternete açık senaryoda OIDC +
+   httpOnly çerez katmanına geçilmelidir. `API_HOST` varsayılanı bilinçli
+   olarak `127.0.0.1`'dir.
+2. **Rate limit ve oturumlar süreç içidir** — yatay ölçeklemede Redis tabanlı
+   sayaç/oturum deposu gerekir.
+3. **`GET /files/*` erişim denetiminden muaftır** — anahtarı bilen okuyabilir
+   (anahtarlar tahmin edilemez kimlikler içerir); imzalı URL'ler yol haritasında.
 4. **Sağlayıcı anahtarları süreç env'indedir** — gizli değer yöneticisi (Vault,
    SOPS, bulut KMS) önerilir.
-5. **Bağımlılık taraması** el ile yapılır (`pnpm audit`); CI'a eklenmesi önerilir.
+5. **Bağımlılık taraması CI'dadır** (`pnpm audit --audit-level high`); bilinen
+   high bulgular pnpm overrides ile yamalandı.

@@ -22,5 +22,11 @@
     "turbo": "^2.5.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "sharp": ">=0.35.0",
+      "postcss": ">=8.5.18"
+    }
   }
 }
