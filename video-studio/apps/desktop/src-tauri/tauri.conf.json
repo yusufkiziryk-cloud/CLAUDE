@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AI Video Stüdyosu",
+  "version": "0.1.0",
+  "identifier": "com.videostudio.app",
+  "build": {
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "http://localhost:3000",
+    "beforeDevCommand": {
+      "script": "pnpm --filter @studio/web dev",
+      "cwd": "../.."
+    }
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "AI Video Stüdyosu",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 700
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false,
+    "targets": ["msi", "nsis"]
+  }
+}

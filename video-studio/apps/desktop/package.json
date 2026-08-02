@@ -1,0 +1,17 @@
+{
+  "name": "@studio/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "echo 'Masaüstü derlemesi yerel makine gerektirir: pnpm --filter @studio/desktop tauri:build (bkz. README)'",
+    "tauri:build": "tauri build",
+    "typecheck": "echo 'desktop kabuğunda TS kodu yok (Faz 1)'",
+    "test": "echo 'desktop kabuğunda test yok (Faz 1)'",
+    "lint": "echo 'desktop kabuğunda lintlenecek TS yok (Faz 1)'"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.2.5"
+  }
+}

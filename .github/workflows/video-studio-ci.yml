@@ -1,0 +1,48 @@
+name: video-studio CI
+
+on:
+  push:
+    paths:
+      - "video-studio/**"
+      - ".github/workflows/video-studio-ci.yml"
+  pull_request:
+    paths:
+      - "video-studio/**"
+      - ".github/workflows/video-studio-ci.yml"
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: video-studio
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: video-studio/pnpm-lock.yaml
+
+      - name: Bağımlılıkları kur
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm turbo run lint
+
+      - name: Typecheck
+        run: pnpm turbo run typecheck
+
+      - name: Testler
+        run: pnpm turbo run test
+
+      - name: Build (web dahil)
+        run: pnpm turbo run build
+
+      - name: Format kontrolü
+        run: pnpm format:check

@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id                String    @id
+  name              String
+  purpose           String
+  aspectRatio       String
+  targetDurationSec Int
+  language          String    @default("tr")
+  resolution        String    @default("1080p")
+  style             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  promptVersions PromptVersion[]
+  assets         Asset[]
+  generationJobs GenerationJob[]
+}
+
+model PromptVersion {
+  id        String   @id
+  promptId  String
+  projectId String
+  version   Int
+  language  String   @default("tr")
+  /// VideoPrompt gövdesi (Zod ile doğrulanmış JSON)
+  body      Json
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@unique([promptId, version])
+  @@index([projectId])
+}
+
+model Asset {
+  id           String    @id
+  projectId    String
+  kind         String
+  name         String
+  uri          String
+  mimeType     String
+  sizeBytes    Int
+  sha256       String?
+  durationSec  Float?
+  width        Int?
+  height       Int?
+  thumbnailUri String?
+  /// Provenance JSON (providerId, modelId, mock bayrağı, maliyet...)
+  provenance   Json?
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+}
+
+model GenerationJob {
+  id              String    @id
+  projectId       String
+  promptVersionId String?
+  /// CanonicalGenerationRequest JSON'u
+  request         Json
+  status          String
+  progress        Int       @default(0)
+  idempotencyKey  String    @unique
+  costEstimate    Json?
+  actualCostUsd   Float?
+  error           Json?
+  resultAssetIds  String[]  @default([])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  startedAt       DateTime?
+  finishedAt      DateTime?
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId, status])
+}
