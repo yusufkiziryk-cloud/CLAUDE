@@ -41,3 +41,24 @@ export interface ProviderManifest {
   mock: boolean;
   models: ModelManifestView[];
 }
+
+/** GET /projects/:id/analytics yanıtı — model bazlı üretim istatistikleri. */
+export interface ModelAnalytics {
+  providerId: string;
+  modelId: string;
+  total: number;
+  succeeded: number;
+  failed: number;
+  /** Biten işler (başarılı+başarısız) üzerinden; hiç biten iş yoksa null. */
+  successRate: number | null;
+  /** startedAt+finishedAt bilgisi olan işlerin ortalaması; yoksa null. */
+  avgDurationSec: number | null;
+  /** Yalnızca gerçekleşen (actualCostUsd) tutarların toplamı. */
+  totalCostUsd: number;
+}
+
+export interface ProjectAnalytics {
+  projectId: string;
+  totalJobs: number;
+  models: ModelAnalytics[];
+}

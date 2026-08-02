@@ -1,0 +1,33 @@
+{
+  "name": "@studio/provider-replicate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@studio/domain": "workspace:*",
+    "@studio/prompt-engine": "workspace:*",
+    "@studio/provider-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@studio/test-utils": "workspace:*",
+    "@types/node": "^22.10.0",
+    "eslint": "^9.18.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0",
+    "vitest": "^3.0.4"
+  }
+}

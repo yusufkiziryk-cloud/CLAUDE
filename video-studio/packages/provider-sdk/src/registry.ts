@@ -41,4 +41,9 @@ export class ProviderRegistry {
   async allManifests(): Promise<ProviderManifest[]> {
     return Promise.all(this.list().map((id) => this.manifest(id)));
   }
+
+  /** Manifest önbelleğini boşaltır; sonraki çağrılar sağlayıcıdan taze veri çeker. */
+  invalidateManifests(): void {
+    this.manifestCache.clear();
+  }
 }

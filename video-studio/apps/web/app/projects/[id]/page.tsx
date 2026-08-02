@@ -13,6 +13,7 @@ import {
 } from "@/components/prompt-editor";
 import { GenerationLab } from "@/components/generation-lab";
 import { Gallery } from "@/components/gallery";
+import { AnalyticsPanel } from "@/components/analytics-panel";
 import { TemplatePanel } from "@/components/template-panel";
 import { VersionHistory } from "@/components/version-history";
 
@@ -76,6 +77,7 @@ export default function ProjectStudioPage({ params }: { params: Promise<{ id: st
             onJobCreated={() => setVersionKey((k) => k + 1)}
           />
           <VersionHistory projectId={id} refreshKey={versionKey} onLoad={loadPromptBody} />
+          <AnalyticsPanel projectId={id} refreshKey={galleryKey} />
         </div>
       </div>
 

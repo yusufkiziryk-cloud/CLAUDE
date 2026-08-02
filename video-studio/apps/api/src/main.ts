@@ -65,6 +65,8 @@ async function main(): Promise<void> {
   const providers = registerConfiguredProviders(registry, {
     FAL_API_KEY: process.env["FAL_API_KEY"],
     OPENAI_API_KEY: process.env["OPENAI_API_KEY"],
+    REPLICATE_API_TOKEN: process.env["REPLICATE_API_TOKEN"],
+    ELEVENLABS_API_KEY: process.env["ELEVENLABS_API_KEY"],
   });
   console.log(`[providers] kayıtlı sağlayıcılar: ${providers.registered.join(", ")}`);
 

@@ -31,7 +31,9 @@
     "@studio/provider-mock": "workspace:*",
     "@studio/provider-openai": "workspace:*",
     "@studio/provider-sdk": "workspace:*",
-    "@studio/media-engine": "workspace:*"
+    "@studio/media-engine": "workspace:*",
+    "@studio/provider-replicate": "workspace:*",
+    "@studio/provider-elevenlabs": "workspace:*"
   },
   "devDependencies": {
     "@studio/test-utils": "workspace:*",

@@ -335,6 +335,37 @@ importers:
         specifier: ^3.0.4
         version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0)
 
+  packages/providers/elevenlabs:
+    dependencies:
+      "@studio/domain":
+        specifier: workspace:*
+        version: link:../../domain
+      "@studio/prompt-engine":
+        specifier: workspace:*
+        version: link:../../prompt-engine
+      "@studio/provider-sdk":
+        specifier: workspace:*
+        version: link:../../provider-sdk
+    devDependencies:
+      "@studio/test-utils":
+        specifier: workspace:*
+        version: link:../../test-utils
+      "@types/node":
+        specifier: ^22.10.0
+        version: 22.20.1
+      eslint:
+        specifier: ^9.18.0
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.20.0
+        version: 8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+      vitest:
+        specifier: ^3.0.4
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0)
+
   packages/providers/fal:
     dependencies:
       "@studio/domain":
@@ -428,6 +459,37 @@ importers:
         specifier: ^3.0.4
         version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0)
 
+  packages/providers/replicate:
+    dependencies:
+      "@studio/domain":
+        specifier: workspace:*
+        version: link:../../domain
+      "@studio/prompt-engine":
+        specifier: workspace:*
+        version: link:../../prompt-engine
+      "@studio/provider-sdk":
+        specifier: workspace:*
+        version: link:../../provider-sdk
+    devDependencies:
+      "@studio/test-utils":
+        specifier: workspace:*
+        version: link:../../test-utils
+      "@types/node":
+        specifier: ^22.10.0
+        version: 22.20.1
+      eslint:
+        specifier: ^9.18.0
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.20.0
+        version: 8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+      vitest:
+        specifier: ^3.0.4
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.1)(yaml@2.9.0)
+
   packages/shared:
     dependencies:
       "@aws-sdk/client-s3":
@@ -442,6 +504,9 @@ importers:
       "@studio/media-engine":
         specifier: workspace:*
         version: link:../media-engine
+      "@studio/provider-elevenlabs":
+        specifier: workspace:*
+        version: link:../providers/elevenlabs
       "@studio/provider-fal":
         specifier: workspace:*
         version: link:../providers/fal
@@ -451,6 +516,9 @@ importers:
       "@studio/provider-openai":
         specifier: workspace:*
         version: link:../providers/openai
+      "@studio/provider-replicate":
+        specifier: workspace:*
+        version: link:../providers/replicate
       "@studio/provider-sdk":
         specifier: workspace:*
         version: link:../provider-sdk

@@ -121,6 +121,13 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     return { providers: manifests };
   });
 
+  /** Manifest önbelleğini boşaltıp taze manifestleri döner ("Modelleri Yenile"). */
+  app.post("/providers/refresh", async () => {
+    registry.invalidateManifests();
+    const manifests = await registry.allManifests();
+    return { providers: manifests, refreshedAt: new Date().toISOString() };
+  });
+
   // ---- Projeler ----
   app.post("/projects", async (request, reply) => {
     const input = CreateProjectInput.parse(request.body);
@@ -307,6 +314,56 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   app.get("/projects/:id/generations", async (request) => {
     const { id } = request.params as { id: string };
     return { jobs: await storage.listGenerationJobs(id) };
+  });
+
+  /**
+   * Model bazlı analiz: sayı, başarı oranı, ortalama süre ve toplam maliyet.
+   * Süre yalnızca startedAt+finishedAt olan işlerden; maliyet yalnızca
+   * gerçekleşen (actualCostUsd) tutarlardan hesaplanır — tahmin karıştırılmaz.
+   */
+  app.get("/projects/:id/analytics", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const project = await storage.getProject(id);
+    if (!project) return notFound(reply, "Proje bulunamadı.");
+    const jobs = await storage.listGenerationJobs(id);
+
+    const byModel = new Map<string, GenerationJob[]>();
+    for (const job of jobs) {
+      const key = `${job.request.providerId}::${job.request.modelId}`;
+      const bucket = byModel.get(key) ?? [];
+      bucket.push(job);
+      byModel.set(key, bucket);
+    }
+
+    const models = [...byModel.entries()].map(([key, group]) => {
+      const [providerId, modelId] = key.split("::") as [string, string];
+      const succeeded = group.filter((j) => j.status === "succeeded").length;
+      const failed = group.filter((j) => j.status === "failed").length;
+      const finished = succeeded + failed;
+      const durations = group
+        .filter((j) => j.startedAt && j.finishedAt)
+        .map((j) => (Date.parse(j.finishedAt as string) - Date.parse(j.startedAt as string)) / 1000)
+        .filter((sec) => sec >= 0);
+      const avgDurationSec =
+        durations.length > 0
+          ? Math.round((durations.reduce((a, b) => a + b, 0) / durations.length) * 100) / 100
+          : null;
+      const totalCostUsd =
+        Math.round(group.reduce((sum, j) => sum + (j.actualCostUsd ?? 0), 0) * 10000) / 10000;
+      return {
+        providerId,
+        modelId,
+        total: group.length,
+        succeeded,
+        failed,
+        successRate: finished > 0 ? Math.round((succeeded / finished) * 1000) / 1000 : null,
+        avgDurationSec,
+        totalCostUsd,
+      };
+    });
+    models.sort((a, b) => b.total - a.total || a.modelId.localeCompare(b.modelId));
+
+    return { projectId: id, totalJobs: jobs.length, models };
   });
 
   app.post("/generations/:id/cancel", async (request, reply) => {

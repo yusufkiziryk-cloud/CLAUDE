@@ -1,13 +1,15 @@
 # 🎬 AI Video Üretim ve Kurgu Stüdyosu
 
 Türkçe öncelikli, web + Windows masaüstü hedefli yapay zekâ video üretim ve kurgu
-stüdyosu. **Şu an Faz 6 tamamlandı**: sahne başına seslendirme (TTS — anahtarsızda gerçek
-WAV üreten MOCK, OPENAI_API_KEY ile gpt-4o-mini-tts), sahnelerden tek tıkla
-animatic kurgusu (storyboard + anlatıcı sesi + başlıklar → timeline), SRT/VTT
-altyazı motoru + editörü (sahnelerden üretim, içe/dışa aktarma, metin track'ine
-uygulama), Whisper transkripsiyon ucu ve lip-sync/avatar için rıza politikası.
-Önceki fazlar: bulut depolama + işçi ayrımı (Faz 5), timeline + FFmpeg (Faz 4),
-senaryo/storyboard (Faz 3), prompt stüdyosu + gerçek adaptörler (Faz 2).
+stüdyosu. **Şu an Faz 7 tamamlandı**: iki yeni gerçek sağlayıcı adaptörü
+(Replicate — REPLICATE_API_TOKEN, ElevenLabs TTS — ELEVENLABS_API_KEY; sözleşmeler
+resmî OpenAPI spec'lerinden doğrulandı), üretim laboratuvarında karşılaştırma modu
+(aynı prompt N modele, yan yana durum/süre/maliyet/önizleme), model bazlı proje
+analitiği (`GET /projects/:id/analytics`: başarı oranı, ortalama süre, gerçekleşen
+maliyet) ve manifest önbelleği yenileme (`POST /providers/refresh` + "Modelleri
+Yenile" düğmesi). Önceki fazlar: ses/animatic/altyazı (Faz 6), bulut depolama +
+işçi ayrımı (Faz 5), timeline + FFmpeg (Faz 4), senaryo/storyboard (Faz 3),
+prompt stüdyosu + gerçek adaptörler (Faz 2).
 
 > Faz planı ve mimari için: [`../docs/video-studio/FAZ0-KESIF-VE-TASARIM.md`](../docs/video-studio/FAZ0-KESIF-VE-TASARIM.md)
 > Mimari kararlar için: [`docs/adr/`](docs/adr/)
@@ -46,21 +48,23 @@ pnpm turbo run lint typecheck test build   # tamamı CI'da da koşar
 
 ## Yapı
 
-| Yol                         | İçerik                                                                                |
-| --------------------------- | ------------------------------------------------------------------------------------- |
-| `packages/domain`           | Zod domain şemaları (Project, VideoPrompt, GenerationJob, Asset, Provenance)          |
-| `packages/prompt-engine`    | Type-safe prompt builder, deterministik derleyici, yerel kalite denetimi, değişkenler |
-| `packages/provider-sdk`     | `MediaProviderAdapter` sözleşmesi, capability manifest, registry, hata zarfı          |
-| `packages/providers/mock`   | MOCK/DEMO sağlayıcı — gerçek üretim yapmaz, akış testine yarar                        |
-| `packages/providers/fal`    | fal.ai kuyruk API adaptörü (FAL_API_KEY gerektirir)                                   |
-| `packages/providers/openai` | OpenAI görsel (gpt-image-1) + TTS (gpt-4o-mini-tts) adaptörü (OPENAI_API_KEY)         |
-| `packages/shared`           | Depolama sürücüleri (memory/prisma), üretim işlemcisi, Prisma şeması                  |
-| `packages/test-utils`       | Sağlayıcı contract test kiti + fixture'lar                                            |
-| `packages/ui`               | Ortak React bileşenleri (Tailwind)                                                    |
-| `apps/api`                  | Fastify API — projeler, prompt sürümleri, üretim işleri, varlıklar                    |
-| `apps/worker`               | BullMQ üretim işçisi (redis modu)                                                     |
-| `apps/web`                  | Next.js arayüz — proje sihirbazı, prompt stüdyosu, üretim laboratuvarı, galeri        |
-| `apps/desktop`              | Tauri 2 Windows kabuğu (bkz. `apps/desktop/README.md`)                                |
+| Yol                             | İçerik                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------- |
+| `packages/domain`               | Zod domain şemaları (Project, VideoPrompt, GenerationJob, Asset, Provenance)          |
+| `packages/prompt-engine`        | Type-safe prompt builder, deterministik derleyici, yerel kalite denetimi, değişkenler |
+| `packages/provider-sdk`         | `MediaProviderAdapter` sözleşmesi, capability manifest, registry, hata zarfı          |
+| `packages/providers/mock`       | MOCK/DEMO sağlayıcı — gerçek üretim yapmaz, akış testine yarar                        |
+| `packages/providers/fal`        | fal.ai kuyruk API adaptörü (FAL_API_KEY gerektirir)                                   |
+| `packages/providers/openai`     | OpenAI görsel (gpt-image-1) + TTS (gpt-4o-mini-tts) adaptörü (OPENAI_API_KEY)         |
+| `packages/providers/replicate`  | Replicate video adaptörü (REPLICATE_API_TOKEN)                                        |
+| `packages/providers/elevenlabs` | ElevenLabs TTS adaptörü — TR destekli (ELEVENLABS_API_KEY)                            |
+| `packages/shared`               | Depolama sürücüleri (memory/prisma), üretim işlemcisi, Prisma şeması                  |
+| `packages/test-utils`           | Sağlayıcı contract test kiti + fixture'lar                                            |
+| `packages/ui`                   | Ortak React bileşenleri (Tailwind)                                                    |
+| `apps/api`                      | Fastify API — projeler, prompt sürümleri, üretim işleri, varlıklar                    |
+| `apps/worker`                   | BullMQ üretim işçisi (redis modu)                                                     |
+| `apps/web`                      | Next.js arayüz — proje sihirbazı, prompt stüdyosu, üretim laboratuvarı, galeri        |
+| `apps/desktop`                  | Tauri 2 Windows kabuğu (bkz. `apps/desktop/README.md`)                                |
 
 ## Önemli ilkeler
 

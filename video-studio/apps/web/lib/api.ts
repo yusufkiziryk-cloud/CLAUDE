@@ -19,7 +19,7 @@ import type {
   UpsertBriefInput,
   VideoPromptInput,
 } from "@studio/domain";
-import type { EstimateResponse, ProviderManifest } from "./types";
+import type { EstimateResponse, ProjectAnalytics, ProviderManifest } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -94,6 +94,12 @@ export const api = {
     request<Project>("/projects", { method: "POST", body: JSON.stringify(input) }),
 
   listProviders: () => request<{ providers: ProviderManifest[] }>("/providers"),
+  refreshProviders: () =>
+    request<{ providers: ProviderManifest[]; refreshedAt: string }>("/providers/refresh", {
+      method: "POST",
+    }),
+  getAnalytics: (projectId: string) =>
+    request<ProjectAnalytics>(`/projects/${projectId}/analytics`),
 
   createPromptVersion: (projectId: string, body: VideoPromptInput, promptId?: string) =>
     request<PromptVersion>(`/projects/${projectId}/prompts`, {
