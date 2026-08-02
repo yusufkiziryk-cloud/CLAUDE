@@ -1,15 +1,19 @@
 # 🎬 AI Video Üretim ve Kurgu Stüdyosu
 
 Türkçe öncelikli, web + Windows masaüstü hedefli yapay zekâ video üretim ve kurgu
-stüdyosu. **Şu an Faz 7 tamamlandı**: iki yeni gerçek sağlayıcı adaptörü
-(Replicate — REPLICATE_API_TOKEN, ElevenLabs TTS — ELEVENLABS_API_KEY; sözleşmeler
-resmî OpenAPI spec'lerinden doğrulandı), üretim laboratuvarında karşılaştırma modu
-(aynı prompt N modele, yan yana durum/süre/maliyet/önizleme), model bazlı proje
-analitiği (`GET /projects/:id/analytics`: başarı oranı, ortalama süre, gerçekleşen
-maliyet) ve manifest önbelleği yenileme (`POST /providers/refresh` + "Modelleri
-Yenile" düğmesi). Önceki fazlar: ses/animatic/altyazı (Faz 6), bulut depolama +
-işçi ayrımı (Faz 5), timeline + FFmpeg (Faz 4), senaryo/storyboard (Faz 3),
-prompt stüdyosu + gerçek adaptörler (Faz 2).
+stüdyosu. **Faz 8 (üretim sertleştirmesi) tamamlandı — MVP hazır**: CORS tek
+origin'e daraltıldı (`WEB_ORIGIN`), IP başına istek sınırı (`RATE_LIMIT_PER_MIN`),
+gövde/yükleme limitleri, helmet güvenlik başlıkları, proje bazlı üretim bütçesi
+(`budgetUsd` → aşımda 402), KVKK veri saklama süpürücüsü (`DATA_RETENTION_DAYS`),
+WCAG A/AA erişilebilirlik taraması (axe, 0 ihlal) ve paketleme/güvenlik
+dokümanları ([docs/RELEASE.md](docs/RELEASE.md), [docs/SECURITY.md](docs/SECURITY.md)).
+Önceki fazlar: çoklu sağlayıcı + karşılaştırma + analitik (Faz 7),
+ses/animatic/altyazı (Faz 6), bulut depolama + işçi ayrımı (Faz 5), timeline +
+FFmpeg (Faz 4), senaryo/storyboard (Faz 3), prompt stüdyosu + gerçek adaptörler (Faz 2).
+
+> ⚠ API'de henüz kimlik doğrulama yoktur (tek kullanıcılı yerel mod).
+> İnternete açmadan önce [docs/SECURITY.md](docs/SECURITY.md) bölümündeki
+> "Bilinen sınırlar" listesi tamamlanmalıdır.
 
 > Faz planı ve mimari için: [`../docs/video-studio/FAZ0-KESIF-VE-TASARIM.md`](../docs/video-studio/FAZ0-KESIF-VE-TASARIM.md)
 > Mimari kararlar için: [`docs/adr/`](docs/adr/)

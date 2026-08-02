@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
 import { z, ZodError } from "zod";
 import {
   CanonicalGenerationRequest,
@@ -42,6 +43,14 @@ export interface ServerDeps {
   enableLogger?: boolean;
   /** Transkripsiyon motoru (varsayılan: MOCK — arayüzde açıkça etiketlenir). */
   transcriber?: Transcriber;
+  /** CORS origin (WEB_ORIGIN). Verilmezse geliştirme/test için serbesttir. */
+  corsOrigin?: string | boolean;
+  /** Dakika başına istek sınırı (IP başına). false → kapalı (testler). */
+  rateLimitPerMin?: number | false;
+  /** JSON gövde üst sınırı (bayt). Varsayılan 2 MiB. */
+  bodyLimitBytes?: number;
+  /** Tek dosya yükleme üst sınırı (bayt). Varsayılan 200 MiB. */
+  maxUploadBytes?: number;
 }
 
 const CreatePromptVersionBody = z.object({
@@ -75,10 +84,56 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
           },
         }
       : false,
+    // Sınırsız JSON gövdesi kabul edilmez (varsayılan 2 MiB; multipart ayrı sınırlıdır).
+    bodyLimit: deps.bodyLimitBytes ?? 2 * 1024 * 1024,
   });
+
+  // Güvenlik başlıkları. CSP API yanıtları için anlamlı değil; /files/* medyası
+  // web arayüzü tarafından FARKLI origin'den yüklendiğinden CORP cross-origin olmalı.
+  void app.register(helmet, {
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  });
+
+  // İstek sınırı (IP başına, dakikalık sabit pencere). Süreç içi sayaçtır;
+  // çok kopyalı dağıtımda paylaşımlı depo gerekir (docs/SECURITY.md).
+  if (deps.rateLimitPerMin !== false) {
+    const max = deps.rateLimitPerMin ?? 300;
+    const hits = new Map<string, { count: number; resetAt: number }>();
+    app.addHook("onRequest", async (request, reply) => {
+      const now = Date.now();
+      const entry = hits.get(request.ip);
+      if (!entry || now >= entry.resetAt) {
+        // Süresi geçen tüm pencereler temizlenir; harita sınırsız büyümez.
+        if (hits.size > 10_000) {
+          for (const [ip, e] of hits) if (now >= e.resetAt) hits.delete(ip);
+        }
+        hits.set(request.ip, { count: 1, resetAt: now + 60_000 });
+        return;
+      }
+      entry.count += 1;
+      if (entry.count > max) {
+        const afterSec = Math.max(1, Math.ceil((entry.resetAt - now) / 1000));
+        return reply
+          .status(429)
+          .header("retry-after", String(afterSec))
+          .send({
+            code: "RATE_LIMITED",
+            userMessage: `Çok fazla istek gönderildi; lütfen ${afterSec} saniye sonra tekrar deneyin.`,
+            developerMessage: `IP başına sınır: ${max}/dk`,
+            retryable: true,
+            correlationId: request.id,
+          });
+      }
+    });
+  }
   registerCreativeRoutes(app, { storage, registry, queue, scriptGenerator });
   registerTimelineRoutes(app, { storage, rendersDir, renderQueue });
-  registerFileRoutes(app, { storage, objectStore });
+  registerFileRoutes(app, {
+    storage,
+    objectStore,
+    ...(deps.maxUploadBytes !== undefined ? { maxUploadBytes: deps.maxUploadBytes } : {}),
+  });
   registerAudioRoutes(app, {
     storage,
     registry,
@@ -88,8 +143,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   });
 
   void app.register(cors, {
-    // Faz 1 geliştirme modu: yerel web istemcisi. Üretim sertleştirmesi Faz 8'dedir.
-    origin: true,
+    // Üretimde WEB_ORIGIN env ile tek origin'e daraltılır; verilmezse (test/dev) serbesttir.
+    origin: deps.corsOrigin ?? true,
   });
 
   app.setErrorHandler((error, request, reply) => {
@@ -99,6 +154,20 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
         code: "VALIDATION_ERROR",
         userMessage: "Gönderilen veri geçersiz. Alanları kontrol edin.",
         developerMessage: error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
+        retryable: false,
+        correlationId,
+      });
+    }
+    // Fastify'nin kendi HTTP hataları (413 gövde sınırı, 415, 404...) 500'e düşürülmez.
+    const statusCode = (error as { statusCode?: number }).statusCode;
+    if (typeof statusCode === "number" && statusCode >= 400 && statusCode < 500) {
+      return reply.status(statusCode).send({
+        code: (error as { code?: string }).code ?? "REQUEST_ERROR",
+        userMessage:
+          statusCode === 413
+            ? "İstek gövdesi izin verilen boyutu aşıyor."
+            : "İstek işlenemedi; girdilerinizi kontrol edin.",
+        developerMessage: error instanceof Error ? error.message : String(error),
         retryable: false,
         correlationId,
       });
@@ -141,6 +210,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
       language: input.language ?? "tr",
       resolution: input.resolution ?? "1080p",
       ...(input.style !== undefined ? { style: input.style } : {}),
+      ...(input.budgetUsd !== undefined ? { budgetUsd: input.budgetUsd } : {}),
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -285,6 +355,27 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     }
 
     const costEstimate = await adapter.estimate(input.request);
+
+    // Bütçe kapısı: gerçekleşen harcama + aktif işlerin tahmini + bu isteğin
+    // tahmini proje bütçesini aşarsa iş HİÇ kuyruğa alınmaz (402).
+    if (project.budgetUsd !== undefined) {
+      const jobs = await storage.listGenerationJobs(input.projectId);
+      const committedUsd = jobs.reduce((sum, j) => {
+        if (j.actualCostUsd !== undefined) return sum + j.actualCostUsd;
+        if (j.status === "queued" || j.status === "running")
+          return sum + (j.costEstimate?.amount ?? 0);
+        return sum;
+      }, 0);
+      if (committedUsd + costEstimate.amount > project.budgetUsd) {
+        return reply.status(402).send({
+          code: "BUDGET_EXCEEDED",
+          userMessage: `Proje bütçesi aşılıyor: bütçe $${project.budgetUsd.toFixed(2)}, taahhüt $${committedUsd.toFixed(4)}, bu istek ~$${costEstimate.amount.toFixed(4)}. Bütçeyi artırın veya bekleyen işleri iptal edin.`,
+          retryable: false,
+          correlationId: request.id,
+        });
+      }
+    }
+
     const now = new Date().toISOString();
     const job: GenerationJob = {
       id: newId("gen"),

@@ -238,23 +238,26 @@ export function PromptEditor({
   return (
     <Card title="Prompt Stüdyosu (v2)">
       <div className="space-y-3">
-        <div className="flex items-center gap-2" role="tablist" aria-label="Editör modu">
-          <Button
-            variant={tab === "form" ? "primary" : "secondary"}
-            role="tab"
-            aria-selected={tab === "form"}
-            onClick={() => setTab("form")}
-          >
-            Form
-          </Button>
-          <Button
-            variant={tab === "text" ? "primary" : "secondary"}
-            role="tab"
-            aria-selected={tab === "text"}
-            onClick={openTextTab}
-          >
-            Serbest Metin
-          </Button>
+        {/* Dışa aktarma düğmeleri tablist'in DIŞINDA: tablist yalnızca tab rolü içerebilir (a11y). */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" role="tablist" aria-label="Editör modu">
+            <Button
+              variant={tab === "form" ? "primary" : "secondary"}
+              role="tab"
+              aria-selected={tab === "form"}
+              onClick={() => setTab("form")}
+            >
+              Form
+            </Button>
+            <Button
+              variant={tab === "text" ? "primary" : "secondary"}
+              role="tab"
+              aria-selected={tab === "text"}
+              onClick={openTextTab}
+            >
+              Serbest Metin
+            </Button>
+          </div>
           <span className="ml-auto flex gap-1">
             <Button
               variant="secondary"
@@ -476,7 +479,7 @@ export function PromptEditor({
           <div className="rounded-md border border-zinc-700 bg-zinc-950 p-3">
             <p className="mb-1 text-xs font-semibold text-zinc-400">Derlenmiş önizleme</p>
             <p className="text-xs text-zinc-300">{preview}</p>
-            <p className="mt-1 text-right text-xs text-zinc-500">{preview.length} karakter</p>
+            <p className="mt-1 text-right text-xs text-zinc-400">{preview.length} karakter</p>
           </div>
         ) : null}
 

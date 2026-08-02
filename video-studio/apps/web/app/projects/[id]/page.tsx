@@ -49,6 +49,9 @@ export default function ProjectStudioPage({ params }: { params: Promise<{ id: st
         <Badge variant="info">{project.aspectRatio}</Badge>
         <Badge variant="neutral">{project.resolution}</Badge>
         <Badge variant="neutral">hedef {project.targetDurationSec} sn</Badge>
+        {project.budgetUsd !== undefined ? (
+          <Badge variant="warning">bütçe ${project.budgetUsd.toFixed(2)}</Badge>
+        ) : null}
         <span className="ml-auto flex gap-4">
           <a href={`/projects/${id}/senaryo`} className="text-sm text-indigo-400 hover:underline">
             Senaryo & Storyboard →

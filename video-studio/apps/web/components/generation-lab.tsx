@@ -451,7 +451,7 @@ export function GenerationLab({
                 ${estimate.estimate.amount.toFixed(4)}
                 {estimate.estimate.isExact ? "" : " (yaklaşık)"}
               </span>{" "}
-              <span className="text-zinc-500">
+              <span className="text-zinc-400">
                 ({estimate.estimate.source} — {estimate.estimate.asOf})
               </span>
             </p>
@@ -497,7 +497,7 @@ export function GenerationLab({
               {submitting ? "Gönderiliyor…" : `⚖ Karşılaştır (${compareSelection.length} model)`}
             </Button>
             {compareSelection.length < 2 ? (
-              <p className="mt-1 text-xs text-zinc-500">En az iki model seçin.</p>
+              <p className="mt-1 text-xs text-zinc-400">En az iki model seçin.</p>
             ) : null}
           </div>
         ) : (
@@ -509,7 +509,7 @@ export function GenerationLab({
           </Button>
         )}
         {!promptReady ? (
-          <p className="text-xs text-zinc-500">Üretim için önce özne alanını doldurun.</p>
+          <p className="text-xs text-zinc-400">Üretim için önce özne alanını doldurun.</p>
         ) : null}
 
         {compareJobs.length > 0 ? (
@@ -565,7 +565,7 @@ export function GenerationLab({
                         ) : asset.mimeType.startsWith("audio/") ? (
                           <audio controls src={resolveAssetUrl(asset.uri)} className="w-full" />
                         ) : (
-                          <p className="text-xs text-zinc-500">{asset.mimeType}</p>
+                          <p className="text-xs text-zinc-400">{asset.mimeType}</p>
                         )}
                         {asset.provenance?.mock ? (
                           <div className="mt-1">
@@ -600,7 +600,7 @@ export function GenerationLab({
                         <span className="text-xs text-zinc-400">{job.request.modelId}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-zinc-400">
                           {new Date(job.createdAt).toLocaleTimeString("tr-TR")}
                         </span>
                         {job.status === "queued" ? (

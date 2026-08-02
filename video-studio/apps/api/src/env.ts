@@ -13,6 +13,14 @@ const EnvSchema = z
     S3_BUCKET: z.string().optional(),
     API_PORT: z.coerce.number().int().positive().default(4000),
     API_HOST: z.string().default("127.0.0.1"),
+    /** Web arayüzünün origin'i; CORS bu değere daraltılır. */
+    WEB_ORIGIN: z.string().url().default("http://localhost:3000"),
+    /** IP başına dakikalık istek sınırı. 0 → kapalı (yalnızca güvenilir ağda!). */
+    RATE_LIMIT_PER_MIN: z.coerce.number().int().nonnegative().default(300),
+    /** Tek dosya yükleme üst sınırı (MiB). */
+    UPLOAD_MAX_MB: z.coerce.number().int().positive().default(200),
+    /** Bitmiş iş/varlık saklama süresi (gün). Tanımsız → süpürme KAPALI. */
+    DATA_RETENTION_DAYS: z.coerce.number().int().positive().optional(),
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === "prisma" && !env.DATABASE_URL) {

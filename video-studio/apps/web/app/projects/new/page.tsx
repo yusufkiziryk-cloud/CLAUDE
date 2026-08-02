@@ -23,6 +23,7 @@ export default function NewProjectPage() {
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [duration, setDuration] = useState(30);
   const [resolution, setResolution] = useState("1080p");
+  const [budget, setBudget] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -37,6 +38,7 @@ export default function NewProjectPage() {
         aspectRatio: aspectRatio as never,
         targetDurationSec: duration,
         resolution: resolution as never,
+        ...(budget.trim() !== "" && Number(budget) > 0 ? { budgetUsd: Number(budget) } : {}),
       });
       router.push(`/projects/${project.id}`);
     } catch (err) {
@@ -92,6 +94,19 @@ export default function NewProjectPage() {
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
               required
+            />
+          </Field>
+          <Field
+            label="Üretim bütçesi (USD, isteğe bağlı)"
+            hint="Doluysa, tahmini maliyeti bütçeyi aşacak üretimler reddedilir"
+          >
+            <TextInput
+              type="number"
+              min={0}
+              step={0.01}
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              placeholder="Örn. 5.00 — boş bırakılırsa sınırsız"
             />
           </Field>
           {error ? <ErrorNote message={error} /> : null}

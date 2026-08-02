@@ -168,7 +168,7 @@ export function SceneBoard({ projectId, refreshKey }: { projectId: string; refre
             </ol>
           </div>
         ) : (
-          <p className="mt-3 text-xs text-zinc-500">
+          <p className="mt-3 text-xs text-zinc-400">
             Brief'i kaydettikten sonra senaryo üretin. OPENAI_API_KEY tanımlıysa gerçek LLM, değilse
             açıkça etiketlenmiş şablon taslağı kullanılır.
           </p>
@@ -237,12 +237,12 @@ export function SceneBoard({ projectId, refreshKey }: { projectId: string; refre
                     <span className="truncate text-sm font-medium text-zinc-200">
                       {scene.title}
                     </span>
-                    <span className="ml-auto shrink-0 text-xs text-zinc-500">
+                    <span className="ml-auto shrink-0 text-xs text-zinc-400">
                       {scene.durationSec} sn
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-zinc-400">{scene.summary}</p>
-                  <p className="mt-1 text-xs text-zinc-500">🎙 {scene.narration.slice(0, 100)}…</p>
+                  <p className="mt-1 text-xs text-zinc-400">🎙 {scene.narration.slice(0, 100)}…</p>
                   <div className="mt-2 flex items-center gap-2">
                     <input
                       type="text"

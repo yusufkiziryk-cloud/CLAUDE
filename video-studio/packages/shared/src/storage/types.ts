@@ -71,6 +71,13 @@ export interface StorageDriver {
   findSceneByStoryboardJob(jobId: string): Promise<Scene | null>;
   findSceneByNarrationJob(jobId: string): Promise<Scene | null>;
 
+  // Veri saklama (Faz 8): süpürücünün kullandığı sorgu + silme işlemleri
+  listFinishedGenerationJobsBefore(cutoffIso: string): Promise<GenerationJob[]>;
+  listFinishedRenderJobsBefore(cutoffIso: string): Promise<RenderJob[]>;
+  deleteGenerationJob(id: string): Promise<boolean>;
+  deleteRenderJob(id: string): Promise<boolean>;
+  deleteAsset(id: string): Promise<boolean>;
+
   // Üretim işleri
   createGenerationJob(job: GenerationJob): Promise<GenerationJob>;
   getGenerationJob(id: string): Promise<GenerationJob | null>;

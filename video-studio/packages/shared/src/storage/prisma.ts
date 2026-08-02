@@ -380,6 +380,35 @@ export class PrismaStorageDriver implements StorageDriver {
     return fromRenderJobRow(row);
   }
 
+  async listFinishedGenerationJobsBefore(cutoffIso: string): Promise<GenerationJob[]> {
+    const rows = await this.db.generationJob.findMany({
+      where: { finishedAt: { not: null, lt: new Date(cutoffIso) } },
+    });
+    return rows.map(fromJobRow);
+  }
+
+  async listFinishedRenderJobsBefore(cutoffIso: string): Promise<RenderJob[]> {
+    const rows = await this.db.renderJob.findMany({
+      where: { finishedAt: { not: null, lt: new Date(cutoffIso) } },
+    });
+    return rows.map(fromRenderJobRow);
+  }
+
+  async deleteGenerationJob(id: string): Promise<boolean> {
+    const result = await this.db.generationJob.deleteMany({ where: { id } });
+    return result.count > 0;
+  }
+
+  async deleteRenderJob(id: string): Promise<boolean> {
+    const result = await this.db.renderJob.deleteMany({ where: { id } });
+    return result.count > 0;
+  }
+
+  async deleteAsset(id: string): Promise<boolean> {
+    const result = await this.db.asset.deleteMany({ where: { id } });
+    return result.count > 0;
+  }
+
   async createGenerationJob(job: GenerationJob): Promise<GenerationJob> {
     const row = await this.db.generationJob.create({ data: toJobRow(job) });
     return fromJobRow(row);
@@ -573,6 +602,7 @@ function toProjectRow(p: Project) {
     language: p.language,
     resolution: p.resolution,
     style: p.style ?? null,
+    budgetUsd: p.budgetUsd ?? null,
     createdAt: new Date(p.createdAt),
     updatedAt: new Date(p.updatedAt),
     deletedAt: p.deletedAt ? new Date(p.deletedAt) : null,
@@ -589,6 +619,7 @@ function fromProjectRow(row: ProjectRow): Project {
     language: row.language,
     resolution: row.resolution,
     style: row.style ?? undefined,
+    budgetUsd: row.budgetUsd ?? undefined,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     deletedAt: row.deletedAt ? row.deletedAt.toISOString() : null,

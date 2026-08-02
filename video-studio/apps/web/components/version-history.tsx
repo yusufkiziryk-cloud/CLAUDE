@@ -54,7 +54,7 @@ export function VersionHistory({
         />
       ) : (
         <div className="space-y-3">
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-zinc-400">
             Karşılaştırmak için iki sürüm işaretleyin; forma geri yüklemek için "Yükle".
           </p>
           <ul className="max-h-48 space-y-1 overflow-y-auto">
@@ -73,7 +73,7 @@ export function VersionHistory({
                 <span className="truncate text-xs text-zinc-400">
                   {v.body.subject.description.slice(0, 60)}
                 </span>
-                <span className="ml-auto shrink-0 text-xs text-zinc-500">
+                <span className="ml-auto shrink-0 text-xs text-zinc-400">
                   {new Date(v.createdAt).toLocaleTimeString("tr-TR")}
                 </span>
                 <Button
@@ -93,7 +93,7 @@ export function VersionHistory({
                 v{diff.older.version} → v{diff.newer.version} farkları
               </p>
               {diff.entries.length === 0 ? (
-                <p className="text-xs text-zinc-500">İçerik aynı.</p>
+                <p className="text-xs text-zinc-400">İçerik aynı.</p>
               ) : (
                 <ul className="space-y-1">
                   {diff.entries.map((entry) => (

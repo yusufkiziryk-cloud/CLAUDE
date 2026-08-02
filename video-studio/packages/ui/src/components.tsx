@@ -85,13 +85,13 @@ export function Field({
     <label className="block">
       <span className="mb-1 block text-sm font-medium text-zinc-300">{label}</span>
       {children}
-      {hint ? <span className="mt-1 block text-xs text-zinc-500">{hint}</span> : null}
+      {hint ? <span className="mt-1 block text-xs text-zinc-400">{hint}</span> : null}
     </label>
   );
 }
 
 const inputClass =
-  "w-full rounded-md border border-zinc-600 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none disabled:opacity-50";
+  "w-full rounded-md border border-zinc-600 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none disabled:opacity-50";
 
 export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={inputClass} {...props} />;
@@ -124,7 +124,7 @@ export function EmptyState({ title, description }: { title: string; description?
   return (
     <div className="rounded-lg border border-dashed border-zinc-700 p-8 text-center">
       <p className="text-sm font-medium text-zinc-300">{title}</p>
-      {description ? <p className="mt-1 text-xs text-zinc-500">{description}</p> : null}
+      {description ? <p className="mt-1 text-xs text-zinc-400">{description}</p> : null}
     </div>
   );
 }

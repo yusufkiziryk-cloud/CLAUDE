@@ -114,7 +114,7 @@ export function CaptionPanel({
             ⬇ Metin Track'ine Uygula
           </Button>
         </div>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-zinc-400">
           "Sahnelerden Üret" senaryo metninden türetir (ses dökümü değildir); süreler kelime
           sayısıyla orantılanır.
         </p>

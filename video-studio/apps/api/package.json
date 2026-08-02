@@ -13,18 +13,19 @@
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",
+    "@fastify/helmet": "^13.1.0",
+    "@fastify/multipart": "^9.0.1",
     "@studio/creative-engine": "workspace:*",
     "@studio/domain": "workspace:*",
     "@studio/media-engine": "workspace:*",
-    "@studio/timeline-engine": "workspace:*",
     "@studio/prompt-engine": "workspace:*",
     "@studio/provider-mock": "workspace:*",
     "@studio/provider-sdk": "workspace:*",
     "@studio/shared": "workspace:*",
+    "@studio/timeline-engine": "workspace:*",
     "bullmq": "^5.34.0",
     "fastify": "^5.2.1",
-    "zod": "^3.24.1",
-    "@fastify/multipart": "^9.0.1"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@studio/test-utils": "workspace:*",

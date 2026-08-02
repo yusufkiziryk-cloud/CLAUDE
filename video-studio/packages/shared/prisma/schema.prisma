@@ -16,6 +16,7 @@ model Project {
   language          String    @default("tr")
   resolution        String    @default("1080p")
   style             String?
+  budgetUsd         Float?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   deletedAt         DateTime?

@@ -223,6 +223,30 @@ export class MemoryStorageDriver implements StorageDriver {
     return next;
   }
 
+  async listFinishedGenerationJobsBefore(cutoffIso: string): Promise<GenerationJob[]> {
+    return [...this.jobs.values()].filter(
+      (j) => j.finishedAt !== undefined && j.finishedAt < cutoffIso,
+    );
+  }
+
+  async listFinishedRenderJobsBefore(cutoffIso: string): Promise<RenderJob[]> {
+    return [...this.renderJobs.values()].filter(
+      (j) => j.finishedAt !== undefined && j.finishedAt < cutoffIso,
+    );
+  }
+
+  async deleteGenerationJob(id: string): Promise<boolean> {
+    return this.jobs.delete(id);
+  }
+
+  async deleteRenderJob(id: string): Promise<boolean> {
+    return this.renderJobs.delete(id);
+  }
+
+  async deleteAsset(id: string): Promise<boolean> {
+    return this.assets.delete(id);
+  }
+
   async createGenerationJob(job: GenerationJob): Promise<GenerationJob> {
     this.jobs.set(job.id, job);
     return job;

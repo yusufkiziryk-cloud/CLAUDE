@@ -5,6 +5,7 @@ import {
   MockTranscriber,
   OpenAITranscriber,
   S3ObjectStore,
+  purgeExpiredData,
   recoverInterruptedJobs,
   registerConfiguredProviders,
   type ObjectStore,
@@ -109,6 +110,27 @@ async function main(): Promise<void> {
   // (redis modunda bu işi worker da yapar; işlem idempotenttir.)
   await recoverInterruptedJobs(storage, console.warn);
 
+  // Veri saklama (KVKK): DATA_RETENTION_DAYS tanımlıysa açılışta + günde bir süpürülür.
+  let retentionTimer: ReturnType<typeof setInterval> | undefined;
+  if (env.DATA_RETENTION_DAYS !== undefined) {
+    const runPurge = () =>
+      purgeExpiredData({
+        storage,
+        objectStore,
+        retentionDays: env.DATA_RETENTION_DAYS as number,
+        rendersDir,
+        log: console.log,
+      }).catch((error) => console.error("[retention] süpürme başarısız:", error));
+    await runPurge();
+    retentionTimer = setInterval(runPurge, 24 * 60 * 60 * 1000);
+    retentionTimer.unref?.();
+    console.log(
+      `[retention] veri saklama süresi: ${env.DATA_RETENTION_DAYS} gün (günlük süpürme).`,
+    );
+  } else {
+    console.log("[retention] DATA_RETENTION_DAYS tanımsız → otomatik silme KAPALI.");
+  }
+
   const app = buildServer({
     storage,
     registry,
@@ -119,9 +141,19 @@ async function main(): Promise<void> {
     rendersDir,
     transcriber,
     enableLogger: true,
+    corsOrigin: env.WEB_ORIGIN,
+    rateLimitPerMin: env.RATE_LIMIT_PER_MIN === 0 ? false : env.RATE_LIMIT_PER_MIN,
+    maxUploadBytes: env.UPLOAD_MAX_MB * 1024 * 1024,
   });
+  if (env.RATE_LIMIT_PER_MIN === 0) {
+    console.warn("[security] RATE_LIMIT_PER_MIN=0: istek sınırı KAPALI (yalnızca güvenilir ağda).");
+  }
+  console.log(
+    `[security] CORS origin: ${env.WEB_ORIGIN} | istek sınırı: ${env.RATE_LIMIT_PER_MIN}/dk | yükleme sınırı: ${env.UPLOAD_MAX_MB} MiB`,
+  );
 
   const shutdown = async () => {
+    if (retentionTimer) clearInterval(retentionTimer);
     await app.close();
     await queue.close();
     await renderQueue.close();

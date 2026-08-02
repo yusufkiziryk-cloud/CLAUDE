@@ -59,11 +59,11 @@ export function AnalyticsPanel({
                   >
                     <td className="py-2 pr-3">
                       <span className="font-medium">{m.modelId}</span>{" "}
-                      <span className="text-zinc-500">({m.providerId})</span>
+                      <span className="text-zinc-400">({m.providerId})</span>
                     </td>
                     <td className="py-2 pr-3">
                       {m.total}
-                      <span className="text-zinc-500">
+                      <span className="text-zinc-400">
                         {" "}
                         ({m.succeeded}✓ {m.failed}✗)
                       </span>
@@ -83,9 +83,9 @@ export function AnalyticsPanel({
         ) : null}
         <div className="flex items-center justify-between">
           {analytics ? (
-            <span className="text-xs text-zinc-500">Toplam {analytics.totalJobs} üretim işi</span>
+            <span className="text-xs text-zinc-400">Toplam {analytics.totalJobs} üretim işi</span>
           ) : (
-            <span className="text-xs text-zinc-500">Yükleniyor…</span>
+            <span className="text-xs text-zinc-400">Yükleniyor…</span>
           )}
           <Button variant="secondary" className="px-2 py-1 text-xs" onClick={() => void load()}>
             Yenile

@@ -149,7 +149,7 @@ export function BiblePanel({ projectId, onChanged }: { projectId: string; onChan
                 </div>
                 <p className="mt-1 text-xs text-zinc-400">{card.description}</p>
                 {card.promptFragment ? (
-                  <p className="mt-1 text-xs text-zinc-500">
+                  <p className="mt-1 text-xs text-zinc-400">
                     Kilitli parça:{" "}
                     <span className="font-mono text-indigo-400">{card.promptFragment}</span>
                   </p>

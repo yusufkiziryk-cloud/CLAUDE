@@ -90,7 +90,7 @@ export function TemplatePanel({
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm text-zinc-200">{t.name}</p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-400">
                     {new Date(t.createdAt).toLocaleDateString("tr-TR")}
                   </p>
                 </div>

@@ -25,6 +25,8 @@ export const ProjectSchema = z.object({
   language: z.enum(["tr", "en"]).default("tr"),
   resolution: z.enum(["720p", "1080p", "4k"]).default("1080p"),
   style: z.string().max(500).optional(),
+  /** Üretim bütçesi (USD). Tanımsız → sınırsız. Aşılırsa yeni üretim reddedilir. */
+  budgetUsd: z.number().positive().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   deletedAt: z.string().datetime().nullable().default(null),
@@ -40,5 +42,6 @@ export const CreateProjectInput = ProjectSchema.pick({
   language: z.enum(["tr", "en"]).optional(),
   resolution: z.enum(["720p", "1080p", "4k"]).optional(),
   style: z.string().max(500).optional(),
+  budgetUsd: z.number().positive().optional(),
 });
 export type CreateProjectInput = z.infer<typeof CreateProjectInput>;

@@ -47,7 +47,7 @@ export default function ProjectListPage() {
               <p className="mt-2 text-xs text-zinc-400">
                 Amaç: {p.purpose} · Hedef süre: {p.targetDurationSec} sn · {p.resolution}
               </p>
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-xs text-zinc-400">
                 Oluşturma: {new Date(p.createdAt).toLocaleString("tr-TR")}
               </p>
             </Card>

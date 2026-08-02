@@ -6,6 +6,7 @@ export * from "./objectstore/types.js";
 export * from "./objectstore/local-disk.js";
 export * from "./objectstore/s3.js";
 export * from "./recovery.js";
+export * from "./retention.js";
 export * from "./render/executor.js";
 export * from "./transcription.js";
 // NOT: PrismaStorageDriver bilinçli olarak buradan export edilmez;

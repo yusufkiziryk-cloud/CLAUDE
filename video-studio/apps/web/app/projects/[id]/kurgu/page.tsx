@@ -225,7 +225,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
         <div className="overflow-x-auto pb-2">
           <div style={{ width: Math.max(600, (durationSec + 5) * PX_PER_SEC) }}>
             {/* zaman cetveli */}
-            <div className="relative mb-1 h-5 border-b border-zinc-700 text-[10px] text-zinc-500">
+            <div className="relative mb-1 h-5 border-b border-zinc-700 text-[10px] text-zinc-400">
               {Array.from({ length: Math.ceil(durationSec + 5) }, (_, i) => (
                 <span key={i} className="absolute" style={{ left: i * PX_PER_SEC }}>
                   {i}s
@@ -382,7 +382,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
               🎞 Render Et
             </Button>
             {durationSec === 0 ? (
-              <p className="text-xs text-zinc-500">Önce timeline'a klip ekleyin.</p>
+              <p className="text-xs text-zinc-400">Önce timeline'a klip ekleyin.</p>
             ) : null}
             {renderJob ? (
               <div className="space-y-2">
