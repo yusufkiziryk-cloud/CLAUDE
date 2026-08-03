@@ -1,0 +1,18 @@
+services:
+  uygulama:
+    build: .
+    container_name: deprem-gorevlendirme
+    ports:
+      - "3000:3000"
+    environment:
+      # KURULUMDA MUTLAKA DEĞİŞTİRİN: en az 32 karakter rastgele bir değer girin
+      - SESSION_SECRET=bu-anahtari-kurulumda-degistirin-cok-gizli
+      - DEMO_MODE=1
+      - DATABASE_PATH=/app/data/uygulama.db
+      - KURUM_ADI=T.C. Şanlıurfa Valiliği İl Sağlık Müdürlüğü
+    volumes:
+      - uygulama-veri:/app/data
+    restart: unless-stopped
+
+volumes:
+  uygulama-veri:
