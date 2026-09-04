@@ -15,6 +15,7 @@ Claude Code oturumunda otomatik olarak kullanılabilir olur.
 | `katsayi-hesabi-asc.md` | ASÇ bilgilendirme belgesi özeti (devir örnekleri; eşikler güncellendi) | `kaynak/asc-hyp-katsayi-hesabi-01.06.2025.pdf` |
 | `kaynak/` | Yönerge PDF'i ve ASÇ belgesi (birincil kaynaklar) | Kullanıcı yüklemesi (04.09.2026) |
 | `kaynak-belgeler.md` | Google Drive'daki HYP kaynak belge envanteri | Drive taraması (30.08.2026) |
+| `kamu-maas/` | **657 + aile hekimliği maaş bilgi tabanı** (18 dosya; dizin ve uygulanan kapsam `kamu-maas/README.md`) | claude.ai "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" projesi (04.09.2026) |
 | `../config/planlar.json` | Ürün plan/paket tanımları | Drive: `planlar.json` (27.08.2026) |
 
 ## claude.ai projesindeki 27 dosya nasıl aktarılır?

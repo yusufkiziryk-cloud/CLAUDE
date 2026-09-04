@@ -58,7 +58,7 @@ gösterir.
 
 ```
 [Kullanıcı tarayıcısı]
-  ├─ hyp-analitik.html  (tek dosya; motor + lisans doğrulama + UI; veri localStorage)
+  ├─ hyp-analitik.html  (tek dosya; katsayı motoru + bordro motoru + kural seti + lisans doğrulama + UI; veri localStorage)
   ├─ eklenti/           (SİNA Pozitif Performans → JSON; panoya kopyalar)
   └─ lisans anahtarı    (satıcı özel anahtarıyla imzalı; uygulama açık anahtarla doğrular)
 
@@ -72,6 +72,11 @@ gösterir.
   eklenti JSON → uygulama. Satıcı sunucusuna SİNA verisi hiç gitmez.
 - **Motor tek kaynak:** `src/hyp-katsayi.js`; `node tools/derle.js` HTML'e
   gömer. Mevzuat değişince tablo + test + derleme.
+- **Bordro motoru:** `src/bordro-motoru.js` + `kurallar/2026-kurallar.json`
+  (tarih-sürümlü, kaynaklı, durum etiketli). Doğrulanmamış kuralla sonuç
+  "TAHMİNİ / SİMÜLASYON", rejim belirsiz veya tarife yoksa hesap kilitli.
+  Katsayı yalnızca kayıtlı kişi ödemesine uygulanır; öneriler aylık net TL'ye
+  çevrilir. Kapsam ve VERIFIED süreci: `bilgi-tabani/kamu-maas/README.md`.
 - **Çevrimdışı plan** LifeTrack'teki şifreli tek dosya deneyiminin devamıdır;
   ileride dosya, lisans sahibinin adına AES ile mühürlenebilir.
 - **Faz 2 backend** için Drive'daki "Finans Komuta Merkezi" iskeleti (FastAPI
@@ -85,6 +90,10 @@ gösterir.
 - **SİNA kullanım koşulları:** içerik izinsiz çoğaltılamaz, erişilen bilgi
   üçüncü kişilerle paylaşılamaz → okuma yalnızca kullanıcının cihazında,
   satıcıya veri aktarımı yok; bu ilke ürün sözünün parçasıdır.
+- **Bordro simülasyonu resmî bordro değildir:** Maaş sekmesi her çıktıda
+  "karar destek ve kontrol amaçlıdır; kurumun resmî bordro/tahakkuk kaydının
+  yerine geçmez" uyarısı taşır; kullanıcı tutarlarını kendi girer, gerçek
+  bordro verisi satıcıya gitmez ve depoya girmez.
 - **Bakanlık ile ilişkisizlik:** her ekranda "resmî hesap değildir; Bakanlık
   sistemleri esastır" ibaresi. "HYP" bir Bakanlık program adıdır; ürün
   adında tanımlayıcı kullanım kabul edilebilir ama marka tescili için
@@ -100,10 +109,10 @@ gösterir.
 
 | Faz | Süre | İş | Çıktı |
 |---|---|---|---|
-| 0 (bu sürüm) | — | Motor v2, uygulama v2, eklenti, lisans altyapısı, site, belgeler | Depoda |
+| 0 (bu sürüm) | — | Motor v2, uygulama v2, eklenti, lisans altyapısı, site, belgeler; Maaş sekmesi (bordro simülasyonu, TAHMİNİ) + kamu maaş bilgi tabanı | Depoda |
 | 1 | 2–4 hafta | Eklentiyi gerçek SİNA'da doğrulama; 5–10 pilot kullanıcı; fiyat; ödeme linki; Web Store yayını; alan adı + GitHub Pages | İlk satış |
 | 2 | 1–3 ay | Küçük API: hesap, ödeme webhook'u → otomatik lisans, cihaz sınırı; çoklu birim (kurumsal); Excel raporu; ay sonu "hedefe kalan" e-postası | SaaS |
-| 3 | 3–6 ay | Mobil (Expo WebView, SİNA içinde okuma); Dr/ASÇ bordro modülü (Ödeme Yönetmeliği kaynağıyla); teşvik kuralı (kaynak gelince); il/ilçe kıyas | Platform |
+| 3 | 3–6 ay | Mobil (Expo WebView, SİNA içinde okuma); bordro modülünü VERIFIED'a taşıma (resmî belge hash'leri, 2026 asgari ücret istisnası, Ödeme Yönetmeliği ile AH kalemlerinin türetilmesi, anonim örnek bordro ile kalem kalem doğrulama); teşvik kuralı (kaynak gelince); il/ilçe kıyas | Platform |
 
 ## 7. Operasyon
 
