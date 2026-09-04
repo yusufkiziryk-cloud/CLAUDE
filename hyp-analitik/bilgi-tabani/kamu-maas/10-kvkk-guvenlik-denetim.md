@@ -1,10 +1,8 @@
-> Kaynak: claude.ai projesi "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" — Project
-> Knowledge dosyası `10_KVKK_GUVENLIK_DENETIM.md`. Kullanıcı tarafından
-> 04.09.2026'da mesaj olarak aktarıldı; içerik aynen korunmuştur.
+> Kaynak: claude.ai projesi "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" — Project Knowledge dosyası `10_KVKK_GUVENLIK_DENETIM.md` (birleşik dosya DOSYA 11/18, 04.09.2026). İçerik aynen korunmuştur; birleşik orijinal: `KAMU_MAAS_HYP_PROJECT_KNOWLEDGE_BIRLESIK.md`.
 
 # KVKK, GÜVENLİK VE DENETİM
 
-Maaş/bordro sistemi yüksek hassasiyetli özlük ve mali veri işler. Varsayılan mimari "privacy by design" olmalıdır.
+Maaş/bordro sistemi yüksek hassasiyetli özlük ve mali veri işler. Varsayılan mimari “privacy by design” olmalıdır.
 
 ## Veri minimizasyonu
 

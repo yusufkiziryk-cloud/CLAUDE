@@ -1,11 +1,8 @@
-> Kaynak: claude.ai projesi "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" — Project
-> Knowledge dosyası `04_MAAS_ODEME_KALEMLERI.md`. Kullanıcı tarafından
-> 04.09.2026'da mesaj olarak aktarıldı; içerik aynen korunmuştur. Mesaj
-> "effective_to: null" satırında bittiğinden dosyanın sonu eksik olabilir.
+> Kaynak: claude.ai projesi "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" — Project Knowledge dosyası `04_MAAS_ODEME_KALEMLERI.md` (birleşik dosya DOSYA 5/18, 04.09.2026). İçerik aynen korunmuştur; birleşik orijinal: `KAMU_MAAS_HYP_PROJECT_KNOWLEDGE_BIRLESIK.md`.
 
 # MAAŞ / BORDRO ÖDEME KALEMLERİ KATALOĞU
 
-Bu liste, veritabanında "pay item catalog" olarak modellenmelidir. Her kalemin vergi/prim/damga durumu **adıyla tahmin edilmemeli**, kaynaklı `tax_profile` üzerinden belirlenmelidir.
+Bu liste, veritabanında “pay item catalog” olarak modellenmelidir. Her kalemin vergi/prim/damga durumu **adıyla tahmin edilmemeli**, kaynaklı `tax_profile` üzerinden belirlenmelidir.
 
 ## 1. 657/375 çekirdek aylık kalemleri
 
@@ -152,3 +149,5 @@ pay_item:
   effective_from: null
   effective_to: null
 ```
+
+Bir kalem için bu metadata tamamlanmamışsa, motor “0 TL” deyip sessiz geçmesin; `UNRESOLVED_PAY_ITEM` uyarısı versin.

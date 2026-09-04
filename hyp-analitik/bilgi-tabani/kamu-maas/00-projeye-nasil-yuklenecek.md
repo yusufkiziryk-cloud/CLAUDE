@@ -1,6 +1,4 @@
-> Kaynak: claude.ai projesi "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" — Project
-> Knowledge klasörünün README/yükleme talimatı. Kullanıcı tarafından
-> 04.09.2026'da mesaj olarak aktarıldı; içerik aynen korunmuştur.
+> Kaynak: claude.ai projesi "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" — Project Knowledge dosyası `00_PROJEYE_NASIL_YUKLENECEK.md` (birleşik dosya DOSYA 2/18, 04.09.2026). İçerik aynen korunmuştur; birleşik orijinal: `KAMU_MAAS_HYP_PROJECT_KNOWLEDGE_BIRLESIK.md`.
 
 # Claude Project Knowledge — Yükleme Talimatı
 

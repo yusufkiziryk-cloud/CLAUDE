@@ -1,9 +1,4 @@
-> Kaynak: claude.ai projesi "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" — Project
-> Knowledge dosyası `05_VERGI_SGK_KESINTI_MOTORU.md`. Kullanıcı tarafından
-> 04.09.2026'da mesaj olarak aktarıldı; içerik aynen korunmuştur. Mesaj 7.
-> bölümdeki ledger bloğunda ("= NET_ODENECEK") bitti; 8. bölüm
-> ("İcra/nafaka/BES/sendika") ve devamı `bolum1-parcali-aktarim.md` içinde
-> parça olarak mevcuttur.
+> Kaynak: claude.ai projesi "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" — Project Knowledge dosyası `05_VERGI_SGK_KESINTI_MOTORU.md` (birleşik dosya DOSYA 6/18, 04.09.2026). İçerik aynen korunmuştur; birleşik orijinal: `KAMU_MAAS_HYP_PROJECT_KNOWLEDGE_BIRLESIK.md`.
 
 # VERGİ, SGK, EMEKLİ KESENEĞİ VE KESİNTİ MOTORU
 
@@ -33,11 +28,11 @@ Zorunlu alanlar:
 - `exempt_pay_items[]`
 - `minimum_wage_exemption_used_for_month`
 
-Bir ayda birden fazla bordro/ek ödeme varsa istisna "iki kez" kullandırılmamalıdır.
+Bir ayda birden fazla bordro/ek ödeme varsa istisna “iki kez” kullandırılmamalıdır.
 
 ## 3. Asgari ücret gelir vergisi istisnası
 
-GVK 23/18 ve ilgili tebliğ uygulamasını ayrı fonksiyon yap. Maaşla aynı dönemde ücret sayılan prim, ikramiye, mesai, döner sermaye, ek ders vb. ödemeler varsa aynı aya ait istisna havuzunun bir kez kullanılması gerekir. Bordrolar ayrı çalıştırılsa bile aylık "exemption ledger" ortak olmalıdır.
+GVK 23/18 ve ilgili tebliğ uygulamasını ayrı fonksiyon yap. Maaşla aynı dönemde ücret sayılan prim, ikramiye, mesai, döner sermaye, ek ders vb. ödemeler varsa aynı aya ait istisna havuzunun bir kez kullanılması gerekir. Bordrolar ayrı çalıştırılsa bile aylık “exemption ledger” ortak olmalıdır.
 
 ## 4. Damga vergisi
 
@@ -53,7 +48,7 @@ SGK resmi açıklamasından doğrulanan başlangıç referansları:
 - GSS toplam %12,5 = kişi %5 + işveren %7,5
 - Fiili hizmet süresi zammı olan işlerde ilave işveren oranı ayrıca uygulanabilir.
 
-Prime esas kazanç unsurları personel rejimine göre kaynaklı listeyle oluşturulmalı; "tüm brüt maaş" otomatik PEK kabul edilmemelidir.
+Prime esas kazanç unsurları personel rejimine göre kaynaklı listeyle oluşturulmalı; “tüm brüt maaş” otomatik PEK kabul edilmemelidir.
 
 ## 6. 5434 geçiş rejimi — kontrol referansı
 
@@ -68,7 +63,7 @@ Emekli keseneğine esas aylık ile gelir vergisi matrahı aynı kavram değildir
 
 ## 7. Kesinti sırası
 
-Kesintileri tek bir "toplam kesinti" içinde hesaplama. Minimum ledger:
+Kesintileri tek bir “toplam kesinti” içinde hesaplama. Minimum ledger:
 
 ```text
 BRUT_HAKEDIS
@@ -82,3 +77,19 @@ BRUT_HAKEDIS
 + vergiden bağımsız net düzeltmeler (varsa)
 = NET_ODENECEK
 ```
+
+Sıra yalnız görsel sunum değildir; bazı kalemlerin vergi matrahına etkisi nedeniyle hesap sırası kural motoruyla belirlenmelidir.
+
+## 8. İcra/nafaka/BES/sendika
+
+Bu modüller çekirdek maaş formülünden ayrılmalı. Her biri:
+
+- yasal dayanak
+- başlangıç/bitiş
+- sabit/oransal tutar
+- öncelik
+- üst sınır
+- haczedilemez kalem profilleri
+- aynı ayda kalan bakiye
+
+bilgisiyle çalışmalıdır. İcra kesintisi gibi yüksek riskli alanlarda hukuki kural tam doğrulanmadan otomatik karar üretme.

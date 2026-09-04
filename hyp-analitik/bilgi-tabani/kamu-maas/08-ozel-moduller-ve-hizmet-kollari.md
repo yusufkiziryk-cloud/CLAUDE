@@ -1,12 +1,10 @@
-> Kaynak: claude.ai projesi "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" — Project
-> Knowledge dosyası `08_OZEL_MODULLER_VE_HIZMET_KOLLARI.md`. Kullanıcı
-> tarafından 04.09.2026'da mesaj olarak aktarıldı; içerik aynen korunmuştur.
+> Kaynak: claude.ai projesi "657 ve AİLE HEKİMLİĞİ MAAŞ HESAPLAMA" — Project Knowledge dosyası `08_OZEL_MODULLER_VE_HIZMET_KOLLARI.md` (birleşik dosya DOSYA 9/18, 04.09.2026). İçerik aynen korunmuştur; birleşik orijinal: `KAMU_MAAS_HYP_PROJECT_KNOWLEDGE_BIRLESIK.md`.
 
 # ÖZEL MODÜLLER, KURUMLAR VE HİZMET KOLLARI
 
 ## 2026–2027 toplu sözleşme dönemi
 
-Sistem "genel hüküm" ile "hizmet kolu hükmü"nü ayırmalıdır. Çalışma ve Sosyal Güvenlik Bakanlığının 8. Dönem toplu sözleşme/hakem kurulu belgeleri ayrı kaynak sürümü olarak tutulmalıdır.
+Sistem “genel hüküm” ile “hizmet kolu hükmü”nü ayırmalıdır. Çalışma ve Sosyal Güvenlik Bakanlığının 8. Dönem toplu sözleşme/hakem kurulu belgeleri ayrı kaynak sürümü olarak tutulmalıdır.
 
 `service_branch` zorunlu/opsiyonel seçim olmalı. Kullanıcı hizmet kolunu bilmiyorsa kurum eşleştirme tablosundan öneri üret; kesin değilse onay iste.
 
@@ -23,7 +21,7 @@ Alt adapter'lar:
 - döner sermaye
 - HYP
 
-Bunları tek "sağlık zammı" formülüne birleştirme.
+Bunları tek “sağlık zammı” formülüne birleştirme.
 
 ## Eğitim
 
@@ -53,4 +51,4 @@ Bunları tek "sağlık zammı" formülüne birleştirme.
 
 ## KİT
 
-399 KHK personelinde ücret/ikramiye/başarı vb. mekanizma özel rejimdir. Kurum/pozisyon cetvelleri ve dönemsel tavanlar olmadan "tam destek" işaretleme.
+399 KHK personelinde ücret/ikramiye/başarı vb. mekanizma özel rejimdir. Kurum/pozisyon cetvelleri ve dönemsel tavanlar olmadan “tam destek” işaretleme.
