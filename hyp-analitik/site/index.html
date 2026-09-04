@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HYP Analitik</title>
+<meta name="description" content="Aile hekimliği HYP tarama-takip katsayısını resmî kurallarla hesaplayan, SİNA'dan tek tıkla veri alan ve kaç işlem daha gerektiğini söyleyen karar destek aracı.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root { color-scheme: light; --plane:#f4f6f5; --surface:#fdfdfc; --surface-2:#eef1ef; --ink:#131816; --ink-2:#4c5552; --muted:#7d8683; --hairline:#dfe3e0; --accent:#0e6a5c; --accent-ink:#fff; --accent-soft:#e2efec; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --plane:#101211; --surface:#1a1d1c; --surface-2:#232726; --ink:#f1f3f1; --ink-2:#bcc3bf; --muted:#8b938f; --hairline:#2c302e; --accent:#3ba48f; --accent-ink:#08211c; --accent-soft:#16302b; } }
+:root[data-theme="dark"] { color-scheme: dark; --plane:#101211; --surface:#1a1d1c; --surface-2:#232726; --ink:#f1f3f1; --ink-2:#bcc3bf; --muted:#8b938f; --hairline:#2c302e; --accent:#3ba48f; --accent-ink:#08211c; --accent-soft:#16302b; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--plane); color:var(--ink); font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; font-size:16px; line-height:1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 24px 20px 72px; }
+header { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+.logo { font-size:22px; font-weight:700; letter-spacing:-0.02em; } .logo span { color:var(--accent); }
+nav a { color:var(--ink-2); text-decoration:none; margin-left:18px; font-weight:500; font-size:15px; }
+.hero { display:grid; grid-template-columns: 1.15fr 1fr; gap:32px; align-items:center; padding:56px 0 40px; }
+.hero h1 { font-size: clamp(30px, 4.4vw, 46px); line-height:1.12; letter-spacing:-0.025em; margin:0 0 14px; text-wrap:balance; }
+.hero p { color:var(--ink-2); font-size:18px; margin:0 0 22px; max-width:52ch; }
+.btn { display:inline-block; font:inherit; font-weight:600; border:1px solid var(--hairline); background:var(--surface); color:var(--ink); border-radius:10px; padding:12px 20px; text-decoration:none; cursor:pointer; }
+.btn.primary { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+.btn + .btn { margin-left:10px; }
+.kanit { background:var(--surface); border:1px solid var(--hairline); border-radius:14px; padding:20px 22px; }
+.kanit .k { font-size:11.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); }
+.kanit .v { font-size:34px; font-weight:700; letter-spacing:-0.01em; margin:2px 0 4px; font-variant-numeric: tabular-nums; }
+.kanit .s { color:var(--ink-2); font-size:14px; }
+.kanit + .kanit { margin-top:12px; }
+h2 { font-size:24px; letter-spacing:-0.015em; margin:44px 0 14px; text-wrap:balance; }
+.ozellikler { display:grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap:14px; }
+.oz { background:var(--surface); border:1px solid var(--hairline); border-radius:12px; padding:16px 18px; }
+.oz h3 { margin:0 0 6px; font-size:16px; } .oz p { margin:0; color:var(--ink-2); font-size:14.5px; }
+.planlar { display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:14px; }
+.plan { background:var(--surface); border:1px solid var(--hairline); border-radius:12px; padding:18px; display:flex; flex-direction:column; gap:8px; }
+.plan.one { border-color: var(--accent); background: var(--accent-soft); }
+.plan h3 { margin:0; font-size:17px; } .plan .fiyat { font-size:26px; font-weight:700; } .plan .fiyat small { font-size:13px; color:var(--muted); font-weight:500; }
+.plan ul { margin:0; padding-left:18px; color:var(--ink-2); font-size:14px; }
+.plan .btn { margin-top:auto; text-align:center; }
+details { background:var(--surface); border:1px solid var(--hairline); border-radius:10px; padding:10px 16px; margin-top:8px; }
+summary { font-weight:600; cursor:pointer; } details p { color:var(--ink-2); margin:8px 0 4px; }
+footer { color:var(--muted); font-size:13px; margin-top:48px; border-top:1px solid var(--hairline); padding-top:16px; }
+footer a { color:var(--ink-2); }
+@media (max-width: 760px) { .hero { grid-template-columns: 1fr; padding-top:28px; } nav a { margin-left:12px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">HYP <span>Analitik</span></div>
+    <nav><a href="#ozellikler">Özellikler</a><a href="#planlar">Planlar</a><a href="#sss">SSS</a><a href="../hyp-analitik.html">Uygulamayı dene</a></nav>
+  </header>
+
+  <section class="hero">
+    <div>
+      <h1>Katsayınızı tahmin etmeyin, hesaplayın. Sonra kaç işlem kaldığını görün.</h1>
+      <p>HYP Analitik, aile hekimi ve aile sağlığı çalışanı için tarama-takip katsayısını resmî kılavuz tablolarıyla hesaplar, SİNA'dan tek tıkla veri alır ve bu ay hangi kriterde kaç işlem daha yapmanın maaşa ne kazandıracağını söyler.</p>
+      <a class="btn primary" href="../hyp-analitik.html">Ücretsiz dene</a>
+      <a class="btn" href="#planlar">Planları gör</a>
+    </div>
+    <div>
+      <div class="kanit"><div class="k">Resmî tablo kontrolü</div><div class="v">1,500 · 0,900</div><div class="s">18 kriterin üst katsayı çarpımı 1,5; alt katsayı çarpımı 0,9. Kılavuz 14.04.2026 ile birebir; her sürümde testle doğrulanır.</div></div>
+      <div class="kanit"><div class="k">Veri nerede</div><div class="v">Cihazınızda</div><div class="s">SİNA verisi yalnızca sizin tarayıcınızda okunur; sunucuya gönderilmez. Hasta verisi işlenmez.</div></div>
+    </div>
+  </section>
+
+  <h2 id="ozellikler">Ne yapar</h2>
+  <div class="ozellikler">
+    <div class="oz"><h3>Yönergeye göre hesap</h3><p>Asgari/azami oranlar, doğrusal katsayı, devir (%10 şartı, 2 ay), tavan, büyük birim kuralı, muafiyetler. Hekim 18 kriter, ASÇ 2 kriter.</p></div>
+    <div class="oz"><h3>SİNA'dan tek tıkla</h3><p>Chrome eklentisi Pozitif Performans ekranındaki gereken / yapılan / devreden sayılarını okur; uygulamaya yapıştırırsınız. Elle giriş de her zaman açık.</p></div>
+    <div class="oz"><h3>Öncelikli hamleler</h3><p>Aynı emekle en çok katsayı kazandıran kriterleri sıralar: asgari için kaç işlem, azami için kaç işlem, kazanç ne kadar.</p></div>
+    <div class="oz"><h3>Hekim–ASÇ ekip analizi</h3><p>%75 kuralını uygular: ASÇ maaş çarpanı hangi katsayıdan hesaplanır, eşiğe ne kadar kaldı, hekim katsayısı yükselirse ne olur.</p></div>
+    <div class="oz"><h3>Dönem trendi ve rapor</h3><p>Aylar boyunca katsayı eğrisi, yazdırılabilir rapor, CSV dışa aktarımı, JSON yedekleme.</p></div>
+    <div class="oz"><h3>Çevrimdışı ve tek dosya</h3><p>Kurulum yok; tek HTML dosyası internet olmadan çalışır. Kurum ağı kısıtlarına uygun.</p></div>
+  </div>
+
+  <h2 id="planlar">Planlar</h2>
+  <div class="planlar" id="plan-kap"></div>
+
+  <h2 id="sss">Sık sorulanlar</h2>
+  <details><summary>Bakanlık uygulaması mı?</summary><p>Hayır. HYP Analitik bağımsız bir karar destek aracıdır; Sağlık Bakanlığı ile ilişkisi yoktur. Resmî hesap için Bakanlık sistemleri esastır.</p></details>
+  <details><summary>SİNA şifremi istiyor mu?</summary><p>Hayır. SİNA'ya kendiniz giriş yaparsınız; eklenti yalnızca açık sayfadaki tabloyu okur ve panoya kopyalar. Hiçbir veri bize gelmez.</p></details>
+  <details><summary>Hesap ne kadar doğru?</summary><p>Kriter tabloları HYP Tarama ve Takip Kılavuzu'nun (14.04.2026) Bölüm 1'inden, kurallar Tarama ve Takip Katsayısı Yönergesi'nden alınmıştır. Her sürümde tablo çarpım kontrolü ve yönerge örnekleriyle otomatik testler çalışır.</p></details>
+  <details><summary>Lisans nasıl çalışır?</summary><p>Ödeme sonrası size özel, imzalı bir lisans anahtarı gönderilir; uygulamada "Lisans" düğmesinden yapıştırırsınız. Deneme sürümü 3 dönem ve filigranlı çıktı ile sınırsız süre kullanılabilir.</p></details>
+
+  <footer>
+    <div>HYP Analitik · Bilgilendirme amaçlıdır; resmî hesap için Bakanlık sistemleri geçerlidir. Kişi/hasta verisi işlenmez. <a href="gizlilik.html">Gizlilik ve KVKK</a></div>
+    <div style="margin-top:6px">İletişim: <a href="mailto:iletisim@example.com" id="iletisim">iletisim@example.com</a> — Bu adresi kendi adresinizle değiştirin.</div>
+  </footer>
+</div>
+<script>
+const PLANLAR = {
+  DEMO: { ad: 'Ücretsiz Deneme', fiyat: null, donem: 'sinirsiz', satilabilir: false, ozellikler: ['3 dönem kaydı', 'Filigranlı çıktı', 'Yedekleme ve geri yükleme'] },
+  OFFLINE_INDIVIDUAL: { ad: 'Çevrimdışı Bireysel', fiyat: null, donem: 'yillik', satilabilir: true, ozellikler: ['Sınırsız dönem', 'Temiz çıktı ve CSV', 'Tek dosya, internet gerekmez'] },
+  SAAS_STANDARD: { ad: 'Online Standart', fiyat: null, donem: 'yillik', satilabilir: true, one: true, ozellikler: ['Sınırsız dönem', 'Temiz çıktı ve CSV', '3 cihaz', 'Otomatik güncelleme'] },
+  HYBRID_PRO: { ad: 'Hibrit Pro', fiyat: null, donem: 'yillik', satilabilir: true, ozellikler: ['Online + çevrimdışı dosya', '5 cihaz', 'Hekim ve ASÇ birlikte'] },
+  INSTITUTIONAL: { ad: 'Kurumsal', fiyat: null, donem: 'yillik', satilabilir: true, ozellikler: ['Çoklu birim ve kullanıcı', '10 cihaz', 'Toplu lisans, özel teklif'] },
+};
+const fmt = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 });
+document.getElementById('plan-kap').innerHTML = Object.entries(PLANLAR).map(([kod, p]) => `
+  <div class="plan${p.one ? ' one' : ''}">
+    <h3>${p.ad}</h3>
+    <div class="fiyat">${p.fiyat === null ? (p.satilabilir ? 'İletişime geçin' : 'Ücretsiz') : fmt.format(p.fiyat)} ${p.fiyat !== null ? `<small>/ ${p.donem === 'yillik' ? 'yıl' : 'süresiz'}</small>` : ''}</div>
+    <ul>${p.ozellikler.map((o) => `<li>${o}</li>`).join('')}</ul>
+    <a class="btn${p.one ? ' primary' : ''}" href="${p.satilabilir ? 'mailto:iletisim@example.com?subject=HYP%20Analitik%20' + encodeURIComponent(p.ad) : '../hyp-analitik.html'}">${p.satilabilir ? 'Teklif al' : 'Hemen dene'}</a>
+  </div>`).join('');
+</script>
+</body>
+</html>

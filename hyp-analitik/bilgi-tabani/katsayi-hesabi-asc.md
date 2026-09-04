@@ -1,5 +1,12 @@
 # ASÇ Tarama ve Takip Katsayısı — Kural Seti
 
+> **Güncelleme (04.09.2026):** HYP Tarama ve Takip Kılavuzu 14.04.2026, her iki
+> ASÇ kriteri için asgari başarı oranını **%40** ve üst katsayıları
+> **1,0611 / 1,1309** (çarpım 1,2000) olarak belirler. Aşağıdaki %50 ve
+> 1,06 / 1,13 değerleri bu belgenin yazıldığı tarihe aittir; geçerli değerler
+> ve motor sözleşmesi için `kriter-tablolari-resmi.md` esastır. Devir örnekleri
+> ve maaş karşılaştırma açıklamaları geçerliliğini korur.
+
 > Kaynak: 01.06.2025 tarihli **Aile Hekimliği Tarama ve Takip Katsayısına İlişkin
 > Yönerge** esas alınarak hazırlanan "ASÇ HYP Katsayı Hesabı 01.06.2025" dokümanı
 > (Drive: `HYP/ASÇ HYP Katsayı Hesabı 01.06.2025.pdf`). Nihai bilgi için Yönerge
@@ -71,14 +78,15 @@ Yönergedeki 4 aylık örnek (motor testinde birebir doğrulanır):
 3. Avantajdan yararlanmak için ASÇ'nin en az **1,0** katsayıya ulaşması gerekir;
    nüfus > 3000 ve hekim tam yapıyorsa 1,0 yeterlidir, nüfus < 2666'da eşik 1,125'tir.
 
-## 6. Motor kapsamı ve bilinçli sınırlar
+## 6. Motorla ilişkisi
 
-- `src/hyp-katsayi.js` yalnızca **ASÇ tarafını** hesaplar. Aile hekimi kriter
-  seti (KVR değerlendirmesi, DM/HT/obezite tarama ve izlemleri vb.) farklı
-  katsayı bantlarına sahiptir; doğrulanmış kaynak eklenmeden **kodlanmayacak**,
-  hekim katsayısı karşılaştırma için elle girilir.
+- Motor (`src/hyp-katsayi.js`) v2'den itibaren hem aile hekimliği birimi (18
+  aktif kriter) hem ASÇ kriterlerini `kriter-tablolari-resmi.md`'deki resmî
+  değerlerle hesaplar; bu belgedeki %50 eşiği ve 1,06 / 1,13 değerleri
+  kullanılmaz.
+- Bu belgenin kalıcı katkısı: devir zincirinin 4 aylık işleyiş örneği (motor
+  testinde birebir doğrulanır) ve ASÇ–hekim maaş karşılaştırmasının sahadaki
+  yorumu (nüfusa göre %75 eşiği tablosu).
 - md.7/10-b istisnasındaki "devrin ilk ayı" yorumu: fazlası bir önceki ayda
   oluşmuş devir mevcutsa istisna uygulanır (motor yorumudur; tereddütte Yönerge
   metnine bakılır).
-- Entegre birim tavanında 1,5 üst sınırı normal birime kıyasen uygulanmıştır;
-  Yönerge farklı bir üst sınır getiriyorsa `tavanKatsayisi` güncellenir.

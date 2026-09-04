@@ -79,9 +79,9 @@ gösterir; yine de birincil kaynak Yönerge'dir.
 - 1,0611 × 1,1309 = **1,2000** → ASÇ azami katsayısı tam 1,2. Bizim
   belgemizdeki 1,06 / 1,13 yuvarlanmış değerlerdir (çarpım 1,1978).
   **Motor güncellemesi adayı** (Yönerge teyidi sonrası).
-- **Çelişki:** Vital Bulgular alt eşiği eklentide %40, `ASÇ HYP Katsayı
-  Hesabı 01.06.2025` belgesinde %50 (tablo 45% → 0,930, 50% → 1,000). Hangisi
-  doğruysa motor ona göre kalır/değişir. **Yönerge metniyle çözülecek.**
+- **Çözüldü (04.09.2026):** Kılavuz 14.04.2026 Tablo 2 her iki ASÇ kriteri için
+  asgari %40 der; eklentinin Yaşlı Sağlığı için kullandığı %50 eskidir. Motor
+  resmî tabloyu kullanır (`kriter-tablolari-resmi.md`).
 
 ### 4b. Hekim (18 kriter)
 
@@ -136,7 +136,6 @@ OBEZİTE İZLEMİ) eklentinin `HYP_MAPPING` tablosundadır.
 4. **Uygunluk:** veri yalnızca kullanıcının cihazında işlenir; SİNA verisi
    sunucuya alınmaz (SİNA kullanım metni: içerik izinsiz kopyalanamaz,
    üçüncü kişilerle paylaşılamaz).
-5. **Motor için bekleyen kararlar:** Vital alt eşiği (%40/%50), ASÇ üst
-   katsayıları (1,0611/1,1309), hekim 18 kriter tablosu, teşvik eşikleri —
-   hepsi Yönerge PDF'i (hsgm.saglik.gov.tr, bu ortamdan erişilemedi) ile
-   doğrulandıktan sonra kodlanır.
+5. **Karar (04.09.2026):** Hekim 18 kriter tablosu, ASÇ eşik ve üst katsayıları
+   Kılavuz 14.04.2026 ile doğrulanıp motora alındı; teşvik eşikleri Yönerge'de
+   yer almadığından kodlanmadı.

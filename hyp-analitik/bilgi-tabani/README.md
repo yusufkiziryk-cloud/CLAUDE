@@ -10,7 +10,10 @@ Claude Code oturumunda otomatik olarak kullanılabilir olur.
 
 | Dosya | İçerik | Kaynak |
 |---|---|---|
-| `katsayi-hesabi-asc.md` | ASÇ tarama-takip katsayısı kural seti (motorun sözleşmesi) | Drive: `ASÇ HYP Katsayı Hesabı 01.06.2025.pdf` |
+| `kriter-tablolari-resmi.md` | **Resmî kriter tabloları + Yönerge kuralları (motorun sözleşmesi)** | Kılavuz 14.04.2026 Bölüm 1; Yönerge (`kaynak/`) |
+| `sina-okuma-mekanizmasi.md` | SİNA Pozitif Performans ekranının nasıl okunduğu | "HYP & SINA Asistanı" eklenti analizi |
+| `katsayi-hesabi-asc.md` | ASÇ bilgilendirme belgesi özeti (devir örnekleri; eşikler güncellendi) | `kaynak/asc-hyp-katsayi-hesabi-01.06.2025.pdf` |
+| `kaynak/` | Yönerge PDF'i ve ASÇ belgesi (birincil kaynaklar) | Kullanıcı yüklemesi (04.09.2026) |
 | `kaynak-belgeler.md` | Google Drive'daki HYP kaynak belge envanteri | Drive taraması (30.08.2026) |
 | `../config/planlar.json` | Ürün plan/paket tanımları | Drive: `planlar.json` (27.08.2026) |
 

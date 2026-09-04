@@ -8,7 +8,9 @@
 
 | Belge | Drive konumu | Not |
 |---|---|---|
-| ASÇ HYP Katsayı Hesabı 01.06.2025.pdf | `HYP/` | ✅ Damıtıldı → `katsayi-hesabi-asc.md` |
+| ASÇ HYP Katsayı Hesabı 01.06.2025.pdf | `HYP/` ve `kaynak/` | ✅ Damıtıldı → `katsayi-hesabi-asc.md` (eşikler güncellendi) |
+| Aile Hekimliği Tarama ve Takip Katsayısına İlişkin Yönerge (taranmış PDF, 4 sayfa) | `kaynak/yonerge-tarama-takip-katsayisi.pdf` | ✅ Kurallar → `kriter-tablolari-resmi.md` §3 |
+| HYP Tarama ve Takip Kılavuzu 14.04.2026 (.docx, 18 MB, 15 bölüm) | Kullanıcıda (depoya alınmadı, boyut) | ✅ Bölüm 1 tabloları → `kriter-tablolari-resmi.md`; klinik bölümler ürün kapsamı dışı |
 | Hastalık Yönetim Platformu (HYP) Tarama ve Takip Kılavuzu.pdf | Drive genel | Tarama/takip iş kuralları — hekim kriterleri için birincil aday |
 | Üst_Yazı_HYP'nin Maaşa Yansımaması.pdf | Drive genel | Maaş yansıması sorun kaydı |
 | HYP ORANLARI ASÇ DİLEKÇESİ (klasör) | `HYP ORANLARI ASÇ DİLEKÇESİ/` | Oran itirazları yazışmaları |

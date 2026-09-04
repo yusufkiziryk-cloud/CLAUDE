@@ -1,25 +1,29 @@
 # HYP Analitik
 
-Aile hekimliği **HYP tarama ve takip katsayısı** analiz aracı. Aylık
-hedef/yapılan verilerinden kriter katsayılarını, devir zincirini, tavan
-uygulamasını ve maaş çarpanını 01.06.2025 tarihli Yönerge kurallarıyla
-hesaplar.
+Aile hekimliği **HYP tarama ve takip katsayısı** karar destek ürünü: resmî
+kılavuz tablolarıyla hesap, SİNA'dan veri aktarımı, "kaç işlem daha" aksiyon
+önerisi, hekim–ASÇ ekip analizi, dönem trendi, lisanslı planlar.
 
 ## Kullanım
 
-`hyp-analitik.html` dosyasını tarayıcıda açın — kurulum yok, internet
-gerekmez. Veriler cihazda (tarayıcı depolamasında) kalır; JSON yedekleme ve
-geri yükleme uygulama içindedir.
+- `hyp-analitik.html` → tarayıcıda açın; kurulum ve internet gerekmez.
+- `eklenti/` → Chrome'a paketlenmemiş yükleyin; SİNA Pozitif Performans
+  ekranında "HYP Analitik'e aktar" düğmesi çıkar (bkz. `eklenti/README.md`).
+- `site/index.html` → tanıtım sayfası; GitHub Pages'te yayınlanabilir.
 
 ## Geliştirme
 
 ```bash
-node --test test/hyp-katsayi.test.js   # motor testleri (10 test)
+node --test                  # motor (13) + lisans (4) testleri
+node tools/derle.js          # app/sablon.html + src/* → hyp-analitik.html
+node tools/derle.js --artifact /tmp/onizleme.html   # sarmalayıcısız önizleme
+node tools/lisans/anahtar-uret.js uretim            # satıcı anahtar çifti (bir kez)
+node tools/lisans/lisans-uret.js --plan SAAS_STANDARD --ad "Dr. X" --bitis 2027-09-04 --kid uretim
 ```
 
-- Hesap motoru: `src/hyp-katsayi.js` (bağımlılıksız ES module)
-- Kural sözleşmesi: `bilgi-tabani/katsayi-hesabi-asc.md`
-- Proje kimliği ve çalışma kuralları: `CLAUDE.md`
+- Hesap kuralları ve kaynaklar: `bilgi-tabani/kriter-tablolari-resmi.md`
+- Ürün tasarımı (iş modeli, mimari, yol haritası): `docs/urun-tasarimi.md`
+- Çalışma kuralları: `CLAUDE.md`
 
-> Bu araç bilgilendirme amaçlıdır; resmî hesap için ilgili Yönerge ve resmî
-> sistemler esastır.
+> Bilgilendirme amaçlıdır; resmî hesap için Bakanlık sistemleri esastır.
+> Kişi/hasta verisi işlenmez; veriler kullanıcının cihazında kalır.
