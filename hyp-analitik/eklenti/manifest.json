@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "HYP Analitik - SINA Aktarici",
+  "version": "0.1.0",
+  "description": "SİNA Pozitif Performans ekranındaki gereken/yapılan/devreden sayılarını HYP Analitik'e aktarır. Veriler cihazınızda kalır.",
+  "permissions": ["storage", "clipboardWrite"],
+  "host_permissions": ["https://sina.saglik.gov.tr/*"],
+  "action": { "default_popup": "popup.html", "default_title": "HYP Analitik" },
+  "content_scripts": [
+    { "matches": ["https://sina.saglik.gov.tr/*"], "js": ["icerik-sina.js"], "run_at": "document_idle" }
+  ]
+}

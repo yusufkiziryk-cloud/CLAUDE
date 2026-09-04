@@ -1,0 +1,1642 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HYP Analitik</title>
+<!-- APP-HEAD-START -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --plane: #f4f6f5; --surface: #fdfdfc; --surface-2: #eef1ef;
+  --ink: #131816; --ink-2: #4c5552; --muted: #7d8683;
+  --hairline: #dfe3e0; --grid: #e7eae7;
+  --accent: #0e6a5c; --accent-ink: #ffffff; --accent-soft: #e2efec;
+  --seri-1: #2a78d6; --seri-2: #eb6834; --seri: #08856c;
+  --good: #0ca30c; --good-text: #006300; --warn: #fab219; --warn-text: #7a5200; --crit: #d03b3b; --crit-text: #b32f2f;
+  --focus: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --plane: #101211; --surface: #1a1d1c; --surface-2: #232726;
+    --ink: #f1f3f1; --ink-2: #bcc3bf; --muted: #8b938f;
+    --hairline: #2c302e; --grid: #262a28;
+    --accent: #3ba48f; --accent-ink: #08211c; --accent-soft: #16302b;
+    --seri-1: #3987e5; --seri-2: #d95926; --seri: #3ba48f;
+    --good: #0ca30c; --good-text: #35c035; --warn: #fab219; --warn-text: #ffd166; --crit: #e66767; --crit-text: #e66767;
+    --focus: #3987e5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plane: #101211; --surface: #1a1d1c; --surface-2: #232726;
+  --ink: #f1f3f1; --ink-2: #bcc3bf; --muted: #8b938f;
+  --hairline: #2c302e; --grid: #262a28;
+  --accent: #3ba48f; --accent-ink: #08211c; --accent-soft: #16302b;
+  --seri-1: #3987e5; --seri-2: #d95926; --seri: #3ba48f;
+  --good: #0ca30c; --good-text: #35c035; --warn: #fab219; --warn-text: #ffd166; --crit: #e66767; --crit-text: #e66767;
+  --focus: #3987e5;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--plane); color: var(--ink); font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 18px 16px 64px; }
+header.app { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between; padding: 6px 0 14px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+.brand h1 span { color: var(--accent); }
+.plan { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 3px 10px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--hairline); }
+.plan.ucretli { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.plan.dev { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn-text); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+button, .btn { font: inherit; font-size: 13.5px; font-weight: 600; border: 1px solid var(--hairline); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 7px 13px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.kucuk { padding: 4px 9px; font-size: 12.5px; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+section.card { background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; padding: 14px 16px; margin-top: 14px; }
+.card > h2, .baslik { margin: 0 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.card > p.hint, p.hint { margin: 0 0 10px; color: var(--ink-2); font-size: 13px; }
+.satir-arasi { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.birim-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px 12px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin-bottom: 3px; }
+.field input, .field select { width: 100%; font: inherit; padding: 6px 9px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--plane); color: var(--ink); }
+.checks { display: flex; flex-direction: column; gap: 4px; justify-content: end; }
+.checks label { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2); }
+nav.sekmeler { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid var(--hairline); }
+nav.sekmeler button { border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none; padding: 8px 14px; color: var(--ink-2); font-weight: 600; }
+nav.sekmeler button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.donem-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.donem-bar select { font: inherit; font-weight: 600; padding: 6px 10px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.tablo-kap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--hairline); font-size: 13.5px; white-space: nowrap; }
+th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+th.ad, td.ad { text-align: left; position: sticky; left: 0; background: var(--surface); }
+td.ad { font-weight: 600; max-width: 260px; white-space: normal; }
+td input { width: 74px; font: inherit; font-size: 13.5px; text-align: right; padding: 4px 6px; border: 1px solid var(--hairline); border-radius: 6px; background: var(--plane); color: var(--ink); font-variant-numeric: tabular-nums; }
+tr.pasif td { color: var(--muted); }
+tr.pasif td.ad { font-weight: 500; }
+.seviye { display: inline-block; min-width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; background: var(--muted); }
+.seviye.azami { background: var(--good); } .seviye.arada { background: var(--warn); } .seviye.asgari-alti { background: var(--crit); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; padding: 12px 14px; }
+.tile .k { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.tile .v { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; margin-top: 2px; line-height: 1.15; }
+.tile .s { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
+.tile.vurgu { background: var(--accent-soft); border-color: transparent; }
+.tile.vurgu .v { color: var(--accent); }
+.rozet { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.rozet.iyi { color: var(--good-text); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.rozet.kotu { color: var(--crit-text); background: color-mix(in srgb, var(--crit) 14%, transparent); }
+.rozet.uyari { color: var(--warn-text); background: color-mix(in srgb, var(--warn) 20%, transparent); }
+.rozet.notr { color: var(--ink-2); background: var(--surface-2); }
+ol.hamleler { margin: 6px 0 0; padding-left: 20px; }
+ol.hamleler li { margin: 4px 0; font-size: 13.5px; }
+ol.hamleler b { font-variant-numeric: tabular-nums; }
+.grafik-kap { position: relative; }
+.grafik-kap svg { display: block; width: 100%; height: auto; }
+.tooltip { position: absolute; pointer-events: none; background: var(--ink); color: var(--plane); font-size: 12.5px; border-radius: 8px; padding: 6px 10px; transform: translate(-50%, -115%); white-space: nowrap; display: none; z-index: 5; font-variant-numeric: tabular-nums; }
+.legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--ink-2); margin: 4px 0 6px; }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.uyari-kutu { border-left: 4px solid var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-top: 10px; }
+.dipnot { color: var(--muted); font-size: 12.5px; margin-top: 20px; max-width: 80ch; }
+dialog { border: 1px solid var(--hairline); border-radius: 12px; background: var(--surface); color: var(--ink); max-width: 620px; width: calc(100vw - 40px); padding: 18px; }
+dialog::backdrop { background: rgba(0,0,0,0.45); }
+dialog h3 { margin: 0 0 6px; font-size: 16px; }
+dialog textarea { width: 100%; height: 190px; font: 12px/1.4 ui-monospace, monospace; background: var(--plane); color: var(--ink); border: 1px solid var(--hairline); border-radius: 8px; padding: 8px; }
+dialog .actions { margin-top: 10px; justify-content: flex-end; display: flex; }
+.plan-tablo td, .plan-tablo th { white-space: normal; text-align: left; font-size: 13px; }
+.gizli { display: none !important; }
+.banner { border-left: 4px solid var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); padding: 10px 14px; border-radius: 8px; font-size: 13.5px; margin-top: 14px; }
+.banner.kilit { border-left-color: var(--crit); background: color-mix(in srgb, var(--crit) 12%, transparent); }
+.banner b { font-weight: 700; }
+.kalem-tablo td input[type=checkbox] { width: auto; }
+.kalem-tablo td input[type=text] { width: 220px; text-align: left; }
+.kalem-tablo td input[type=number] { width: 110px; }
+.ledger td.ad { font-weight: 500; }
+.ledger tr.toplam td { font-weight: 700; border-top: 2px solid var(--hairline); }
+.kural-liste td { white-space: normal; }
+ul.aciklama { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+ul.aciklama li { margin: 3px 0; }
+#filigran { display: none; }
+@media print {
+  .actions, .no-print, nav.sekmeler, .donem-bar button, dialog { display: none !important; }
+  body { background: #fff; color: #000; }
+  section.card, .tile { border-color: #ccc; break-inside: avoid; }
+  body.demo #filigran { display: block; position: fixed; inset: 0; z-index: 99; pointer-events: none; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: rgba(0,0,0,0.10); transform: rotate(-24deg); }
+}
+</style>
+<!-- APP-HEAD-END -->
+</head>
+<body>
+<!-- APP-BODY-START -->
+<div id="filigran">DEMO · HYP Analitik</div>
+<div class="wrap">
+  <header class="app">
+    <div class="brand">
+      <h1>HYP <span>Analitik</span></h1>
+      <span class="plan" id="plan-rozet">DEMO</span>
+    </div>
+    <div class="actions">
+      <button id="btn-ice-aktar" class="primary">İçe aktar</button>
+      <button id="btn-yedekle">Yedekle</button>
+      <button id="btn-geri-yukle">Geri yükle</button>
+      <button id="btn-csv">CSV</button>
+      <button id="btn-yazdir">Yazdır</button>
+      <button id="btn-lisans">Lisans</button>
+      <button id="btn-ornek">Örnek veri</button>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="satir-arasi">
+      <h2 style="margin:0">Birim bilgileri</h2>
+      <span id="birim-ozet" class="rozet notr">Nüfus girilmedi</span>
+    </div>
+    <div class="birim-grid" style="margin-top:10px">
+      <div class="field"><label for="f-birim-ad">Birim (ÇKYS) adı</label><input type="text" id="f-birim-ad" placeholder="örn. 34.12.001"></div>
+      <div class="field"><label for="f-birim-tipi">Birim tipi</label>
+        <select id="f-birim-tipi"><option value="normal">Normal birim</option><option value="entegre">Entegre / zorunlu düşük nüfus</option></select></div>
+      <div class="field"><label for="f-nufus">Kayıtlı kişi sayısı</label><input type="number" id="f-nufus" min="0" step="1" placeholder="örn. 3400"></div>
+      <div class="field"><label for="f-tutuklu">Tutuklu-hükümlü kayıtlı</label><input type="number" id="f-tutuklu" min="0" step="1" value="0"></div>
+      <div class="field"><label for="f-hekim-brut">Hekim kayıtlı kişi ödemesi (brüt ₺)</label><input type="number" id="f-hekim-brut" min="0" step="1" placeholder="katsayının uygulandığı kalem"></div>
+      <div class="field"><label for="f-asc-brut">ASÇ kayıtlı kişi ödemesi (brüt ₺)</label><input type="number" id="f-asc-brut" min="0" step="1" placeholder="katsayının uygulandığı kalem"></div>
+      <div class="checks">
+        <label><input type="checkbox" id="f-puan"> Maaşa esas puan 1000'in altında</label>
+        <label><input type="checkbox" id="f-yeni"> Yeni birim muafiyeti (ilk 18 ay)</label>
+      </div>
+    </div>
+  </section>
+
+  <nav class="sekmeler" role="tablist">
+    <button role="tab" data-sekme="AH" aria-selected="true">Hekim (AHB)</button>
+    <button role="tab" data-sekme="ASC" aria-selected="false">Aile sağlığı çalışanı</button>
+    <button role="tab" data-sekme="EKIP" aria-selected="false">Ekip</button>
+    <button role="tab" data-sekme="MAAS" aria-selected="false">Maaş</button>
+  </nav>
+
+  <div class="donem-bar">
+    <button class="kucuk" id="donem-onceki" title="Önceki dönem">◀</button>
+    <select id="donem-sec"></select>
+    <button class="kucuk" id="donem-sonraki" title="Sonraki dönem">▶</button>
+    <button class="kucuk" id="donem-ekle">+ Dönem ekle</button>
+    <button class="kucuk" id="donem-sil">Dönemi sil</button>
+    <span id="donem-not" class="rozet notr"></span>
+  </div>
+
+  <div id="panel-AH" class="panel">
+    <div class="tiles" id="tiles-AH"></div>
+    <section class="card">
+      <div class="satir-arasi">
+        <h2 style="margin:0">Kriterler — <span id="donem-baslik-AH"></span></h2>
+        <span class="rozet notr" id="kaynak-AH"></span>
+      </div>
+      <p class="hint">SİNA Pozitif Performans satırlarını girin veya "İçe aktar" ile yapıştırın. Devreden sütunu SİNA'dan gelir; başarı oranı yönergeye göre hesaplanır.</p>
+      <div class="tablo-kap"><table id="tablo-AH"><thead><tr>
+        <th class="ad">Kriter</th><th>Gereken</th><th>Yapılan</th><th>Devreden</th><th>Başarı</th><th>Katsayı</th><th>Asgari için</th><th>Azami için</th></tr></thead><tbody></tbody></table></div>
+    </section>
+    <section class="card">
+      <h2>Öncelikli hamleler</h2>
+      <p class="hint">Aynı emekle en çok katsayı kazandıran kriterler. Sayılar bu dönemin gereken/yapılan değerlerine göredir.</p>
+      <ol class="hamleler" id="hamleler-AH"></ol>
+    </section>
+    <section class="card">
+      <h2>Dönemler boyunca katsayı</h2>
+      <p class="hint">Kesikli çizgi 1,000 eşiği, noktalı çizgi birim tavanıdır.</p>
+      <div class="grafik-kap"><div class="tooltip" aria-hidden="true"></div><div id="grafik-AH"></div></div>
+    </section>
+  </div>
+
+  <div id="panel-ASC" class="panel gizli">
+    <div class="tiles" id="tiles-ASC"></div>
+    <section class="card">
+      <div class="satir-arasi">
+        <h2 style="margin:0">Kriterler — <span id="donem-baslik-ASC"></span></h2>
+        <span class="rozet notr" id="kaynak-ASC"></span>
+      </div>
+      <p class="hint">ASÇ ekranındaki iki kriter. Maaş çarpanı için aynı dönemde hekim verisi varsa otomatik kullanılır.</p>
+      <div class="tablo-kap"><table id="tablo-ASC"><thead><tr>
+        <th class="ad">Kriter</th><th>Gereken</th><th>Yapılan</th><th>Devreden</th><th>Başarı</th><th>Katsayı</th><th>Asgari için</th><th>Azami için</th></tr></thead><tbody></tbody></table></div>
+    </section>
+    <section class="card">
+      <h2>Öncelikli hamleler</h2>
+      <ol class="hamleler" id="hamleler-ASC"></ol>
+    </section>
+    <section class="card">
+      <h2>Dönemler boyunca katsayı</h2>
+      <div class="grafik-kap"><div class="tooltip" aria-hidden="true"></div><div id="grafik-ASC"></div></div>
+    </section>
+  </div>
+
+  <div id="panel-EKIP" class="panel gizli">
+    <div class="tiles" id="tiles-EKIP"></div>
+    <section class="card">
+      <h2>Hekim – ASÇ ilişkisi (Yönerge md.7/3)</h2>
+      <div id="ekip-analiz"></div>
+    </section>
+    <section class="card">
+      <h2>Dönemler boyunca hekim ve ASÇ katsayısı</h2>
+      <div class="legend"><span><i style="background:var(--seri-1)"></i>Hekim</span><span><i style="background:var(--seri-2)"></i>ASÇ</span></div>
+      <div class="grafik-kap"><div class="tooltip" aria-hidden="true"></div><div id="grafik-EKIP"></div></div>
+    </section>
+    <section class="card">
+      <h2>Dönem tablosu</h2>
+      <div class="tablo-kap"><table id="tablo-EKIP"><thead><tr>
+        <th class="ad">Dönem</th><th>Hekim</th><th>ASÇ</th><th>%75 eşiği</th><th>ASÇ çarpanı</th><th>Geçerli</th></tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+
+  <div id="panel-MAAS" class="panel gizli">
+    <div class="banner" id="maas-banner"><b>TAHMİNİ / SİMÜLASYON.</b> Bu hesaplama karar destek ve kontrol amaçlıdır; kurumun resmî bordro/tahakkuk kaydının yerine geçmez. Tarama-takip katsayısı yalnızca <b>kayıtlı kişi ödemesine</b> uygulanır; diğer kalemler değişmez.</div>
+    <section class="card">
+      <div class="satir-arasi">
+        <h2 style="margin:0">Bordro girdileri — <span id="maas-donem-baslik"></span></h2>
+        <span class="rozet notr" id="maas-katsayi-rozet"></span>
+      </div>
+      <p class="hint">Kalem tutarlarını kendi bordronuzdan brüt olarak girin. Vergi/prim/damga niteliği kalem adından tahmin edilmez; kutucuklarla siz belirlersiniz (varsayılanlar doğrulanmamış kabul edilir).</p>
+      <div class="birim-grid">
+        <div class="field"><label for="m-kisi">Kimin bordrosu</label>
+          <select id="m-kisi"><option value="AH">Aile hekimi</option><option value="ASC">Aile sağlığı çalışanı</option></select></div>
+        <div class="field"><label for="m-sg">Sosyal güvenlik rejimi</label>
+          <select id="m-sg"><option value="BELIRSIZ">Belirsiz (hesap kilitlenir)</option><option value="SGK_5510_4C">5510 4/c (2008 sonrası)</option><option value="PENSION_5434">5434 Emekli Sandığı (geçiş)</option></select></div>
+        <div class="field"><label for="m-kumulatif">Yıl içi önceki GV matrahı (₺)</label><input type="number" id="m-kumulatif" min="0" step="1" placeholder="önceki ayların toplamı"></div>
+        <div class="field"><label for="m-diger">Diğer kesintiler toplamı (₺)</label><input type="number" id="m-diger" min="0" step="1" placeholder="sendika, BES, icra…"></div>
+      </div>
+      <div class="tablo-kap" style="margin-top:12px"><table class="kalem-tablo" id="m-kalemler"><thead><tr>
+        <th class="ad">Kalem</th><th>Brüt ₺</th><th>GV</th><th>Damga</th><th>PEK</th><th>Katsayıya tabi</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="actions" style="margin-top:10px"><button class="kucuk" id="m-kalem-ekle">+ Kalem ekle</button><button class="kucuk" id="m-varsayilan">Varsayılan kalemleri yükle</button></div>
+    </section>
+    <div class="tiles" id="tiles-MAAS"></div>
+    <section class="card">
+      <h2>Kesinti sırası (ledger)</h2>
+      <div class="tablo-kap"><table class="ledger" id="m-ledger"><tbody></tbody></table></div>
+    </section>
+    <section class="card">
+      <h2>Öncelikli hamlelerin net etkisi</h2>
+      <p class="hint">Katsayı sekmesindeki öneriler, bu bordroya göre aylık net TL'ye çevrilir.</p>
+      <ol class="hamleler" id="m-hamleler"></ol>
+    </section>
+    <section class="card">
+      <h2>Açıklama zinciri ve kullanılan kurallar</h2>
+      <ul class="aciklama" id="m-aciklama"></ul>
+      <div class="tablo-kap" style="margin-top:10px"><table class="kural-liste" id="m-kurallar"><thead><tr><th class="ad">Kural</th><th>Sürüm</th><th>Durum</th><th class="ad">Kaynak</th></tr></thead><tbody></tbody></table></div>
+      <p class="hint" style="margin-top:8px">Durumlar: VERIFIED resmî belge hash'iyle doğrulandı; PROVISIONAL resmî kaynak görüldü, hash yok; RESEARCH_REQUIRED parametre eksik. Doğrulanmamış kural varken sonuç TAHMİNİ etiketiyle gösterilir.</p>
+    </section>
+  </div>
+
+  <p class="dipnot">
+    Hesaplar, Aile Hekimliği Tarama ve Takip Katsayısına İlişkin Yönerge ile HYP Tarama ve Takip Kılavuzu (14.04.2026, Bölüm 1) esas alınarak yapılır; bilgilendirme amaçlıdır, resmî hesap için Bakanlık sistemleri geçerlidir. Kişi/hasta verisi işlenmez; tüm veriler yalnızca bu cihazda saklanır. Derleme: 2026-09-04
+  </p>
+</div>
+
+<dialog id="dlg-ice">
+  <h3>İçe aktar</h3>
+  <p class="hint">SİNA tablosunu kopyalayıp yapıştırın (satırlar: parametre, gereken, yapılan, devreden) ya da HYP Analitik eklentisinin ürettiği JSON'u yapıştırın. Veriler <b id="ice-hedef"></b> dönemine yazılır.</p>
+  <textarea id="ice-metin" spellcheck="false" placeholder="HİPERTANSİYON TARAMASI	120	80	10
+DİYABET TARAMASI	60	55	0
+..."></textarea>
+  <div id="ice-sonuc" class="hint" style="margin-top:8px"></div>
+  <div class="actions"><button id="ice-uygula" class="primary">Aktar</button><button id="ice-kapat">Kapat</button></div>
+</dialog>
+
+<dialog id="dlg-yedek">
+  <h3 id="yedek-baslik">Yedek (JSON)</h3>
+  <p class="hint" id="yedek-aciklama"></p>
+  <textarea id="yedek-metin" spellcheck="false"></textarea>
+  <div class="actions"><button id="yedek-kopyala">Kopyala</button><button id="yedek-uygula" class="primary">İçe aktar</button><button id="yedek-kapat">Kapat</button></div>
+</dialog>
+
+<dialog id="dlg-lisans">
+  <h3>Lisans</h3>
+  <p class="hint" id="lisans-durum"></p>
+  <div class="field"><label for="lisans-anahtar">Lisans anahtarı</label>
+    <input type="text" id="lisans-anahtar" placeholder="HYPA1.…" autocomplete="off"></div>
+  <div id="lisans-mesaj" class="hint" style="margin-top:8px"></div>
+  <div class="tablo-kap" style="margin-top:10px"><table class="plan-tablo"><thead><tr><th>Plan</th><th>Dönem</th><th>Çıktı</th><th>CSV</th></tr></thead><tbody id="plan-liste"></tbody></table></div>
+  <div class="actions"><button id="lisans-kaldir">Kaldır</button><button id="lisans-uygula" class="primary">Etkinleştir</button><button id="lisans-kapat">Kapat</button></div>
+</dialog>
+
+<script>
+/* ================================================================
+   MOTOR — tools/derle.js tarafından src/hyp-katsayi.js'ten gömülür.
+   Elle düzenlemeyin; kaynağı değiştirip `node tools/derle.js` çalıştırın.
+   ================================================================ */
+/**
+ * HYP Analitik — Tarama ve Takip Katsayısı hesap motoru (v2)
+ *
+ * Kaynaklar (doğrulanmış):
+ *  - Aile Hekimliği Tarama ve Takip Katsayısına İlişkin Yönerge (md.4, 5, 7, 8;
+ *    30/6/2021 tarihli 1091 sayılı yönergeyi yürürlükten kaldıran metin)
+ *  - HYP Tarama ve Takip Kılavuzu, 14.04.2026, Bölüm 1 (kriter tabloları)
+ * Davranış sözleşmesi: ../bilgi-tabani/kriter-tablolari-resmi.md
+ *
+ * Bağımlılık yok; Node ve tarayıcıda aynı şekilde çalışır.
+ * Tarayıcı kopyası: ../hyp-analitik.html içindeki "MOTOR" bloğu (eşit tutulur).
+ */
+
+const KAYNAK = {
+  yonerge: 'Aile Hekimliği Tarama ve Takip Katsayısına İlişkin Yönerge (2025)',
+  kilavuz: 'HYP Tarama ve Takip Kılavuzu — 14.04.2026, Bölüm 1',
+};
+
+const DEVIR_PENCERESI_AY = 2;        // md.7/9: en fazla iki ay ileri devreder
+const DEVIR_KULLANIM_ESIGI = 0.10;   // md.7/9: o ay gerekenin ≥ %10'u yapılmalı
+
+/** Kriter tanımı: kod, ad, tur, asgari/azami başarı %, alt/üst katsayı, aktif. */
+const K = (kod, ad, tur, asgari, azami, altK, ustK, aktif = true) =>
+  ({ kod, ad, tur, asgari, azami, altK, ustK, aktif });
+
+/** Aile hekimliği birimi kriterleri — Kılavuz 14.04.2026, Tablo 1 ve 3. */
+const KRITERLER_AH = [
+  K('HT_TARAMA',   'Hipertansiyon taraması',                     'tarama', 40, 90, 0.993999, 1.023440),
+  K('HT_TAKIP',    'Hipertansiyon takibi',                       'takip',  50, 90, 0.996994, 1.011652),
+  K('HT_SONUC',    'Hipertansiyon sonuç',                        'sonuc',  40, 90, 1, 1, false),
+  K('DM_TARAMA',   'Diyabet taraması',                           'tarama', 40, 90, 0.993999, 1.023440),
+  K('DM_TAKIP',    'Diyabet takibi',                             'takip',  50, 90, 0.996994, 1.011652),
+  K('DM_SONUC',    'Diyabet sonuç',                              'sonuc',  40, 90, 1, 1, false),
+  K('OB_TARAMA',   'Obezite taraması',                           'tarama', 40, 90, 0.996994, 1.011652),
+  K('OB_TAKIP',    'Obezite takibi',                             'takip',  50, 90, 0.993997, 1.023440),
+  K('OB_SONUC',    'Obezite sonuç',                              'sonuc',  40, 90, 1, 1, false),
+  K('KA_SERVIKS',  'Serviks kanseri taraması',                   'tarama', 50, 90, 0.991010, 1.035365),
+  K('KA_KOLOREKTAL','Kolorektal kanser taraması',                'tarama', 50, 90, 0.991010, 1.035365),
+  K('KA_MEME',     'Meme kanseri taraması',                      'tarama', 40, 90, 0.991010, 1.035365),
+  K('KVR_TARAMA',  'Kardiyovasküler risk taraması',              'tarama', 40, 90, 0.993999, 1.023440),
+  K('KVR_TAKIP',   'Kardiyovasküler risk takibi',                'takip',  50, 90, 0.996994, 1.011652),
+  K('KVR_SONUC',   'Kardiyovasküler risk sonuç',                 'sonuc',  40, 90, 1, 1, false),
+  K('YASLI_TAKIP', 'Çok yönlü yaşlı sağlığı değerlendirmesi',    'takip',  50, 90, 0.993997, 1.023440),
+  K('KAH_TAKIP',   'Koroner arter hastalığı takibi',             'takip',  40, 85, 0.993997, 1.023440),
+  K('INME_TAKIP',  'İnme takibi',                                'takip',  40, 85, 0.993997, 1.023440),
+  K('KBH_TAKIP',   'Kronik böbrek hastalığı takibi',             'takip',  40, 85, 0.993997, 1.023440),
+  K('KOAH_TAKIP',  'KOAH takibi',                                'takip',  40, 85, 0.993997, 1.023440),
+  K('ASTIM_TAKIP', 'Astım takibi',                               'takip',  40, 85, 0.993997, 1.023440),
+  K('OTIZM_TARAMA','Otizm (OSB) taraması',                       'tarama', 40, 90, 0.993997, 1.023440),
+  K('SUREC',       'Süreç yönetimi',                             'surec',  50, 80, 1, 1, false),
+];
+
+/** Aile sağlığı çalışanı kriterleri — Kılavuz 14.04.2026, Tablo 2 ve 4. */
+const KRITERLER_ASC = [
+  K('VITAL',  'Vital bulgular (tarama-takip)',                          'tarama-takip', 40, 90, 0.93, 1.0611),
+  K('YASLI',  'Çok yönlü yaşlı sağlığı değerlendirmesi (tarama-takip)', 'tarama-takip', 40, 90, 0.97, 1.1309),
+];
+
+/** SİNA / HYP ekranlarında görülen adları kanonik koda eşler (normalize edilmiş). */
+const SINA_ESLEME = {
+  'hipertansiyon taramasi': 'HT_TARAMA', 'hipertansiyon tarama': 'HT_TARAMA',
+  'hipertansiyon izlem': 'HT_TAKIP', 'hipertansiyon izlemi': 'HT_TAKIP', 'hipertansiyon takip': 'HT_TAKIP',
+  'diyabet taramasi': 'DM_TARAMA', 'diyabet tarama': 'DM_TARAMA',
+  'diyabet izlemi': 'DM_TAKIP', 'diyabet izlem': 'DM_TAKIP', 'diyabet takip': 'DM_TAKIP',
+  'obezite taramasi': 'OB_TARAMA', 'obezite tarama': 'OB_TARAMA',
+  'obezite izlemi': 'OB_TAKIP', 'obezite izlem': 'OB_TAKIP', 'obezite izlem (aile hekimi)': 'OB_TAKIP', 'obezite takip': 'OB_TAKIP',
+  'kanser serviks taramasi': 'KA_SERVIKS', 'serviks kanseri taramasi': 'KA_SERVIKS', 'serviks kanseri': 'KA_SERVIKS',
+  'kanser kolorektal taramasi': 'KA_KOLOREKTAL', 'kolorektal kanser taramasi': 'KA_KOLOREKTAL', 'kolorektal kanser': 'KA_KOLOREKTAL',
+  'kanser mamografi taramasi': 'KA_MEME', 'meme kanseri taramasi': 'KA_MEME', 'meme kanseri': 'KA_MEME',
+  'kvr taramasi': 'KVR_TARAMA', 'kardiyovaskuler risk tarama': 'KVR_TARAMA', 'kardiyovaskuler risk taramasi': 'KVR_TARAMA',
+  'kvr izlemi': 'KVR_TAKIP', 'kardiyovaskuler risk izlem': 'KVR_TAKIP', 'kardiyovaskuler risk takip': 'KVR_TAKIP',
+  'kardiyovaskuler risk degerlendirmesi tarama': 'KVR_TARAMA', 'kardiyovaskuler risk degerlendirmesi takip': 'KVR_TAKIP',
+  'hipertansiyon takibi': 'HT_TAKIP', 'diyabet takibi': 'DM_TAKIP', 'obezite takibi': 'OB_TAKIP',
+  'yasli sagligi takibi': 'YASLI_TAKIP', 'cok yonlu yasli sagligi degerlendirmesi takip': 'YASLI_TAKIP',
+  'yasli sagligi izlemi': 'YASLI_TAKIP', 'yasli degerlendirme izlem': 'YASLI_TAKIP', 'cok yonlu yasli sagligi degerlendirmesi': 'YASLI_TAKIP',
+  'koronerarter izlemi': 'KAH_TAKIP', 'koroner arter hastaligi izlem': 'KAH_TAKIP', 'koroner arter hastaligi': 'KAH_TAKIP',
+  'inme izlemi': 'INME_TAKIP', 'inme izlem': 'INME_TAKIP', 'inme': 'INME_TAKIP',
+  'kronik bobrek izlemi': 'KBH_TAKIP', 'kronik bobrek hastaligi izlem': 'KBH_TAKIP', 'kronik bobrek hastaligi': 'KBH_TAKIP',
+  'koah izlemi': 'KOAH_TAKIP', 'kronik obstruktif akciger hastaligi izlem': 'KOAH_TAKIP', 'koah': 'KOAH_TAKIP',
+  'astim izlemi': 'ASTIM_TAKIP', 'astim izlem': 'ASTIM_TAKIP', 'astim': 'ASTIM_TAKIP',
+  'otizm tarama': 'OTIZM_TARAMA', 'osb tarama': 'OTIZM_TARAMA', 'otizm': 'OTIZM_TARAMA',
+  'vital bulgu asc': 'VITAL', 'vital bulgular': 'VITAL', 'vital bulgu': 'VITAL',
+  'yasli sagligi izlemi asc': 'YASLI', 'cok yonlu yasli sagligi degerlendirmesi asc': 'YASLI',
+};
+
+/** Türkçe karakterleri sadeleştirip küçük harfe çevirir (eşleme için). */
+function normalizeTR(s) {
+  return String(s || '')
+    .replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i')
+    .replace(/Ğ/g, 'g').replace(/ğ/g, 'g').replace(/Ü/g, 'u').replace(/ü/g, 'u')
+    .replace(/Ş/g, 's').replace(/ş/g, 's').replace(/Ö/g, 'o').replace(/ö/g, 'o')
+    .replace(/Ç/g, 'c').replace(/ç/g, 'c')
+    .toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/** Ekranda görülen parametre adını kriter koduna çevirir; bulamazsa null. */
+function kriterKoduBul(ad, grup = 'AH') {
+  const n = normalizeTR(ad);
+  if (n.length < 3) return null;
+  const liste = grup === 'ASC' ? KRITERLER_ASC : KRITERLER_AH;
+  const gecerli = new Set(liste.map((k) => k.kod));
+  if (SINA_ESLEME[n] && gecerli.has(SINA_ESLEME[n])) return SINA_ESLEME[n];
+  const tam = liste.find((k) => normalizeTR(k.ad) === n);
+  if (tam) return tam.kod;
+  // Kısmi eşleme: yalnızca tam kelime sınırında ve en uzun anahtar öncelikli
+  // ("bilinmeyen" içindeki "inme" gibi yanlış yakalamaları önler).
+  const kelimeSiniri = (metin, parca) => new RegExp(`(^|[^a-z0-9])${parca.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^a-z0-9])`).test(metin);
+  const kismi = Object.keys(SINA_ESLEME)
+    .filter((anahtar) => anahtar.length >= 4 && gecerli.has(SINA_ESLEME[anahtar]) && (kelimeSiniri(n, anahtar) || kelimeSiniri(anahtar, n)))
+    .sort((a, b) => b.length - a.length)[0];
+  return kismi ? SINA_ESLEME[kismi] : null;
+}
+
+/**
+ * Tek kriterin katsayısı (Yönerge md.7/2; büyük birim kuralı md.7/4).
+ * yüzde null → 1 (hedef nüfus 0, md.7/8). Asgari altı → altK; azami ve üzeri → ustK;
+ * arada doğrusal. Büyük birimde (nüfus 4000/2400 üzeri veya tutuklu 2000 üzeri):
+ * asgari ve üzeri → 1, altı → altK.
+ */
+function kriterKatsayisi(yuzde, kriter, { buyukBirim = false } = {}) {
+  if (yuzde === null || yuzde === undefined || Number.isNaN(yuzde)) return 1;
+  if (!kriter.aktif) return 1;
+  if (yuzde < kriter.asgari) return kriter.altK;
+  if (buyukBirim) return 1;
+  if (yuzde >= kriter.azami) return kriter.ustK;
+  return 1 + ((yuzde - kriter.asgari) / (kriter.azami - kriter.asgari)) * (kriter.ustK - 1);
+}
+
+/**
+ * SİNA satır biçiminden (gereken / yapılan / devreden) aylık başarı oranı.
+ * md.4/b ve md.7/9-10:
+ *  - yapılan ≥ %10·gereken → devir kullanılır (hedefe kadar), oran = (yapılan + kullanılan) / gereken.
+ *  - yapılan < %10·gereken ve devir varsa: devreden < azami·gereken → alt katsayı (oran ham kalır);
+ *    devreden > azami·gereken → devrin ilk ayında kriter katsayısı 1 (devirIlkAy=true varsayılır).
+ */
+function basariOrani({ gereken, yapilan, devreden = 0 }, kriter, { devirIlkAy = true } = {}) {
+  gereken = Math.max(0, Number(gereken) || 0);
+  yapilan = Math.max(0, Number(yapilan) || 0);
+  devreden = Math.max(0, Number(devreden) || 0);
+  if (gereken === 0) return { yuzde: null, kullanilanDevir: 0, kalanDevir: devreden, istisnaKatsayi1: false, devirSarti: null };
+
+  const devirSarti = yapilan >= DEVIR_KULLANIM_ESIGI * gereken;
+  let kullanilanDevir = 0;
+  let istisnaKatsayi1 = false;
+  if (devirSarti) {
+    kullanilanDevir = Math.min(devreden, Math.max(0, gereken - yapilan));
+  } else if (devreden > 0 && kriter && devreden > (kriter.azami / 100) * gereken && devirIlkAy) {
+    istisnaKatsayi1 = true;
+  }
+  const yuzde = ((yapilan + kullanilanDevir) / gereken) * 100;
+  return { yuzde, kullanilanDevir, kalanDevir: devreden - kullanilanDevir, istisnaKatsayi1, devirSarti, fazla: Math.max(0, yapilan - gereken) };
+}
+
+/**
+ * Hedefe ulaşmak için ek kaç yapılan gerekir (simülasyon).
+ * Devir sayılabilmesi için önce %10 eşiği aşılmalıdır; hesap bunu gözetir.
+ */
+function hedefeKalan({ gereken, yapilan, devreden = 0 }, hedefYuzde) {
+  gereken = Math.max(0, Number(gereken) || 0);
+  yapilan = Math.max(0, Number(yapilan) || 0);
+  devreden = Math.max(0, Number(devreden) || 0);
+  if (gereken === 0) return 0;
+  const esik = Math.ceil(DEVIR_KULLANIM_ESIGI * gereken);
+  const gerekenToplam = Math.ceil((hedefYuzde / 100) * gereken - 1e-9);
+  const yapilanMin = Math.max(esik, gerekenToplam - devreden);
+  return Math.max(0, yapilanMin - yapilan);
+}
+
+/**
+ * Birim nüfusuna göre tavan ve büyük birim durumu (md.7/4-5).
+ * Normal ≤ 4000 → 4000/nüfus; entegre/zorunlu düşük ≤ 2400 → 2400/nüfus.
+ * Nüfus sınırın üzerinde → tavan yok, büyük birim kuralı (kriter katsayısı 1).
+ * Tutuklu-hükümlü > 1700 → 1,176471; 1500–1700 → 1,333334; > 2000 → büyük birim.
+ */
+function birimDurumu({ birimTipi = 'normal', nufus = null, tutukluSayisi = 0 } = {}) {
+  const sinir = birimTipi === 'entegre' ? 2400 : 4000;
+  let tavan = null;
+  let buyukBirim = false;
+  if (nufus && nufus > 0) {
+    if (nufus > sinir) buyukBirim = true;
+    else tavan = sinir / nufus;
+  }
+  if (tutukluSayisi > 2000) buyukBirim = true;
+  else if (tutukluSayisi > 1700) tavan = Math.min(tavan ?? Infinity, 1.176471);
+  else if (tutukluSayisi >= 1500) tavan = Math.min(tavan ?? Infinity, 1.333334);
+  if (tavan === Infinity) tavan = null;
+  return { tavan, buyukBirim, sinir };
+}
+
+/** Katsayı muafiyetleri: maaşa esas puan < 1000 (md.7/6), yeni birim (md.7/7). */
+function muafiyetVarMi({ maasaEsasPuan = null, yeniBirimMuafiyeti = false } = {}) {
+  if (yeniBirimMuafiyeti) return 'yeni-birim';
+  if (maasaEsasPuan !== null && maasaEsasPuan !== undefined && maasaEsasPuan < 1000) return 'puan';
+  return null;
+}
+
+/**
+ * Bir ayın tam hesabı (AH veya ASÇ): satırlar {kod, gereken, yapilan, devreden}.
+ * Dönüş: kriter bazlı ayrıntı, ham katsayı (çarpım), tavan sonrası katsayı, muafiyet.
+ */
+function aylikHesap({ grup = 'AH', satirlar = [], birim = {}, devirIlkAy = true }) {
+  const kriterler = grup === 'ASC' ? KRITERLER_ASC : KRITERLER_AH;
+  const durum = birimDurumu(birim);
+  const muafiyet = muafiyetVarMi(birim);
+  const satirMap = new Map(satirlar.map((s) => [s.kod, s]));
+  const ayrinti = kriterler.map((kriter) => {
+    const s = satirMap.get(kriter.kod) || { gereken: 0, yapilan: 0, devreden: 0 };
+    const oran = basariOrani(s, kriter, { devirIlkAy });
+    const katsayi = oran.istisnaKatsayi1 ? 1 : kriterKatsayisi(oran.yuzde, kriter, { buyukBirim: durum.buyukBirim });
+    const seviye = oran.yuzde === null ? 'yok' : oran.yuzde < kriter.asgari ? 'asgari-alti' : oran.yuzde >= kriter.azami ? 'azami' : 'arada';
+    return {
+      kriter, gereken: oran.yuzde === null ? 0 : Number(s.gereken) || 0, yapilan: Number(s.yapilan) || 0, devreden: Number(s.devreden) || 0,
+      yuzde: oran.yuzde, kullanilanDevir: oran.kullanilanDevir, istisnaKatsayi1: oran.istisnaKatsayi1, devirSarti: oran.devirSarti,
+      katsayi, seviye,
+      asgariIcinKalan: hedefeKalan(s, kriter.asgari), azamiIcinKalan: hedefeKalan(s, kriter.azami),
+    };
+  });
+  const ham = ayrinti.reduce((t, a) => t * a.katsayi, 1);
+  let katsayi = ham;
+  let tavanUygulandi = false;
+  if (durum.tavan !== null && ham > durum.tavan) { katsayi = durum.tavan; tavanUygulandi = true; }
+  if (muafiyet) katsayi = 1;
+  return { grup, ayrinti, hamKatsayi: ham, katsayi, tavan: durum.tavan, buyukBirim: durum.buyukBirim, tavanUygulandi, muafiyet };
+}
+
+/**
+ * ASÇ maaş çarpanı (md.7/3):
+ *  a) ASÇ katsayısı < 1 → ASÇ'nin kendi katsayısı,
+ *  b) ASÇ ≥ 1 ve birimin %75'inden küçük → ASÇ'nin kendi katsayısı,
+ *  c) ASÇ ≥ 1 ve birimin %75'ine eşit/büyük → birim ile ASÇ'den büyük olanı.
+ * Katsayılar tavan uygulanmış değerlerdir; muafiyet varsa 1.
+ */
+function ascMaasCarpani({ kAsc, kBirim = null, muafiyet = null }) {
+  if (muafiyet) return { carpan: 1, gecerli: 'muafiyet', esik: null };
+  if (kAsc < 1) return { carpan: kAsc, gecerli: 'asc', esik: kBirim !== null ? 0.75 * kBirim : null };
+  if (kBirim === null || kBirim === undefined) return { carpan: kAsc, gecerli: 'asc', esik: null };
+  const esik = 0.75 * kBirim;
+  if (kAsc >= esik) return { carpan: Math.max(kAsc, kBirim), gecerli: kBirim > kAsc ? 'birim' : 'asc', esik };
+  return { carpan: kAsc, gecerli: 'asc', esik };
+}
+
+/**
+ * Çok aylı devir zinciri (SİNA devreden sayısı elde yokken simülasyon için).
+ * md.7/9-10: fazla en fazla 2 ay ileri; %10 şartı; kullanılan sayı devirden düşülür;
+ * mevcut ayın yapılanı önce kendi hedefine sayılır, açık en eski uygun devirden kapanır.
+ */
+function devirliGerceklesme(aylar, kriter = null) {
+  const fazlalar = [];
+  const azami = kriter ? kriter.azami : 90;
+  return aylar.map(({ hedef, yapilan }, ay) => {
+    hedef = Math.max(0, Number(hedef) || 0);
+    yapilan = Math.max(0, Number(yapilan) || 0);
+    const uygunlar = fazlalar.filter((f) => ay - f.kaynakAy <= DEVIR_PENCERESI_AY && f.kalan > 0);
+    const devreden = uygunlar.reduce((t, f) => t + f.kalan, 0);
+    let kullanilanDevir = 0;
+    let istisnaKatsayi1 = false;
+    if (hedef === 0) {
+      if (yapilan > 0) fazlalar.push({ kaynakAy: ay, kalan: yapilan });
+      return { hedef, yapilan, devreden, kullanilanDevir: 0, yuzde: null, istisnaKatsayi1: false };
+    }
+    if (yapilan >= DEVIR_KULLANIM_ESIGI * hedef) {
+      let acik = Math.max(0, hedef - yapilan);
+      for (const f of uygunlar) {
+        if (acik <= 0) break;
+        const kullan = Math.min(acik, f.kalan);
+        f.kalan -= kullan; acik -= kullan; kullanilanDevir += kullan;
+      }
+    } else if (devreden > (azami / 100) * hedef && uygunlar.some((f) => ay - f.kaynakAy === 1)) {
+      istisnaKatsayi1 = true;
+    }
+    if (yapilan > hedef) fazlalar.push({ kaynakAy: ay, kalan: yapilan - hedef });
+    const yuzde = ((yapilan + kullanilanDevir) / hedef) * 100;
+    return { hedef, yapilan, devreden, kullanilanDevir, yuzde, istisnaKatsayi1 };
+  });
+}
+
+/** Maaş etkisi: brüt tutar × çarpan; fark ve yüzde. */
+function maasEtkisi(brut, carpan) {
+  const b = Number(brut) || 0;
+  return { brut: b, yeni: b * carpan, fark: b * (carpan - 1), yuzde: (carpan - 1) * 100 };
+}
+
+/* ================== LİSANS — src/lisans.js ================== */
+/**
+ * HYP Analitik — Lisans anahtarı doğrulama (istemci tarafı)
+ *
+ * Anahtar biçimi:  HYPA1.<payload-base64url>.<imza-base64url>
+ *  - payload: UTF-8 JSON {v:1, id, kid, plan, ad, eposta?, bitis:'YYYY-MM-DD', cihaz, not?}
+ *  - imza: ECDSA P-256 / SHA-256, IEEE P1363 (r||s, 64 bayt), payload metni üzerinde
+ * Doğrulama WebCrypto ile yapılır (tarayıcı ve Node 20+ aynı API).
+ * Açık anahtar (JWK) uygulamaya gömülür; özel anahtar yalnızca satıcıda kalır.
+ */
+
+const LISANS_ONEKI = 'HYPA1';
+
+/** Plan tanımları (config/planlar.json ile eş). Fiyatlar satıcı tarafından doldurulur. */
+const PLANLAR = {
+  DEMO:               { ad: 'Ücretsiz Deneme',               donemSiniri: 3,    ozellikler: ['veri_okuma', 'yedekleme', 'geri_yukleme', 'filigranli_cikti'] },
+  OFFLINE_INDIVIDUAL: { ad: 'Çevrimdışı Bireysel (yıllık)',  donemSiniri: null, ozellikler: ['veri_okuma', 'yedekleme', 'geri_yukleme', 'sinirsiz_hesap', 'temiz_cikti', 'tam_disa_aktarim', 'offline_indirme'] },
+  SAAS_STANDARD:      { ad: 'Online Standart (yıllık)',       donemSiniri: null, ozellikler: ['veri_okuma', 'yedekleme', 'geri_yukleme', 'sinirsiz_hesap', 'temiz_cikti', 'tam_disa_aktarim'] },
+  HYBRID_PRO:         { ad: 'Hibrit Pro (yıllık)',            donemSiniri: null, ozellikler: ['veri_okuma', 'yedekleme', 'geri_yukleme', 'sinirsiz_hesap', 'temiz_cikti', 'tam_disa_aktarim', 'offline_indirme'] },
+  INSTITUTIONAL:      { ad: 'Kurumsal (özel teklif)',         donemSiniri: null, ozellikler: ['veri_okuma', 'yedekleme', 'geri_yukleme', 'sinirsiz_hesap', 'temiz_cikti', 'tam_disa_aktarim', 'offline_indirme', 'coklu_kullanici'] },
+};
+
+const b64urlCoz = (s) => {
+  const b64 = s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4);
+  const bin = typeof atob === 'function' ? atob(b64) : Buffer.from(b64, 'base64').toString('binary');
+  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+};
+
+async function acikAnahtariIceAktar(jwk) {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) throw new Error('WebCrypto yok');
+  return subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y, ext: true }, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+}
+
+/**
+ * Anahtarı çözer ve imzayı doğrular.
+ * @returns {Promise<{gecerli:boolean, neden?:string, lisans?:object, plan?:object}>}
+ */
+async function lisansCoz(anahtarMetni, acikJwk, { bugun = new Date() } = {}) {
+  try {
+    const parcalar = String(anahtarMetni || '').trim().split('.');
+    if (parcalar.length !== 3 || parcalar[0] !== LISANS_ONEKI) return { gecerli: false, neden: 'Biçim tanınmadı' };
+    if (!acikJwk) return { gecerli: false, neden: 'Satıcı açık anahtarı tanımlı değil' };
+    const payloadBayt = b64urlCoz(parcalar[1]);
+    const imza = b64urlCoz(parcalar[2]);
+    const key = await acikAnahtariIceAktar(acikJwk);
+    const dogru = await globalThis.crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, imza, payloadBayt);
+    if (!dogru) return { gecerli: false, neden: 'İmza geçersiz' };
+    const lisans = JSON.parse(new TextDecoder().decode(payloadBayt));
+    if (lisans.v !== 1) return { gecerli: false, neden: 'Sürüm desteklenmiyor' };
+    if (acikJwk.kid && lisans.kid && lisans.kid !== acikJwk.kid) return { gecerli: false, neden: 'Anahtar kimliği uyuşmuyor' };
+    const plan = PLANLAR[lisans.plan];
+    if (!plan) return { gecerli: false, neden: 'Bilinmeyen plan' };
+    const bitis = new Date(lisans.bitis + 'T23:59:59');
+    if (Number.isNaN(bitis.getTime())) return { gecerli: false, neden: 'Bitiş tarihi okunamadı' };
+    if (bitis < bugun) return { gecerli: false, neden: `Süresi ${lisans.bitis} tarihinde doldu`, lisans, plan };
+    return { gecerli: true, lisans, plan };
+  } catch (hata) {
+    return { gecerli: false, neden: 'Doğrulama hatası: ' + (hata.message || hata) };
+  }
+}
+
+/** Plan bir özelliği içeriyor mu? */
+function ozellikVar(planKodu, ozellik) {
+  return (PLANLAR[planKodu] || PLANLAR.DEMO).ozellikler.includes(ozellik);
+}
+
+/* ================== BORDRO — src/bordro-motoru.js ================== */
+/**
+ * HYP Analitik — Bordro (brüt → net) simülasyon motoru
+ *
+ * Tasarım kaynağı: bilgi-tabani/kamu-maas (05 vergi/SGK/kesinti motoru,
+ * 06 kural sürümleme, 07 hesap sırası, 14 fail-closed kuralları).
+ *
+ * İlkeler:
+ *  - Kod içinde sihirli sayı yok; tüm parametreler kurallar/*.json'dan, tarihe göre seçilir.
+ *  - Kural bulunamazsa veya durumu CONFLICT/RETIRED ise sonuç KİLİTLİ (fail-closed).
+ *  - Kullanılan kurallardan biri VERIFIED değilse sonuç "TAHMİNİ" etiketlenir.
+ *  - Her kalemin vergi/prim/damga niteliği adından değil, kalem profilinden gelir.
+ *  - Çıktı yalnız net değil, açıklama zinciridir (hangi kural, hangi sürüm, hangi matrah).
+ *
+ * Kapsam: ücret niteliğindeki brüt kalemlerden kişi kesintileri (5510 4/c veya 5434),
+ * kümülatif gelir vergisi, damga vergisi, isteğe bağlı diğer kesintiler ve işveren maliyeti.
+ * Kapsam dışı: kalemlerin nasıl oluştuğu (puan × katsayı vb.); bu, rejim adaptörlerinin işidir.
+ */
+
+const SOSYAL_GUVENLIK = {
+  SGK_5510_4C: 'SGK_5510_4C',
+  PENSION_5434: 'PENSION_5434',
+  BELIRSIZ: 'BELIRSIZ',
+};
+
+/** Verilen tarihte yürürlükte olan kural sürümünü seçer (en yüksek sürüm öncelikli). */
+function kuralSec(kurallar, ruleId, tarih) {
+  const t = String(tarih);
+  const adaylar = (kurallar || [])
+    .filter((k) => k.rule_id === ruleId && k.effective_from <= t && (k.effective_to === null || k.effective_to === undefined || k.effective_to >= t))
+    .sort((a, b) => b.version - a.version);
+  return adaylar[0] || null;
+}
+
+/** Kümülatif matrah üzerinden dilimli gelir vergisi. Önceki kümülatif matrah zorunlu girdidir (05 §2). */
+function gelirVergisi(matrah, oncekiKumulatif, dilimler) {
+  const bas = Math.max(0, Number(oncekiKumulatif) || 0);
+  const m = Math.max(0, Number(matrah) || 0);
+  const son = bas + m;
+  const parcalar = [];
+  let vergi = 0;
+  let altSinir = 0;
+  for (const d of dilimler) {
+    const ust = d.ustSinir === null ? Infinity : d.ustSinir;
+    const kesisimAlt = Math.max(bas, altSinir);
+    const kesisimUst = Math.min(son, ust);
+    if (kesisimUst > kesisimAlt) {
+      const tutar = kesisimUst - kesisimAlt;
+      parcalar.push({ oran: d.oran, matrah: tutar, vergi: tutar * d.oran });
+      vergi += tutar * d.oran;
+    }
+    altSinir = ust;
+    if (son <= ust) break;
+  }
+  return { vergi, parcalar, yeniKumulatif: son };
+}
+
+const yuvarla = (x) => Math.round((Number(x) + Number.EPSILON) * 100) / 100;
+const tl = (x) => yuvarla(x).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+const yuzde = (oran) => '%' + yuvarla(oran * 100).toLocaleString('tr-TR', { maximumFractionDigits: 2 });
+
+/**
+ * Bordro hesabı.
+ * @param {Object} g
+ * @param {string} g.tarih Hesap tarihi (YYYY-MM-DD); kural sürümünü seçer.
+ * @param {Array}  g.kalemler [{kod, ad, brut, gelirVergisi, damga, sgkPek, aciklama}]
+ * @param {string} g.sosyalGuvenlik SGK_5510_4C | PENSION_5434 | BELIRSIZ
+ * @param {number} g.oncekiKumulatifMatrah Takvim yılı içinde önceki aylardan gelen GV matrahı
+ * @param {Array}  g.digerKesintiler [{ad, tutar}] (sendika, BES, icra... kullanıcı girişi)
+ * @param {Array}  g.kurallar Kural listesi (kurallar/*.json → kurallar)
+ */
+function bordroHesapla({ tarih, kalemler = [], sosyalGuvenlik = SOSYAL_GUVENLIK.BELIRSIZ, oncekiKumulatifMatrah = 0, digerKesintiler = [], kurallar = [] }) {
+  const uyarilar = [];
+  const kilitNedenleri = [];
+  const kullanilan = [];
+  const aciklama = [];
+  const kural = (id) => {
+    const k = kuralSec(kurallar, id, tarih);
+    if (k) kullanilan.push({ rule_id: k.rule_id, version: k.version, status: k.status, kaynak: k.source?.document_name || '', url: k.source?.official_url || null });
+    return k;
+  };
+
+  // 1) Kalemleri topla
+  const satirlar = kalemler.map((k) => {
+    const brut = Math.max(0, Number(k.brut) || 0);
+    if (k.gelirVergisi === undefined || k.damga === undefined || k.sgkPek === undefined) {
+      uyarilar.push(`UNRESOLVED_PAY_ITEM: "${k.ad || k.kod}" kaleminin vergi/prim profili eksik; kalem hesaba katılmadı.`);
+      return { ...k, brut, dahil: false };
+    }
+    return { ...k, brut, dahil: true };
+  });
+  const dahil = satirlar.filter((s) => s.dahil);
+  const brutToplam = dahil.reduce((t, s) => t + s.brut, 0);
+  aciklama.push(`Brüt hakediş: ${dahil.length} kalem, toplam ${tl(brutToplam)}.`);
+
+  // 2) Sosyal güvenlik kişi payı (fail-closed: rejim belirsizse kilit)
+  let sgKisi = 0, sgIsveren = 0, sgMatrah = 0;
+  if (sosyalGuvenlik === SOSYAL_GUVENLIK.SGK_5510_4C) {
+    const k = kural('SGK_5510_4C_ORANLARI');
+    if (!k) kilitNedenleri.push('5510 4/c oranları için yürürlükte kural bulunamadı.');
+    else {
+      sgMatrah = dahil.filter((s) => s.sgkPek).reduce((t, s) => t + s.brut, 0);
+      sgKisi = sgMatrah * (k.parameters.myoKisi + k.parameters.gssKisi);
+      sgIsveren = sgMatrah * (k.parameters.myoIsveren + k.parameters.gssIsveren);
+      aciklama.push(`5510 4/c: PEK ${tl(sgMatrah)} × (${yuzde(k.parameters.myoKisi)} MYÖ + ${yuzde(k.parameters.gssKisi)} GSS) = kişi payı ${tl(sgKisi)}; işveren ${yuzde(k.parameters.myoIsveren + k.parameters.gssIsveren)} = ${tl(sgIsveren)}.`);
+    }
+  } else if (sosyalGuvenlik === SOSYAL_GUVENLIK.PENSION_5434) {
+    const k = kural('EMEKLI_5434_ORANLARI');
+    if (!k) kilitNedenleri.push('5434 kesenek oranları için yürürlükte kural bulunamadı.');
+    else {
+      sgMatrah = dahil.filter((s) => s.sgkPek).reduce((t, s) => t + s.brut, 0);
+      sgKisi = sgMatrah * k.parameters.sahisKesenegi;
+      sgIsveren = sgMatrah * k.parameters.kurumKarsiligi;
+      uyarilar.push('5434: emekli keseneğine esas aylık, brüt kalemlerle aynı kavram değildir; kesenek matrahı olarak PEK işaretli kalemler kullanıldı. %100 artış farkı ve kurum GSS payı hesaba alınmadı.');
+      aciklama.push(`5434: kesenek matrahı ${tl(sgMatrah)} × ${yuzde(k.parameters.sahisKesenegi)} = ${tl(sgKisi)}; kurum karşılığı ${yuzde(k.parameters.kurumKarsiligi)} = ${tl(sgIsveren)}.`);
+    }
+  } else {
+    kilitNedenleri.push('Sosyal güvenlik rejimi belirsiz (5510 4/c mi, 5434 mü?). Sonucu etkilediği için hesap kilitlendi.');
+  }
+
+  // 3) Gelir vergisi matrahı ve vergi
+  let gvMatrah = 0, gv = 0, gvParcalar = [], yeniKumulatif = Number(oncekiKumulatifMatrah) || 0;
+  const tarife = kural('GV_UCRET_TARIFESI');
+  if (!tarife) kilitNedenleri.push('Hesap tarihine ait gelir vergisi tarifesi bulunamadı.');
+  else {
+    const vergiyeTabi = dahil.filter((s) => s.gelirVergisi).reduce((t, s) => t + s.brut, 0);
+    const indirim = kural('GVK_63_PRIM_INDIRIMI');
+    const primIndirimi = indirim && indirim.parameters.kisiPrimleriMatrahtanDusulur ? sgKisi : 0;
+    gvMatrah = Math.max(0, vergiyeTabi - primIndirimi);
+    const istisna = kural('ASGARI_UCRET_GV_ISTISNASI');
+    if (!istisna || istisna.status === 'RESEARCH_REQUIRED' || istisna.parameters.aylikIstisnaMatrahi === null) {
+      uyarilar.push('Asgari ücret gelir vergisi istisnası uygulanmadı: 2026 istisna parametresi doğrulanmadı. Net, gerçek bordrodan bu istisna kadar düşük görünür.');
+    } else {
+      const kullanilanIstisna = Math.min(gvMatrah, istisna.parameters.aylikIstisnaMatrahi);
+      gvMatrah -= kullanilanIstisna;
+      aciklama.push(`Asgari ücret istisnası: matrahtan ${tl(kullanilanIstisna)} düşüldü (aylık havuz bir kez).`);
+    }
+    const sonuc = gelirVergisi(gvMatrah, oncekiKumulatifMatrah, tarife.parameters.dilimler);
+    gv = sonuc.vergi; gvParcalar = sonuc.parcalar; yeniKumulatif = sonuc.yeniKumulatif;
+    aciklama.push(`Gelir vergisi: vergiye tabi ${tl(vergiyeTabi)} − kişi primi ${tl(primIndirimi)} = matrah ${tl(gvMatrah)}; önceki kümülatif ${tl(oncekiKumulatifMatrah)} → ${gvParcalar.map((p) => `${yuzde(p.oran)}: ${tl(p.matrah)}`).join(', ')} → vergi ${tl(gv)}.`);
+  }
+
+  // 4) Damga vergisi
+  let damga = 0;
+  const damgaK = kural('DAMGA_UCRET_ORANI');
+  if (!damgaK) kilitNedenleri.push('Damga vergisi oranı için kural bulunamadı.');
+  else {
+    const damgaMatrah = dahil.filter((s) => s.damga).reduce((t, s) => t + s.brut, 0);
+    damga = damgaMatrah * damgaK.parameters.oran;
+    aciklama.push(`Damga vergisi: ${tl(damgaMatrah)} × binde ${yuvarla(damgaK.parameters.oran * 1000).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} = ${tl(damga)}.`);
+  }
+
+  // 5) Diğer kesintiler ve net (05 §7 sırası)
+  const diger = (digerKesintiler || []).reduce((t, d) => t + Math.max(0, Number(d.tutar) || 0), 0);
+  const net = brutToplam - sgKisi - gv - damga - diger;
+  const isverenMaliyeti = brutToplam + sgIsveren;
+
+  const durum = kilitNedenleri.length ? 'KILITLI' : 'TAMAM';
+  const tamamiDogrulanmis = kullanilan.length > 0 && kullanilan.every((k) => k.status === 'VERIFIED');
+  const etiket = durum === 'KILITLI' ? 'KİLİTLİ' : tamamiDogrulanmis && !uyarilar.length ? 'DOĞRULANMIŞ KURALLARLA' : 'TAHMİNİ / SİMÜLASYON';
+  kullanilan.forEach((k) => { if (['CONFLICT', 'RETIRED'].includes(k.status)) kilitNedenleri.push(`${k.rule_id} v${k.version} durumu ${k.status}; sessiz kullanılamaz.`); });
+
+  return {
+    durum: kilitNedenleri.length ? 'KILITLI' : 'TAMAM',
+    etiket: kilitNedenleri.length ? 'KİLİTLİ' : etiket,
+    kilitNedenleri, uyarilar, kullanilanKurallar: kullanilan, aciklama,
+    satirlar,
+    ozet: {
+      brutToplam: yuvarla(brutToplam), sgMatrah: yuvarla(sgMatrah), sgKisi: yuvarla(sgKisi), sgIsveren: yuvarla(sgIsveren),
+      gvMatrah: yuvarla(gvMatrah), gelirVergisi: yuvarla(gv), damgaVergisi: yuvarla(damga), digerKesintiler: yuvarla(diger),
+      net: yuvarla(net), isverenMaliyeti: yuvarla(isverenMaliyeti), yeniKumulatifMatrah: yuvarla(yeniKumulatif),
+      ham: { brutToplam, sgKisi, sgIsveren, gvMatrah, gelirVergisi: gv, damgaVergisi: damga, net, isverenMaliyeti },
+    },
+  };
+}
+
+/**
+ * Aile hekimliği ödemesinde tarama-takip katsayısı yalnızca kayıtlı kişi ödemesine
+ * uygulanır (Yönerge md.3 → Ödeme Yönetmeliği md.18/2-a-6 ve md.21/2-a-6).
+ * Kalemlerden `katsayiyaTabi: true` olanlar çarpanla çarpılır; diğerleri aynen kalır.
+ */
+function katsayiUygula(kalemler, carpan) {
+  const c = Number(carpan);
+  if (!Number.isFinite(c) || c <= 0) return kalemler.map((k) => ({ ...k }));
+  return kalemler.map((k) => (k.katsayiyaTabi ? { ...k, brutOncesi: k.brut, brut: (Number(k.brut) || 0) * c } : { ...k }));
+}
+
+/**
+ * İki senaryo arasındaki net farkı verir (ör. katsayı 1,05 → 1,08 olsa net ne kadar artar).
+ */
+function netFark(girdi, carpanA, carpanB) {
+  const a = bordroHesapla({ ...girdi, kalemler: katsayiUygula(girdi.kalemler, carpanA) });
+  const b = bordroHesapla({ ...girdi, kalemler: katsayiUygula(girdi.kalemler, carpanB) });
+  if (a.durum !== 'TAMAM' || b.durum !== 'TAMAM') return null;
+  return { netA: a.ozet.net, netB: b.ozet.net, fark: yuvarla(b.ozet.ham.net - a.ozet.ham.net), brutFark: yuvarla(b.ozet.ham.brutToplam - a.ozet.ham.brutToplam) };
+}
+
+const KURAL_SETI = {
+  "_aciklama": "Tarih-sürümlü kural verisi. Kod içine sihirli sayı gömülmez; her kural yürürlük aralığı, kaynak ve durum taşır (bilgi-tabani/kamu-maas/06). PROVISIONAL/RESEARCH_REQUIRED kurallar üretim bordrosunda sessiz kullanılamaz: motor sonucu TAHMİNİ etiketler veya kilitler (14 §9). VERIFIED için resmi belge indirilip sha256 alanı doldurulmalıdır (18).",
+  "_bilgiOnceligi": "Resmî yürürlükteki mevzuat > tarihli HMB/SGK/GİB düzenlemeleri > toplu sözleşme/hakem kurulu > resmî kılavuzlar > yardımcı açıklamalar > ikincil kaynaklar.",
+  "kurallar": [
+    {
+      "rule_id": "HMB_KATSAYI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-06-30",
+      "parameters": { "aylikKatsayi": 1.387871, "tabanAylikKatsayi": 22.722793, "yanOdemeKatsayi": 0.440141 },
+      "source": {
+        "authority": "HMB",
+        "document_name": "2026 Yılı Ocak Ayına Ait Mali ve Sosyal Haklara İlişkin Genelge",
+        "official_url": "https://www.hmb.gov.tr/duyuru/2026-yili-ocak-ayina-ait-mali-ve-sosyal-haklara-iliskin-genelge",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Bilgi tabanı 17 §1 kontrol referansı; resmi PDF hash'i alınınca VERIFIED."
+    },
+    {
+      "rule_id": "HMB_KATSAYI",
+      "version": 2,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-07-01",
+      "effective_to": "2026-12-31",
+      "parameters": { "aylikKatsayi": 1.575512, "tabanAylikKatsayi": 25.794915, "yanOdemeKatsayi": 0.499649, "tavan399": 86231.60, "tavan7_15754": 76873.55 },
+      "source": {
+        "authority": "HMB",
+        "document_name": "2026 Yılı Temmuz Ayına Ait Mali ve Sosyal Haklara İlişkin Genelge",
+        "official_url": "https://ms.hmb.gov.tr/uploads/2026/07/2026-Yili-Temmuz-Ayina-Ait-Mali-ve-Sosyal-Haklara-Iliskin-Genelge-9b5304ed658d77cb.pdf",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Bilgi tabanı 17 §1 kontrol referansı."
+    },
+    {
+      "rule_id": "GV_UCRET_TARIFESI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-12-31",
+      "parameters": {
+        "dilimler": [
+          { "ustSinir": 190000, "oran": 0.15 },
+          { "ustSinir": 400000, "oran": 0.20 },
+          { "ustSinir": 1500000, "oran": 0.27 },
+          { "ustSinir": 5300000, "oran": 0.35 },
+          { "ustSinir": null, "oran": 0.40 }
+        ]
+      },
+      "source": {
+        "authority": "GİB",
+        "document_name": "332 Seri No.lu Gelir Vergisi Genel Tebliği — 2026 ücret gelirleri tarifesi (GVK md.103)",
+        "official_url": "https://cdn.gib.gov.tr/api/gibportal-file/file/getFileResources?objectKey=arsiv%2Fyardim-kaynaklar%2Fyararli-bilgiler%2Fgelir-vergisi-tarifeleri%2Fgelir-vergisi-tarifesi-2026.pdf",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Kümülatif matrah üzerinden uygulanır (05 §1-2). Kontrol: 190.000→28.500; 400.000→70.500; 1.500.000→367.500; 5.300.000→1.697.500."
+    },
+    {
+      "rule_id": "GVK_63_PRIM_INDIRIMI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "parameters": { "kisiPrimleriMatrahtanDusulur": true },
+      "source": {
+        "authority": "GİB",
+        "document_name": "193 sayılı GVK md.63/2 — sigorta primleri ve emekli aidatının ücret matrahından indirimi",
+        "official_url": "https://www.mevzuat.gov.tr/",
+        "sha256": null
+      },
+      "verified_at": null,
+      "notes": "Bilgi tabanı 05 §2 'legal_deductions_before_tax' alanının kaynağı; madde metniyle doğrulanacak."
+    },
+    {
+      "rule_id": "SGK_5510_4C_ORANLARI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-12-31",
+      "parameters": { "myoKisi": 0.09, "myoIsveren": 0.12, "gssKisi": 0.05, "gssIsveren": 0.075 },
+      "source": {
+        "authority": "SGK",
+        "document_name": "4/c Kapsamındaki Sigortalıların Prim ve Prime İlişkin İşlemleri (2026)",
+        "official_url": "https://www.sgk.gov.tr/Content/Post/51eb246d-88b5-4356-ba97-3af847ec4ded/4c-Kapsamindaki-Sigortalilarin-Prim-ve-Prime-Iliskin-Islemleri-2026-01-12-12-07-35",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Fiili hizmet süresi zammı ilave işveren primi ayrı kuraldır (bu motorda yok)."
+    },
+    {
+      "rule_id": "EMEKLI_5434_ORANLARI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "parameters": { "sahisKesenegi": 0.16, "kurumKarsiligi": 0.20, "artisFarkiOrani": 1.0 },
+      "source": {
+        "authority": "SGK",
+        "document_name": "5434 sayılı Kanun ile 5510 sayılı Kanun ayrımı — resmi açıklama",
+        "official_url": "https://www.sgk.gov.tr/Content/Post/52a2428a-9603-4aa1-bbeb-7746432953b6/5434-sayili-Kanun-ile-5510-sayili-Kanun-2022-08-18-11-26-15",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Emekli keseneğine esas aylık, gelir vergisi matrahından farklı kavramdır (05 §6); %100 artış farkı ve kurumca karşılanan GSS bu motorda uygulanmaz, uyarı verilir."
+    },
+    {
+      "rule_id": "DAMGA_UCRET_ORANI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-12-31",
+      "parameters": { "oran": 0.00759 },
+      "source": {
+        "authority": "GİB",
+        "document_name": "488 sayılı Damga Vergisi Kanunu (1) sayılı tablo IV/1-b — ücretlerde binde 7,59",
+        "official_url": "https://www.gib.gov.tr/",
+        "sha256": null
+      },
+      "verified_at": null,
+      "notes": "Bilgi tabanında oran yok; genel bilinen oran girildi, yıllık Damga Vergisi Genel Tebliği ile doğrulanacak. Damgadan istisna kalemler kalem profilinde işaretlenir."
+    },
+    {
+      "rule_id": "ASGARI_UCRET_GV_ISTISNASI",
+      "version": 1,
+      "status": "RESEARCH_REQUIRED",
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-12-31",
+      "parameters": { "aylikIstisnaMatrahi": null, "aylikDamgaIstisnasi": null },
+      "source": {
+        "authority": "GİB",
+        "document_name": "GVK 23/18 ve 319 Seri No.lu Tebliğ — 2026 asgari ücret tutarına bağlı istisna",
+        "official_url": "https://intvrg.gib.gov.tr/hazirbeyan/assets/pdf/DUYURU_UNIVERSAL_2026_2026_Ucret_Geliri.pdf",
+        "sha256": null
+      },
+      "verified_at": null,
+      "notes": "2026 brüt asgari ücret ve istisna tutarları bilgi tabanında yok; parametre girilmeden istisna uygulanmaz, sonuç TAHMİNİ kalır (05 §3, 17 §3)."
+    },
+    {
+      "rule_id": "EK40_ILAVE_ODEME",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "parameters": { "gosterge": 15965, "gelirVergisi": false, "sgkPek": false, "damga": true },
+      "source": {
+        "authority": "GİB",
+        "document_name": "375 sayılı KHK ek md.40 — ilave ödeme (15.965 × aylık katsayı); vergi/prim istisnası özel hüküm",
+        "official_url": "https://gib.gov.tr/mevzuat/kanun/438/ozelge/38831",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Profil başka kalemlere kopyalanmaz (05 §4). Aile hekimliği sözleşmelilerinde uygulanabilirliği ayrıca doğrulanacak."
+    }
+  ]
+};
+/* ================== UYGULAMA ================== */
+const LISANS_ACIK_ANAHTAR = {
+  "kid": "dev",
+  "kty": "EC",
+  "crv": "P-256",
+  "x": "PP5Va5iCrW3RbvX1tQEz-5T2zGXr_Nm0mIoAL5D4HZ0",
+  "y": "XOjWM7TqquuUSPIdTia30zXrKgTDxK0ymxHSPsElynU"
+};
+const AY_ADLARI = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const SAKLAMA = 'hyp-analitik-v2';
+const fmtK = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+const fmtK3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+const fmtY = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 1 });
+const fmtTL = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 });
+const $ = (s) => document.querySelector(s);
+
+const durum = {
+  surum: 2, aktifSekme: 'AH', aktifDonem: null, lisansAnahtari: '',
+  birim: { ad: '', birimTipi: 'normal', nufus: null, tutuklu: 0, puanAlti: false, yeniBirim: false, hekimBrut: null, ascBrut: null },
+  donemler: {},
+  maas: { kisi: 'AH', profil: {
+    AH: { sosyalGuvenlik: 'BELIRSIZ', oncekiKumulatif: null, digerKesinti: null, kalemler: null },
+    ASC: { sosyalGuvenlik: 'BELIRSIZ', oncekiKumulatif: null, digerKesinti: null, kalemler: null },
+  } },
+};
+const plan = { kod: 'DEMO', lisans: null, dev: false, neden: '' };
+
+/* --- saklama --- */
+function kaydet() { try { localStorage.setItem(SAKLAMA, JSON.stringify(durum)); } catch (_) {} }
+function yukle() {
+  try {
+    const ham = localStorage.getItem(SAKLAMA);
+    if (ham) { const v = JSON.parse(ham); if (v && v.surum === 2) { const maasVarsayilan = durum.maas; Object.assign(durum, v); durum.birim = { ...durum.birim, ...(v.birim || {}) }; const vm = v.maas || {}, vp = vm.profil || {}; durum.maas = { kisi: vm.kisi === 'ASC' ? 'ASC' : 'AH', profil: { AH: { ...maasVarsayilan.profil.AH, ...(vp.AH || {}) }, ASC: { ...maasVarsayilan.profil.ASC, ...(vp.ASC || {}) } } }; return; } }
+    const eski = localStorage.getItem('hyp-analitik-v1');
+    if (eski) { v1Tasi(JSON.parse(eski)); kaydet(); }
+  } catch (_) {}
+}
+function v1Tasi(v) {
+  if (!v || !Array.isArray(v.aylar)) return;
+  durum.birim.birimTipi = v.birim?.birimTipi || 'normal';
+  durum.birim.nufus = v.birim?.nufus ?? null;
+  durum.birim.tutuklu = v.birim?.tutuklu || 0;
+  durum.birim.puanAlti = !!v.birim?.puanAlti;
+  durum.birim.yeniBirim = !!v.birim?.yeniBirim;
+  const yil = v.yil || new Date().getFullYear();
+  v.aylar.forEach((a, i) => {
+    if (![a.vh, a.vy, a.ch, a.cy].some((x) => x)) return;
+    const d = donemAnahtari(yil, i + 1);
+    durum.donemler[d] = { AH: { satirlar: {} }, ASC: { satirlar: { VITAL: { g: a.vh || 0, y: a.vy || 0, d: 0 }, YASLI: { g: a.ch || 0, y: a.cy || 0, d: 0 } } } };
+  });
+  durum.aktifSekme = 'ASC';
+}
+const donemAnahtari = (yil, ay) => `${yil}-${String(ay).padStart(2, '0')}`;
+const donemAdi = (d) => { const [y, a] = d.split('-'); return `${AY_ADLARI[+a - 1]} ${y}`; };
+const donemListesi = () => Object.keys(durum.donemler).sort();
+function sayi(v) { if (v === '' || v === null || v === undefined) return null; const n = Number(String(v).replace(',', '.')); return Number.isFinite(n) ? n : null; }
+
+/* --- dönem yönetimi --- */
+function donemGetir(d) {
+  if (!durum.donemler[d]) durum.donemler[d] = { AH: { satirlar: {} }, ASC: { satirlar: {} } };
+  return durum.donemler[d];
+}
+function donemEkle(d) {
+  const sinir = (PLANLAR[plan.kod] || PLANLAR.DEMO).donemSiniri;
+  if (!durum.donemler[d] && sinir !== null && donemListesi().length >= sinir) {
+    lisansAc(`Deneme sürümünde en fazla ${sinir} dönem saklanır. Sınırsız dönem için bir plan etkinleştirin.`);
+    return false;
+  }
+  donemGetir(d); durum.aktifDonem = d; kaydet(); render(); return true;
+}
+function sonrakiDonem(d, adim) { const [y, a] = d.split('-').map(Number); const t = new Date(y, a - 1 + adim, 1); return donemAnahtari(t.getFullYear(), t.getMonth() + 1); }
+
+/* --- hesap --- */
+function satirlariHazirla(grup, d) {
+  const kayit = durum.donemler[d]?.[grup]?.satirlar || {};
+  return Object.entries(kayit).map(([kod, s]) => ({ kod, gereken: s.g || 0, yapilan: s.y || 0, devreden: s.d || 0 }));
+}
+function birimParam() {
+  return { birimTipi: durum.birim.birimTipi, nufus: durum.birim.nufus, tutukluSayisi: durum.birim.tutuklu || 0, maasaEsasPuan: durum.birim.puanAlti ? 0 : null, yeniBirimMuafiyeti: durum.birim.yeniBirim };
+}
+function donemHesabi(grup, d) { return aylikHesap({ grup, satirlar: satirlariHazirla(grup, d), birim: birimParam() }); }
+function veriVar(grup, d) { return satirlariHazirla(grup, d).some((s) => s.gereken > 0 || s.yapilan > 0); }
+
+/* --- render --- */
+function render() {
+  const liste = donemListesi();
+  if (!durum.aktifDonem || !durum.donemler[durum.aktifDonem]) durum.aktifDonem = liste[liste.length - 1] || null;
+  birimFormunuDoldur();
+  document.querySelectorAll('nav.sekmeler button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sekme === durum.aktifSekme)));
+  document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('gizli', p.id !== 'panel-' + durum.aktifSekme));
+  const sec = $('#donem-sec');
+  sec.innerHTML = liste.map((d) => `<option value="${d}">${donemAdi(d)}</option>`).join('') || '<option value="">Dönem yok</option>';
+  if (durum.aktifDonem) sec.value = durum.aktifDonem;
+  const sinir = (PLANLAR[plan.kod] || PLANLAR.DEMO).donemSiniri;
+  $('#donem-not').textContent = sinir === null ? `${liste.length} dönem` : `${liste.length}/${sinir} dönem (deneme)`;
+  $('#btn-csv').disabled = !ozellikVar(plan.kod, 'tam_disa_aktarim');
+  $('#btn-csv').title = $('#btn-csv').disabled ? 'CSV dışa aktarımı ücretli planlarda' : 'Bu dönemin tablosunu CSV olarak indir';
+  document.body.classList.toggle('demo', plan.kod === 'DEMO');
+  planRozetiYaz();
+  birimOzetiYaz();
+  if (durum.aktifSekme === 'EKIP') renderEkip();
+  else if (durum.aktifSekme === 'MAAS') renderMaas();
+  else { renderTablo(durum.aktifSekme); renderTiles(durum.aktifSekme); renderHamleler(durum.aktifSekme); renderGrafik(durum.aktifSekme); }
+}
+function planRozetiYaz() {
+  const r = $('#plan-rozet');
+  const p = PLANLAR[plan.kod] || PLANLAR.DEMO;
+  r.textContent = plan.kod === 'DEMO' ? 'Deneme' : p.ad.replace(/ \(.*\)/, '') + (plan.dev ? ' · geliştirme anahtarı' : '');
+  r.className = 'plan' + (plan.kod !== 'DEMO' ? ' ucretli' : '') + (plan.dev ? ' dev' : '');
+}
+function birimOzetiYaz() {
+  const bd = birimDurumu(birimParam());
+  const m = muafiyetVarMi(birimParam());
+  let metin = 'Nüfus girilmedi — tavan uygulanmaz';
+  if (m === 'puan') metin = 'Muafiyet: maaşa esas puan < 1000 → katsayı 1';
+  else if (m === 'yeni-birim') metin = 'Muafiyet: yeni birim → katsayı 1';
+  else if (bd.buyukBirim) metin = `Büyük birim (sınır ${bd.sinir}): asgariyi geçen kriter katsayısı 1`;
+  else if (bd.tavan !== null) metin = `Tavan ${fmtK.format(bd.tavan)} (${bd.sinir} / ${durum.birim.nufus}${durum.birim.tutuklu >= 1500 ? ', tutuklu-hükümlü sınırı' : ''})`;
+  $('#birim-ozet').textContent = metin;
+}
+function birimFormunuDoldur() {
+  $('#f-birim-ad').value = durum.birim.ad || '';
+  $('#f-birim-tipi').value = durum.birim.birimTipi;
+  $('#f-nufus').value = durum.birim.nufus ?? '';
+  $('#f-tutuklu').value = durum.birim.tutuklu ?? 0;
+  $('#f-hekim-brut').value = durum.birim.hekimBrut ?? '';
+  $('#f-asc-brut').value = durum.birim.ascBrut ?? '';
+  $('#f-puan').checked = !!durum.birim.puanAlti;
+  $('#f-yeni').checked = !!durum.birim.yeniBirim;
+}
+
+function renderTablo(grup) {
+  const tbody = $(`#tablo-${grup} tbody`);
+  const d = durum.aktifDonem;
+  $(`#donem-baslik-${grup}`).textContent = d ? donemAdi(d) : 'dönem yok';
+  if (!d) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">"+ Dönem ekle" ile başlayın.</td></tr>'; return; }
+  const h = donemHesabi(grup, d);
+  const kayit = durum.donemler[d][grup].satirlar;
+  $(`#kaynak-${grup}`).textContent = durum.donemler[d][grup].kaynak ? `Kaynak: ${durum.donemler[d][grup].kaynak}` : 'Elle giriş';
+  tbody.innerHTML = h.ayrinti.map((a) => {
+    const s = kayit[a.kriter.kod] || {};
+    const pasif = !a.kriter.aktif;
+    const inp = (alan, deger) => pasif ? '<td>—</td>' : `<td><input type="number" min="0" step="1" inputmode="numeric" data-kod="${a.kriter.kod}" data-alan="${alan}" value="${deger ?? ''}" aria-label="${a.kriter.ad} ${alan}"></td>`;
+    const yzd = a.yuzde === null ? '—' : '%' + fmtY.format(Math.min(100, a.yuzde));
+    const notlar = [];
+    if (a.istisnaKatsayi1) notlar.push('<span class="rozet notr" title="md.7/10-b: devir azami üstü, ilk ay">k.=1</span>');
+    if (a.kullanilanDevir) notlar.push(`<span class="rozet notr" title="Kullanılan devir">+${a.kullanilanDevir} devir</span>`);
+    return `<tr class="${pasif ? 'pasif' : ''}">
+      <td class="ad"><span class="seviye ${a.seviye}"></span>${a.kriter.ad}${pasif ? ' <span class="rozet notr">katsayı 1</span>' : ''} ${notlar.join(' ')}</td>
+      ${inp('g', s.g)}${inp('y', s.y)}${inp('d', s.d)}
+      <td>${pasif ? '—' : yzd}</td><td><strong>${fmtK.format(a.katsayi)}</strong></td>
+      <td>${pasif || a.yuzde === null ? '—' : a.asgariIcinKalan ? `+${a.asgariIcinKalan}` : '✓'}</td>
+      <td>${pasif || a.yuzde === null ? '—' : a.azamiIcinKalan ? `+${a.azamiIcinKalan}` : '✓'}</td></tr>`;
+  }).join('');
+}
+
+function renderTiles(grup) {
+  const kap = $(`#tiles-${grup}`);
+  const d = durum.aktifDonem;
+  if (!d) { kap.innerHTML = ''; return; }
+  const h = donemHesabi(grup, d);
+  const dolu = veriVar(grup, d);
+  const notK = h.muafiyet ? 'Muafiyet: 1 uygulanır' : h.buyukBirim ? 'Büyük birim kuralı' : h.tavanUygulandi ? `Tavana takıldı (ham ${fmtK.format(h.hamKatsayi)})` : 'Tavan bağlayıcı değil';
+  const rozet = !dolu ? '' : h.katsayi < 1 ? '<span class="rozet kotu">▼ 1,0000 altı</span>' : '<span class="rozet iyi">▲ 1,0000 ve üzeri</span>';
+  const asgariAlti = h.ayrinti.filter((a) => a.kriter.aktif && a.seviye === 'asgari-alti').length;
+  const azami = h.ayrinti.filter((a) => a.kriter.aktif && a.seviye === 'azami').length;
+  const aktifSayi = h.ayrinti.filter((a) => a.kriter.aktif && a.yuzde !== null).length;
+  let maasHtml = '';
+  if (grup === 'AH') {
+    const brut = durum.birim.hekimBrut;
+    const e = brut ? maasEtkisi(brut, h.katsayi) : null;
+    maasHtml = `<div class="tile"><div class="k">Maaş etkisi</div><div class="v">${e ? (e.fark >= 0 ? '+' : '') + fmtTL.format(e.fark) : '—'}</div><div class="s">${e ? `kayıtlı kişi ödemesi ${fmtTL.format(brut)} × ${fmtK.format(h.katsayi)} (brüt)` : 'Kayıtlı kişi ödemesini girin'}</div></div>`;
+  } else {
+    const hekimVar = veriVar('AH', d);
+    const kBirim = hekimVar ? donemHesabi('AH', d).katsayi : null;
+    const mc = ascMaasCarpani({ kAsc: h.katsayi, kBirim, muafiyet: h.muafiyet });
+    const brut = durum.birim.ascBrut;
+    const e = brut ? maasEtkisi(brut, mc.carpan) : null;
+    maasHtml = `<div class="tile"><div class="k">ASÇ maaş çarpanı</div><div class="v">${fmtK.format(mc.carpan)}</div><div class="s">${mc.gecerli === 'birim' ? 'Hekim katsayısı geçerli (%75 avantajı)' : mc.gecerli === 'muafiyet' ? 'Muafiyet' : hekimVar ? 'Kendi katsayısı geçerli' : 'Hekim verisi yok — kendi katsayısı'}</div></div>
+      <div class="tile"><div class="k">Maaş etkisi</div><div class="v">${e ? (e.fark >= 0 ? '+' : '') + fmtTL.format(e.fark) : '—'}</div><div class="s">${e ? `kayıtlı kişi ödemesi ${fmtTL.format(brut)} × ${fmtK.format(mc.carpan)} (brüt)` : 'Kayıtlı kişi ödemesini girin'}</div></div>`;
+  }
+  kap.innerHTML = `
+    <div class="tile vurgu"><div class="k">${grup === 'AH' ? 'Tarama-takip katsayısı' : 'ASÇ katsayısı'} · ${donemAdi(d)}</div><div class="v">${dolu ? fmtK.format(h.katsayi) : '—'}</div><div class="s">${dolu ? rozet + ' ' + notK : 'Veri girin'}</div></div>
+    <div class="tile"><div class="k">Kriter durumu</div><div class="v">${azami}/${aktifSayi}</div><div class="s">azamide · ${asgariAlti} kriter asgari altında</div></div>
+    ${maasHtml}`;
+}
+
+function renderHamleler(grup) {
+  const kap = $(`#hamleler-${grup}`);
+  const d = durum.aktifDonem;
+  if (!d || !veriVar(grup, d)) { kap.innerHTML = '<li>Veri girildiğinde öneriler burada listelenir.</li>'; return; }
+  const h = donemHesabi(grup, d);
+  if (h.muafiyet || h.buyukBirim) { kap.innerHTML = `<li>${h.muafiyet ? 'Muafiyet nedeniyle katsayı 1 uygulanıyor.' : 'Büyük birim kuralı: asgari oranı geçmek yeterli, azami hedefi ek kazanç getirmez.'}</li>`; return; }
+  const oneriler = h.ayrinti.filter((a) => a.kriter.aktif && a.yuzde !== null && a.seviye !== 'azami' && a.azamiIcinKalan > 0).map((a) => {
+    const azamiK = kriterKatsayisi(a.kriter.azami, a.kriter);
+    const asgariK = 1;
+    const asgariKazanc = a.seviye === 'asgari-alti' ? asgariK / a.katsayi : 1;
+    const azamiKazanc = azamiK / a.katsayi;
+    return { a, asgariKazanc, azamiKazanc, verim: (azamiKazanc - 1) / a.azamiIcinKalan };
+  }).sort((x, y) => (y.a.seviye === 'asgari-alti') - (x.a.seviye === 'asgari-alti') || y.verim - x.verim).slice(0, 4);
+  if (!oneriler.length) { kap.innerHTML = '<li>Tüm aktif kriterler azami başarıda. Tebrikler.</li>'; return; }
+  kap.innerHTML = oneriler.map(({ a, asgariKazanc, azamiKazanc }) => {
+    const parcalar = [];
+    if (a.seviye === 'asgari-alti') parcalar.push(`asgari (%${a.kriter.asgari}) için <b>+${a.asgariIcinKalan}</b> işlem → cezadan çıkış (×${fmtK.format(asgariKazanc)})`);
+    parcalar.push(`azami (%${a.kriter.azami}) için <b>+${a.azamiIcinKalan}</b> işlem → ×${fmtK.format(azamiKazanc)}`);
+    return `<li><strong>${a.kriter.ad}</strong>: ${parcalar.join('; ')}</li>`;
+  }).join('');
+}
+
+function renderEkip() {
+  const liste = donemListesi();
+  const satirlar = liste.map((d) => {
+    const hv = veriVar('AH', d), av = veriVar('ASC', d);
+    const hh = hv ? donemHesabi('AH', d) : null, ah = av ? donemHesabi('ASC', d) : null;
+    const mc = ah ? ascMaasCarpani({ kAsc: ah.katsayi, kBirim: hh ? hh.katsayi : null, muafiyet: ah.muafiyet }) : null;
+    return { d, hh, ah, mc };
+  });
+  const son = [...satirlar].reverse().find((s) => s.hh || s.ah);
+  const kap = $('#tiles-EKIP');
+  if (!son) { kap.innerHTML = ''; $('#ekip-analiz').innerHTML = '<p class="hint">Hekim ve ASÇ sekmelerine aynı dönem için veri girin.</p>'; $('#tablo-EKIP tbody').innerHTML = ''; $('#grafik-EKIP').innerHTML = ''; return; }
+  kap.innerHTML = `
+    <div class="tile"><div class="k">Hekim · ${donemAdi(son.d)}</div><div class="v">${son.hh ? fmtK.format(son.hh.katsayi) : '—'}</div></div>
+    <div class="tile"><div class="k">ASÇ · ${donemAdi(son.d)}</div><div class="v">${son.ah ? fmtK.format(son.ah.katsayi) : '—'}</div></div>
+    <div class="tile vurgu"><div class="k">ASÇ maaş çarpanı</div><div class="v">${son.mc ? fmtK.format(son.mc.carpan) : '—'}</div><div class="s">${son.mc ? (son.mc.gecerli === 'birim' ? 'hekim katsayısı geçerli' : son.mc.gecerli === 'muafiyet' ? 'muafiyet' : 'ASÇ kendi katsayısı') : ''}</div></div>`;
+  let analiz = '';
+  if (son.hh && son.ah) {
+    const kA = son.ah.katsayi, kH = son.hh.katsayi, esik = 0.75 * kH;
+    if (kA < 1) analiz = `<div class="uyari-kutu">ASÇ katsayısı <b>${fmtK.format(kA)}</b> 1'in altında: maaş doğrudan bu katsayıyla çarpılır (md.7/3-a). Önce 1,0000'ı geçmek gerekir.</div>`;
+    else if (kA >= kH) analiz = `<p>ASÇ katsayısı (<b>${fmtK.format(kA)}</b>) hekimin katsayısına eşit veya üzerinde; ASÇ'nin kendi katsayısı geçerlidir.</p>`;
+    else if (kA >= esik) analiz = `<p>ASÇ katsayısı <b>${fmtK.format(kA)}</b>, hekim katsayısının %75'i olan <b>${fmtK.format(esik)}</b> eşiğini geçiyor: hekimin <b>${fmtK.format(kH)}</b> katsayısı ASÇ maaşına uygulanır (md.7/3-c).</p><div class="uyari-kutu">Hekim katsayısı <b>${fmtK.format(kA / 0.75)}</b> üzerine çıkarsa %75 şartı bozulur ve ASÇ kendi katsayısına döner.</div>`;
+    else analiz = `<div class="uyari-kutu">ASÇ katsayısı <b>${fmtK.format(kA)}</b>, %75 eşiği <b>${fmtK.format(esik)}</b> altında: ASÇ'nin kendi katsayısı geçerli (md.7/3-b). Eşiğe ulaşmak için ASÇ katsayısını <b>+${fmtK.format(esik - kA)}</b> artırmak gerekir.</div>`;
+  } else analiz = '<p class="hint">Aynı dönem için hem hekim hem ASÇ verisi girildiğinde %75 analizi görünür.</p>';
+  $('#ekip-analiz').innerHTML = analiz;
+  $('#tablo-EKIP tbody').innerHTML = satirlar.filter((s) => s.hh || s.ah).map((s) => `<tr><td class="ad">${donemAdi(s.d)}</td><td>${s.hh ? fmtK.format(s.hh.katsayi) : '—'}</td><td>${s.ah ? fmtK.format(s.ah.katsayi) : '—'}</td><td>${s.hh ? fmtK.format(0.75 * s.hh.katsayi) : '—'}</td><td>${s.mc ? fmtK.format(s.mc.carpan) : '—'}</td><td style="text-align:left">${s.mc ? (s.mc.gecerli === 'birim' ? '<span class="rozet iyi">hekim k.</span>' : s.mc.gecerli === 'muafiyet' ? '<span class="rozet notr">muafiyet</span>' : '<span class="rozet notr">ASÇ k.</span>') : ''}</td></tr>`).join('');
+  ciz('#grafik-EKIP', [
+    { ad: 'Hekim', renk: 'var(--seri-1)', noktalar: satirlar.filter((s) => s.hh).map((s) => ({ etiket: s.d, deger: s.hh.katsayi })) },
+    { ad: 'ASÇ', renk: 'var(--seri-2)', noktalar: satirlar.filter((s) => s.ah).map((s) => ({ etiket: s.d, deger: s.ah.katsayi })) },
+  ], liste, null);
+}
+
+function renderGrafik(grup) {
+  const liste = donemListesi();
+  const bd = birimDurumu(birimParam());
+  const noktalar = liste.filter((d) => veriVar(grup, d)).map((d) => ({ etiket: d, deger: donemHesabi(grup, d).katsayi }));
+  ciz(`#grafik-${grup}`, [{ ad: grup, renk: 'var(--seri)', noktalar }], liste, bd.tavan);
+}
+
+/* --- maaş / bordro simülasyonu --- */
+function maasVarsayilanKalemler(kisi) {
+  const k = (kod, ad, katsayiyaTabi, gv = true, damga = true, pek = true) => ({ kod, ad, brut: null, gelirVergisi: gv, damga, sgkPek: pek, katsayiyaTabi });
+  if (kisi === 'ASC') return [
+    k('KAYITLI_KISI_ASC', 'Kayıtlı kişi ödemesi (ASÇ)', true),
+    k('SOSYOEKONOMIK_ASC', 'Sosyoekonomik gelişmişlik ödemesi', false),
+    k('DIGER_ASC', 'Diğer ödemeler', false),
+  ];
+  return [
+    k('KAYITLI_KISI', 'Kayıtlı kişi ödemesi', true),
+    k('SOSYOEKONOMIK', 'Sosyoekonomik gelişmişlik ödemesi', false),
+    k('ASM_GIDER', 'Aile sağlığı merkezi gider ödemesi', false, false, false, false),
+    k('GEZICI', 'Gezici sağlık hizmeti ödemesi', false, false, false, false),
+    k('TETKIK_SARF', 'Tetkik ve sarf malzemesi ödemesi', false, false, false, false),
+  ];
+}
+function maasProfil() { return durum.maas.profil[durum.maas.kisi]; }
+const ANA_KALEM = { AH: 'KAYITLI_KISI', ASC: 'KAYITLI_KISI_ASC' };
+function maasKalemleri() {
+  const kisi = durum.maas.kisi, p = maasProfil();
+  if (!p.kalemler) p.kalemler = maasVarsayilanKalemler(kisi);
+  // Birim kartındaki "kayıtlı kişi ödemesi" ile tek kaynak: kalem boşsa oradan doldurulur, kalem düzenlenince oraya yazılır.
+  const ana = p.kalemler.find((k) => k.kod === ANA_KALEM[kisi]);
+  const birimBrut = kisi === 'AH' ? durum.birim.hekimBrut : durum.birim.ascBrut;
+  if (ana && (ana.brut === null || ana.brut === undefined || ana.brut === '') && birimBrut) ana.brut = birimBrut;
+  return p.kalemler;
+}
+function maasCarpani(d) {
+  const kisi = durum.maas.kisi;
+  if (!d || !veriVar(kisi, d)) return { carpan: null, not: 'Bu dönem için katsayı verisi yok; kalemler katsayısız hesaplanır.' };
+  const h = donemHesabi(kisi, d);
+  if (kisi === 'AH') return { carpan: h.katsayi, not: `Hekim tarama-takip katsayısı ${fmtK.format(h.katsayi)}` };
+  const kBirim = veriVar('AH', d) ? donemHesabi('AH', d).katsayi : null;
+  const mc = ascMaasCarpani({ kAsc: h.katsayi, kBirim, muafiyet: h.muafiyet });
+  return { carpan: mc.carpan, not: `ASÇ maaş çarpanı ${fmtK.format(mc.carpan)} (${mc.gecerli === 'birim' ? 'hekim katsayısı geçerli' : mc.gecerli === 'muafiyet' ? 'muafiyet' : 'kendi katsayısı'})` };
+}
+function maasGirdi(carpan) {
+  const d = durum.aktifDonem, p = maasProfil();
+  const kalemler = maasKalemleri().filter((k) => k.brut !== null && k.brut !== undefined && k.brut !== '').map((k) => ({ ...k, brut: Number(k.brut) || 0 }));
+  return {
+    tarih: d ? `${d}-15` : new Date().toISOString().slice(0, 10),
+    sosyalGuvenlik: p.sosyalGuvenlik,
+    oncekiKumulatifMatrah: Number(p.oncekiKumulatif) || 0,
+    digerKesintiler: p.digerKesinti ? [{ ad: 'Diğer', tutar: Number(p.digerKesinti) }] : [],
+    kalemler: carpan ? katsayiUygula(kalemler, carpan) : kalemler,
+    kurallar: KURAL_SETI.kurallar,
+  };
+}
+function renderMaas() { renderMaasForm(); renderMaasSonuc(); }
+function renderMaasForm() {
+  const p = maasProfil();
+  $('#m-kisi').value = durum.maas.kisi;
+  $('#m-sg').value = p.sosyalGuvenlik;
+  $('#m-kumulatif').value = p.oncekiKumulatif ?? '';
+  $('#m-diger').value = p.digerKesinti ?? '';
+  const kalemler = maasKalemleri();
+  $('#m-kalemler tbody').innerHTML = kalemler.map((k, i) => `<tr>
+    <td class="ad"><input type="text" data-i="${i}" data-alan="ad" value="${(k.ad || '').replace(/"/g, '&quot;')}"></td>
+    <td><input type="number" min="0" step="1" data-i="${i}" data-alan="brut" value="${k.brut ?? ''}" placeholder="brüt"></td>
+    <td><input type="checkbox" data-i="${i}" data-alan="gelirVergisi" ${k.gelirVergisi ? 'checked' : ''} title="Gelir vergisine tabi"></td>
+    <td><input type="checkbox" data-i="${i}" data-alan="damga" ${k.damga ? 'checked' : ''} title="Damga vergisine tabi"></td>
+    <td><input type="checkbox" data-i="${i}" data-alan="sgkPek" ${k.sgkPek ? 'checked' : ''} title="Prime esas kazanca dahil"></td>
+    <td><input type="checkbox" data-i="${i}" data-alan="katsayiyaTabi" ${k.katsayiyaTabi ? 'checked' : ''} title="Tarama-takip katsayısı uygulanır"></td>
+    <td><button class="kucuk" data-sil="${i}" title="Kalemi sil">✕</button></td></tr>`).join('');
+}
+function renderMaasSonuc() {
+  const d = durum.aktifDonem;
+  $('#maas-donem-baslik').textContent = d ? donemAdi(d) : 'dönem yok';
+  const { carpan, not } = maasCarpani(d);
+  $('#maas-katsayi-rozet').textContent = not;
+  const sonuc = bordroHesapla(maasGirdi(carpan));
+  const banner = $('#maas-banner');
+  banner.classList.toggle('kilit', sonuc.durum === 'KILITLI');
+  banner.innerHTML = sonuc.durum === 'KILITLI'
+    ? `<b>HESAP KİLİTLİ.</b> ${sonuc.kilitNedenleri.join(' ')}`
+    : `<b>${sonuc.etiket}.</b> Bu hesaplama karar destek ve kontrol amaçlıdır; kurumun resmî bordro/tahakkuk kaydının yerine geçmez. Tarama-takip katsayısı yalnızca <b>katsayıya tabi</b> işaretli kalemlere uygulanır.`;
+
+  const o = sonuc.ozet;
+  const kilitli = sonuc.durum === 'KILITLI';
+  const brutOncesi = maasKalemleri().reduce((t, k) => t + (Number(k.brut) || 0), 0);
+  $('#tiles-MAAS').innerHTML = `
+    <div class="tile"><div class="k">Brüt (katsayı sonrası)</div><div class="v">${kilitli ? '—' : fmtTL.format(o.brutToplam)}</div><div class="s">${carpan && !kilitli ? `katsayı öncesi ${fmtTL.format(brutOncesi)}` : 'katsayı uygulanmadı'}</div></div>
+    <div class="tile"><div class="k">Kesintiler</div><div class="v">${kilitli ? '—' : fmtTL.format(o.sgKisi + o.gelirVergisi + o.damgaVergisi + o.digerKesintiler)}</div><div class="s">${kilitli ? '' : `SG ${fmtTL.format(o.sgKisi)} · GV ${fmtTL.format(o.gelirVergisi)} · damga ${fmtTL.format(o.damgaVergisi)}`}</div></div>
+    <div class="tile vurgu"><div class="k">Net ödenecek · ${sonuc.etiket.toLowerCase()}</div><div class="v">${kilitli ? '—' : fmtTL.format(o.net)}</div><div class="s">${kilitli ? 'girdileri tamamlayın' : `yeni kümülatif matrah ${fmtTL.format(o.yeniKumulatifMatrah)}`}</div></div>
+    <div class="tile"><div class="k">İşveren maliyeti</div><div class="v">${kilitli ? '—' : fmtTL.format(o.isverenMaliyeti)}</div><div class="s">${kilitli ? '' : `işveren primi ${fmtTL.format(o.sgIsveren)}`}</div></div>`;
+
+  const led = [
+    ['BRÜT HAKEDİŞ', o.brutToplam, ''],
+    ['− SGK / emekli keseneği (kişi)', -o.sgKisi, `matrah ${fmtTL.format(o.sgMatrah)}`],
+    ['− Gelir vergisi', -o.gelirVergisi, `matrah ${fmtTL.format(o.gvMatrah)}`],
+    ['− Damga vergisi', -o.damgaVergisi, ''],
+    ['− Diğer kesintiler', -o.digerKesintiler, ''],
+  ];
+  $('#m-ledger tbody').innerHTML = kilitli ? '<tr><td class="ad" colspan="3">Hesap kilitli.</td></tr>' :
+    led.map(([a, t, n]) => `<tr><td class="ad">${a}</td><td>${fmtTL.format(t)}</td><td style="text-align:left;color:var(--muted)">${n}</td></tr>`).join('') +
+    `<tr class="toplam"><td class="ad">= NET ÖDENECEK</td><td>${fmtTL.format(o.net)}</td><td></td></tr>`;
+
+  $('#m-aciklama').innerHTML = [...sonuc.aciklama.map((a) => `<li>${a}</li>`), ...sonuc.uyarilar.map((u) => `<li><span class="rozet uyari">uyarı</span> ${u}</li>`)].join('') || '<li>Kalem girildiğinde açıklama zinciri burada listelenir.</li>';
+  const durumRozet = (st) => st === 'VERIFIED' ? 'iyi' : st === 'PROVISIONAL' ? 'uyari' : 'kotu';
+  $('#m-kurallar tbody').innerHTML = sonuc.kullanilanKurallar.map((k) => `<tr><td class="ad">${k.rule_id}</td><td>v${k.version}</td><td><span class="rozet ${durumRozet(k.status)}">${k.status}</span></td><td class="ad">${k.url ? `<a href="${k.url}" target="_blank" rel="noopener">${k.kaynak}</a>` : k.kaynak}</td></tr>`).join('') || '<tr><td class="ad" colspan="4">—</td></tr>';
+
+  // hamlelerin net etkisi
+  const kap = $('#m-hamleler');
+  if (kilitli || !carpan || !d) { kap.innerHTML = '<li>Katsayı verisi ve tamamlanmış bordro girdisi olduğunda hesaplanır.</li>'; return; }
+  const kisi = durum.maas.kisi;
+  const h = donemHesabi(kisi, d);
+  const adaylar = h.ayrinti.filter((a) => a.kriter.aktif && a.yuzde !== null && a.seviye !== 'azami' && a.azamiIcinKalan > 0 && !h.buyukBirim && !h.muafiyet)
+    .map((a) => {
+      const yeniHam = h.hamKatsayi / a.katsayi * kriterKatsayisi(a.kriter.azami, a.kriter);
+      const bd = birimDurumu(birimParam());
+      let yeniK = bd.tavan !== null ? Math.min(yeniHam, bd.tavan) : yeniHam;
+      let yeniCarpan = yeniK;
+      if (kisi === 'ASC') { const kBirim = veriVar('AH', d) ? donemHesabi('AH', d).katsayi : null; yeniCarpan = ascMaasCarpani({ kAsc: yeniK, kBirim, muafiyet: h.muafiyet }).carpan; }
+      const f = netFark(maasGirdi(null), carpan, yeniCarpan);
+      return { a, f, yeniCarpan };
+    }).filter((x) => x.f && x.f.fark > 0.5).sort((x, y) => (y.f.fark / y.a.azamiIcinKalan) - (x.f.fark / x.a.azamiIcinKalan)).slice(0, 4);
+  kap.innerHTML = adaylar.length ? adaylar.map(({ a, f }) => `<li><strong>${a.kriter.ad}</strong>: azami için <b>+${a.azamiIcinKalan}</b> işlem → aylık net <b>+${fmtTL.format(f.fark)}</b> (brüt +${fmtTL.format(f.brutFark)})</li>`).join('')
+    : '<li>Katsayıyı artıracak hamle kalmadı veya tavan/büyük birim kuralı nedeniyle net etkisi yok.</li>';
+}
+function maasDinleyicileri() {
+  $('#m-kisi').addEventListener('change', (e) => { durum.maas.kisi = e.target.value; kaydet(); renderMaas(); });
+  $('#m-sg').addEventListener('change', (e) => { maasProfil().sosyalGuvenlik = e.target.value; kaydet(); renderMaasSonuc(); });
+  $('#m-kumulatif').addEventListener('change', (e) => { maasProfil().oncekiKumulatif = sayi(e.target.value); kaydet(); renderMaasSonuc(); });
+  $('#m-diger').addEventListener('change', (e) => { maasProfil().digerKesinti = sayi(e.target.value); kaydet(); renderMaasSonuc(); });
+  $('#m-kalemler').addEventListener('change', (e) => {
+    const el = e.target; if (el.dataset.i === undefined) return;
+    const k = maasKalemleri()[+el.dataset.i]; if (!k) return;
+    if (el.type === 'checkbox') k[el.dataset.alan] = el.checked;
+    else if (el.dataset.alan === 'brut') {
+      k.brut = sayi(el.value);
+      if (k.kod === 'KAYITLI_KISI') { durum.birim.hekimBrut = k.brut; $('#f-hekim-brut').value = k.brut ?? ''; }
+      else if (k.kod === 'KAYITLI_KISI_ASC') { durum.birim.ascBrut = k.brut; $('#f-asc-brut').value = k.brut ?? ''; }
+    } else k[el.dataset.alan] = el.value;
+    kaydet(); renderMaasSonuc();
+  });
+  $('#m-kalemler').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-sil]'); if (!b) return;
+    maasKalemleri().splice(+b.dataset.sil, 1); kaydet(); renderMaas();
+  });
+  $('#m-kalem-ekle').addEventListener('click', () => { maasKalemleri().push({ kod: 'KALEM_' + Date.now(), ad: 'Yeni kalem', brut: null, gelirVergisi: true, damga: true, sgkPek: true, katsayiyaTabi: false }); kaydet(); renderMaas(); });
+  $('#m-varsayilan').addEventListener('click', () => { if (confirm('Bu kişi için kalemler varsayılan listeyle değiştirilsin mi?')) { maasProfil().kalemler = maasVarsayilanKalemler(durum.maas.kisi); kaydet(); renderMaas(); } });
+}
+
+/* --- grafik (SVG, bağımlılıksız) --- */
+function ciz(secici, seriler, liste, tavan) {
+  const kap = $(secici);
+  const tooltip = kap.parentElement.querySelector('.tooltip');
+  const dolu = seriler.filter((s) => s.noktalar.length);
+  if (!dolu.length) { kap.innerHTML = '<p style="color:var(--muted);font-size:13px;margin:8px 0 4px">Veri girildiğinde dönemler boyunca katsayı eğrisi burada görünür.</p>'; return; }
+  const etiketler = liste.filter((d) => dolu.some((s) => s.noktalar.some((n) => n.etiket === d)));
+  const W = 720, H = 240, M = { u: 18, s: 34, a: 26, o: 48 };
+  const iw = W - M.o - M.s, ih = H - M.u - M.a;
+  const degerler = dolu.flatMap((s) => s.noktalar.map((n) => n.deger));
+  const yMin = Math.min(0.9, ...degerler) - 0.02;
+  const yMax = Math.max(tavan || 0, 1.0, ...degerler) + 0.03;
+  const x = (i) => M.o + (etiketler.length === 1 ? iw / 2 : (i / (etiketler.length - 1)) * iw);
+  const y = (k) => M.u + ih - ((k - yMin) / (yMax - yMin)) * ih;
+  let g = '';
+  for (let i = 0; i <= 4; i++) { const kd = yMin + (i * (yMax - yMin)) / 4; g += `<line x1="${M.o}" x2="${W - M.s}" y1="${y(kd)}" y2="${y(kd)}" stroke="var(--grid)"/><text x="${M.o - 6}" y="${y(kd) + 4}" text-anchor="end" font-size="10.5" fill="var(--muted)">${fmtK3.format(kd)}</text>`; }
+  g += etiketler.map((d, i) => `<text x="${x(i)}" y="${H - 8}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${donemAdi(d).slice(0, 3)} ${d.slice(2, 4)}</text>`).join('');
+  g += `<line x1="${M.o}" x2="${W - M.s}" y1="${y(1)}" y2="${y(1)}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W - M.s}" y="${y(1) - 5}" text-anchor="end" font-size="10.5" fill="var(--muted)">1,000 eşiği</text>`;
+  if (tavan && tavan < yMax) g += `<line x1="${M.o}" x2="${W - M.s}" y1="${y(tavan)}" y2="${y(tavan)}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="2 4"/><text x="${M.o + 4}" y="${y(tavan) - 5}" font-size="10.5" fill="var(--muted)">tavan ${fmtK3.format(tavan)}</text>`;
+  dolu.forEach((s) => {
+    const pts = s.noktalar.map((n) => ({ ...n, i: etiketler.indexOf(n.etiket) }));
+    g += `<path d="${pts.map((p, j) => `${j ? 'L' : 'M'}${x(p.i).toFixed(1)},${y(p.deger).toFixed(1)}`).join(' ')}" fill="none" stroke="${s.renk}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    g += pts.map((p) => `<circle cx="${x(p.i)}" cy="${y(p.deger)}" r="3.5" fill="${s.renk}" stroke="var(--surface)" stroke-width="2"/>`).join('');
+    const son = pts[pts.length - 1];
+    const sagda = x(son.i) > W - 70;
+    g += `<text x="${x(son.i) + (sagda ? -8 : 8)}" y="${y(son.deger) - 8}" text-anchor="${sagda ? 'end' : 'start'}" font-size="11.5" font-weight="700" fill="var(--ink)">${fmtK3.format(son.deger)}</text>`;
+  });
+  kap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Dönemler boyunca katsayı">${g}<line class="kilavuz" y1="${M.u}" y2="${H - M.a}" stroke="var(--hairline)" visibility="hidden"/><rect class="tutucu" x="${M.o}" y="${M.u}" width="${iw}" height="${ih}" fill="transparent"/></svg>`;
+  const svg = kap.querySelector('svg');
+  const kilavuz = svg.querySelector('.kilavuz');
+  svg.querySelector('.tutucu').addEventListener('mousemove', (ev) => {
+    const kutu = svg.getBoundingClientRect();
+    const px = ((ev.clientX - kutu.left) / kutu.width) * W;
+    let i = 0; etiketler.forEach((_, j) => { if (Math.abs(x(j) - px) < Math.abs(x(i) - px)) i = j; });
+    kilavuz.setAttribute('x1', x(i)); kilavuz.setAttribute('x2', x(i)); kilavuz.setAttribute('visibility', 'visible');
+    const parcalar = dolu.map((s) => { const n = s.noktalar.find((p) => p.etiket === etiketler[i]); return n ? `${s.ad === 'AH' || s.ad === 'ASC' ? 'katsayı' : s.ad} ${fmtK.format(n.deger)}` : null; }).filter(Boolean);
+    tooltip.innerHTML = `<strong>${donemAdi(etiketler[i])}</strong> · ${parcalar.join(' · ')}`;
+    tooltip.style.left = (x(i) / W) * 100 + '%';
+    tooltip.style.top = (y(Math.max(...dolu.map((s) => s.noktalar.find((p) => p.etiket === etiketler[i])?.deger ?? -Infinity))) / H) * 100 + '%';
+    tooltip.style.display = 'block';
+  });
+  svg.querySelector('.tutucu').addEventListener('mouseleave', () => { tooltip.style.display = 'none'; kilavuz.setAttribute('visibility', 'hidden'); });
+}
+
+/* --- içe aktarma --- */
+function metniCoz(metin, grup) {
+  const sonuc = { satirlar: {}, eslesmeyen: [], donem: null, kaynak: 'Yapıştırma' };
+  const m = metin.trim();
+  if (m.startsWith('{')) {
+    try {
+      const j = JSON.parse(m);
+      if (j.format === 'hyp-analitik/sina-v1') {
+        const birimler = Object.keys(j.birimler || {});
+        const secili = birimler.find((b) => durum.birim.ad && normalizeTR(b).includes(normalizeTR(durum.birim.ad))) || birimler[0];
+        (j.birimler[secili] || []).forEach((s) => {
+          const kod = kriterKoduBul(s.parametre, grup);
+          if (kod) sonuc.satirlar[kod] = { g: s.gereken || 0, y: s.yapilan || 0, d: s.devreden || 0 }; else sonuc.eslesmeyen.push(s.parametre);
+        });
+        sonuc.donem = j.donem || null; sonuc.kaynak = `SİNA eklentisi (${secili || 'birim'}${j.okumaZamani ? ', ' + new Date(j.okumaZamani).toLocaleDateString('tr-TR') : ''})`;
+        if (birimler.length > 1) sonuc.eslesmeyen.push(`${birimler.length} birim bulundu, "${secili}" alındı — diğerleri için birim adını girin`);
+        return sonuc;
+      }
+    } catch (_) { /* metin olarak dene */ }
+  }
+  m.split(/\r?\n/).forEach((satir) => {
+    if (!satir.trim()) return;
+    const parcalar = satir.split(/\t|;|,(?=\s*\d)|\s{2,}/).map((p) => p.trim()).filter(Boolean);
+    const adParcalari = [], sayilar = [];
+    // Sayı: düz tamsayı ya da binlik ayraçlı (1.234). "34.12.001" gibi ÇKYS kodları sayı değildir.
+    const sayiMi = (p) => /^\d+$/.test(p) || /^\d{1,3}(\.\d{3})+$/.test(p);
+    parcalar.forEach((p) => { if (sayiMi(p)) sayilar.push(parseInt(p.replace(/\./g, ''), 10)); else if (!sayilar.length) adParcalari.push(p); });
+    if (!sayilar.length) return;
+    let kod = null;
+    for (let i = adParcalari.length - 1; i >= 0 && !kod; i--) kod = kriterKoduBul(adParcalari[i], grup);
+    if (!kod) kod = kriterKoduBul(adParcalari.join(' '), grup);
+    if (!kod) { sonuc.eslesmeyen.push(adParcalari.join(' ') || satir.trim()); return; }
+    sonuc.satirlar[kod] = { g: sayilar[0] || 0, y: sayilar[1] || 0, d: sayilar[2] || 0 };
+  });
+  return sonuc;
+}
+
+/* --- lisans --- */
+async function lisansUygula(anahtar, sessiz = false) {
+  const s = await lisansCoz(anahtar, LISANS_ACIK_ANAHTAR);
+  if (s.gecerli) {
+    plan.kod = s.lisans.plan; plan.lisans = s.lisans; plan.dev = (LISANS_ACIK_ANAHTAR && LISANS_ACIK_ANAHTAR.kid === 'dev'); plan.neden = '';
+    durum.lisansAnahtari = anahtar.trim(); kaydet();
+  } else {
+    plan.kod = 'DEMO'; plan.lisans = null; plan.dev = false; plan.neden = s.neden || '';
+  }
+  render();
+  return s;
+}
+function lisansAc(mesaj = '') {
+  $('#lisans-anahtar').value = durum.lisansAnahtari || '';
+  $('#lisans-mesaj').textContent = mesaj;
+  $('#lisans-durum').textContent = plan.lisans ? `Etkin plan: ${PLANLAR[plan.kod].ad} · ${plan.lisans.ad} · bitiş ${plan.lisans.bitis}${plan.dev ? ' · GELİŞTİRME ANAHTARI, üretimde kullanmayın' : ''}` : `Deneme sürümü: ${PLANLAR.DEMO.donemSiniri} dönem, filigranlı çıktı, CSV yok.${plan.neden ? ' (' + plan.neden + ')' : ''}`;
+  $('#plan-liste').innerHTML = Object.entries(PLANLAR).map(([kod, p]) => `<tr${kod === plan.kod ? ' style="font-weight:700"' : ''}><td>${p.ad}</td><td>${p.donemSiniri === null ? 'Sınırsız' : p.donemSiniri}</td><td>${p.ozellikler.includes('temiz_cikti') ? 'Temiz' : 'Filigranlı'}</td><td>${p.ozellikler.includes('tam_disa_aktarim') ? 'Var' : 'Yok'}</td></tr>`).join('');
+  $('#dlg-lisans').showModal();
+}
+
+/* --- dışa aktarma --- */
+function csvIndir() {
+  const d = durum.aktifDonem; if (!d) return;
+  const grup = durum.aktifSekme === 'EKIP' ? 'AH' : durum.aktifSekme;
+  const h = donemHesabi(grup, d);
+  const satirlar = [['Kriter', 'Gereken', 'Yapılan', 'Devreden', 'Başarı %', 'Katsayı'].join(';')]
+    .concat(h.ayrinti.filter((a) => a.kriter.aktif).map((a) => [a.kriter.ad, a.gereken, a.yapilan, a.devreden, a.yuzde === null ? '' : a.yuzde.toFixed(1).replace('.', ','), a.katsayi.toFixed(6).replace('.', ',')].join(';')));
+  satirlar.push(['Tarama-takip katsayısı', '', '', '', '', h.katsayi.toFixed(6).replace('.', ',')].join(';'));
+  const blob = new Blob(['﻿' + satirlar.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `hyp-analitik-${grup}-${d}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* --- olaylar --- */
+function dinleyicileriBagla() {
+  document.querySelectorAll('nav.sekmeler button').forEach((b) => b.addEventListener('click', () => { durum.aktifSekme = b.dataset.sekme; kaydet(); render(); }));
+  $('#donem-sec').addEventListener('change', (e) => { durum.aktifDonem = e.target.value; kaydet(); render(); });
+  $('#donem-onceki').addEventListener('click', () => { const l = donemListesi(); const i = l.indexOf(durum.aktifDonem); if (i > 0) { durum.aktifDonem = l[i - 1]; kaydet(); render(); } });
+  $('#donem-sonraki').addEventListener('click', () => { const l = donemListesi(); const i = l.indexOf(durum.aktifDonem); if (i < l.length - 1) { durum.aktifDonem = l[i + 1]; kaydet(); render(); } });
+  $('#donem-ekle').addEventListener('click', () => {
+    const varsayilan = durum.aktifDonem ? sonrakiDonem(durum.aktifDonem, 1) : donemAnahtari(new Date().getFullYear(), new Date().getMonth() + 1);
+    const g = prompt('Dönem (YYYY-AA):', varsayilan);
+    if (!g) return;
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(g.trim())) { alert('Biçim YYYY-AA olmalı, örn. 2026-07'); return; }
+    donemEkle(g.trim());
+  });
+  $('#donem-sil').addEventListener('click', () => { const d = durum.aktifDonem; if (d && confirm(`${donemAdi(d)} dönemi silinsin mi?`)) { delete durum.donemler[d]; durum.aktifDonem = null; kaydet(); render(); } });
+  ['#tablo-AH', '#tablo-ASC'].forEach((sec) => $(sec).addEventListener('input', (e) => {
+    const inp = e.target; if (!inp.dataset.kod) return;
+    const grup = sec.endsWith('AH') ? 'AH' : 'ASC';
+    const kayit = donemGetir(durum.aktifDonem)[grup];
+    kayit.satirlar[inp.dataset.kod] = { ...(kayit.satirlar[inp.dataset.kod] || { g: 0, y: 0, d: 0 }), [inp.dataset.alan]: sayi(inp.value) ?? 0 };
+    kayit.kaynak = kayit.kaynak && kayit.kaynak.startsWith('SİNA') ? kayit.kaynak + ' + elle' : kayit.kaynak;
+    kaydet();
+    renderTiles(grup); renderHamleler(grup); renderGrafik(grup);
+    const tr = inp.closest('tr'); const h = donemHesabi(grup, durum.aktifDonem); const a = h.ayrinti.find((x) => x.kriter.kod === inp.dataset.kod);
+    if (tr && a) { tr.children[4].textContent = a.yuzde === null ? '—' : '%' + fmtY.format(Math.min(100, a.yuzde)); tr.children[5].innerHTML = `<strong>${fmtK.format(a.katsayi)}</strong>`; tr.children[6].textContent = a.yuzde === null ? '—' : a.asgariIcinKalan ? `+${a.asgariIcinKalan}` : '✓'; tr.children[7].textContent = a.yuzde === null ? '—' : a.azamiIcinKalan ? `+${a.azamiIcinKalan}` : '✓'; tr.querySelector('.seviye').className = 'seviye ' + a.seviye; }
+  }));
+  const birimOku = () => {
+    durum.birim.ad = $('#f-birim-ad').value.trim();
+    durum.birim.birimTipi = $('#f-birim-tipi').value;
+    durum.birim.nufus = sayi($('#f-nufus').value);
+    durum.birim.tutuklu = sayi($('#f-tutuklu').value) ?? 0;
+    durum.birim.hekimBrut = sayi($('#f-hekim-brut').value);
+    durum.birim.ascBrut = sayi($('#f-asc-brut').value);
+    const esle = (kisi, brut) => { const k = (durum.maas.profil[kisi].kalemler || []).find((x) => x.kod === ANA_KALEM[kisi]); if (k) k.brut = brut; };
+    esle('AH', durum.birim.hekimBrut); esle('ASC', durum.birim.ascBrut);
+    durum.birim.puanAlti = $('#f-puan').checked;
+    durum.birim.yeniBirim = $('#f-yeni').checked;
+    kaydet(); render();
+  };
+  ['#f-birim-ad', '#f-birim-tipi', '#f-nufus', '#f-tutuklu', '#f-hekim-brut', '#f-asc-brut', '#f-puan', '#f-yeni'].forEach((s) => $(s).addEventListener('change', birimOku));
+
+  $('#btn-ice-aktar').addEventListener('click', () => {
+    if (durum.aktifSekme === 'EKIP') { alert('Hekim veya ASÇ sekmesini seçin.'); return; }
+    if (!durum.aktifDonem) { alert('Önce bir dönem ekleyin.'); return; }
+    $('#ice-hedef').textContent = donemAdi(durum.aktifDonem) + ' / ' + (durum.aktifSekme === 'AH' ? 'Hekim' : 'ASÇ');
+    $('#ice-metin').value = ''; $('#ice-sonuc').textContent = ''; $('#dlg-ice').showModal();
+  });
+  $('#ice-uygula').addEventListener('click', () => {
+    const grup = durum.aktifSekme;
+    const s = metniCoz($('#ice-metin').value, grup);
+    const adet = Object.keys(s.satirlar).length;
+    if (!adet) { $('#ice-sonuc').textContent = 'Hiç satır eşleşmedi. Parametre adı ile sayıların aynı satırda olduğundan emin olun.' + (s.eslesmeyen.length ? ' Eşleşmeyen: ' + s.eslesmeyen.slice(0, 5).join(', ') : ''); return; }
+    let hedef = durum.aktifDonem;
+    if (s.donem && s.donem !== hedef && /^\d{4}-\d{2}$/.test(s.donem)) { if (confirm(`Veri ${donemAdi(s.donem)} dönemine ait görünüyor. O döneme yazılsın mı? (Hayır: ${donemAdi(hedef)})`)) { if (!donemEkle(s.donem)) return; hedef = s.donem; } }
+    const kayit = donemGetir(hedef)[grup];
+    Object.assign(kayit.satirlar, s.satirlar); kayit.kaynak = s.kaynak; durum.aktifDonem = hedef; kaydet();
+    $('#dlg-ice').close(); render();
+    if (s.eslesmeyen.length) alert(`${adet} satır aktarıldı. Eşleşmeyen: ${s.eslesmeyen.join(', ')}`);
+  });
+  $('#ice-kapat').addEventListener('click', () => $('#dlg-ice').close());
+
+  const dlgY = $('#dlg-yedek');
+  $('#btn-yedekle').addEventListener('click', () => { $('#yedek-baslik').textContent = 'Yedek (JSON)'; $('#yedek-aciklama').textContent = 'Bu metni bir dosyaya kaydedin; "Geri yükle" ile aynen içe aktarabilirsiniz.'; $('#yedek-metin').value = JSON.stringify(durum, null, 2); $('#yedek-uygula').style.display = 'none'; dlgY.showModal(); });
+  $('#btn-geri-yukle').addEventListener('click', () => { $('#yedek-baslik').textContent = 'Geri yükle'; $('#yedek-aciklama').textContent = 'Yedek JSON metnini yapıştırıp "İçe aktar"a basın. Mevcut veriler değiştirilir.'; $('#yedek-metin').value = ''; $('#yedek-uygula').style.display = ''; dlgY.showModal(); });
+  $('#yedek-kopyala').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('#yedek-metin').value); } catch (_) { $('#yedek-metin').select(); document.execCommand('copy'); } $('#yedek-kopyala').textContent = 'Kopyalandı'; setTimeout(() => { $('#yedek-kopyala').textContent = 'Kopyala'; }, 1500); });
+  $('#yedek-uygula').addEventListener('click', () => {
+    try { const v = JSON.parse($('#yedek-metin').value); if (!v || v.surum !== 2 || typeof v.donemler !== 'object') throw new Error('biçim'); Object.assign(durum, v); durum.birim = { ...durum.birim, ...(v.birim || {}) }; kaydet(); dlgY.close(); lisansUygula(durum.lisansAnahtari || ''); }
+    catch (_) { $('#yedek-aciklama').textContent = 'İçe aktarılamadı: JSON çözümlenemedi veya biçim uyumsuz.'; }
+  });
+  $('#yedek-kapat').addEventListener('click', () => dlgY.close());
+  $('#btn-csv').addEventListener('click', csvIndir);
+  $('#btn-yazdir').addEventListener('click', () => window.print());
+  $('#btn-lisans').addEventListener('click', () => lisansAc());
+  $('#lisans-uygula').addEventListener('click', async () => { const s = await lisansUygula($('#lisans-anahtar').value); $('#lisans-mesaj').textContent = s.gecerli ? `Etkinleştirildi: ${PLANLAR[s.lisans.plan].ad} (bitiş ${s.lisans.bitis})` : 'Anahtar kabul edilmedi: ' + s.neden; if (s.gecerli) lisansAc($('#lisans-mesaj').textContent); });
+  $('#lisans-kaldir').addEventListener('click', () => { durum.lisansAnahtari = ''; kaydet(); lisansUygula(''); $('#dlg-lisans').close(); });
+  $('#lisans-kapat').addEventListener('click', () => $('#dlg-lisans').close());
+  $('#btn-ornek').addEventListener('click', ornekYukle);
+  maasDinleyicileri();
+}
+
+function ornekYukle() {
+  if (donemListesi().length && !confirm('Örnek veri mevcut dönemlerin üzerine eklenir. Devam edilsin mi?')) return;
+  durum.birim = { ...durum.birim, ad: 'Örnek AHB', birimTipi: 'normal', nufus: 3400, tutuklu: 0, puanAlti: false, yeniBirim: false };
+  const ahOrnek = (k) => ({
+    HT_TARAMA: [140, 95, 12], HT_TAKIP: [260, 205, 0], DM_TARAMA: [90, 40, 0], DM_TAKIP: [120, 118, 30], OB_TARAMA: [150, 70, 0], OB_TAKIP: [80, 62, 0],
+    KA_SERVIKS: [30, 12, 0], KA_KOLOREKTAL: [40, 21, 0], KA_MEME: [25, 24, 0], KVR_TARAMA: [110, 80, 0], KVR_TAKIP: [70, 66, 0], YASLI_TAKIP: [60, 50, 0],
+    KAH_TAKIP: [20, 15, 0], INME_TAKIP: [8, 7, 0], KBH_TAKIP: [10, 3, 0], KOAH_TAKIP: [15, 12, 0], ASTIM_TAKIP: [12, 11, 0], OTIZM_TARAMA: [9, 9, 0],
+  })[k];
+  const donemler = ['2026-05', '2026-06', '2026-07'];
+  donemler.forEach((d, i) => {
+    const kayit = donemGetir(d);
+    kayit.AH.satirlar = {}; KRITERLER_AH.filter((k) => k.aktif).forEach((k) => { const [g, y, dv] = ahOrnek(k.kod); kayit.AH.satirlar[k.kod] = { g, y: Math.min(g + 10, Math.round(y * (0.8 + i * 0.12))), d: dv }; });
+    kayit.AH.kaynak = 'Örnek veri';
+    kayit.ASC.satirlar = { VITAL: { g: 120, y: [70, 100, 112][i], d: 0 }, YASLI: { g: 15, y: [50, 5, 11][i], d: [0, 35, 20][i] } };
+    kayit.ASC.kaynak = 'Örnek veri';
+  });
+  durum.aktifDonem = '2026-07'; kaydet(); render();
+}
+
+async function baslat() {
+  yukle();
+  dinleyicileriBagla();
+  if (durum.lisansAnahtari) await lisansUygula(durum.lisansAnahtari, true); else render();
+}
+baslat();
+</script>
+<!-- APP-BODY-END -->
+</body>
+</html>
