@@ -111,6 +111,17 @@ dialog textarea { width: 100%; height: 190px; font: 12px/1.4 ui-monospace, monos
 dialog .actions { margin-top: 10px; justify-content: flex-end; display: flex; }
 .plan-tablo td, .plan-tablo th { white-space: normal; text-align: left; font-size: 13px; }
 .gizli { display: none !important; }
+.banner { border-left: 4px solid var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); padding: 10px 14px; border-radius: 8px; font-size: 13.5px; margin-top: 14px; }
+.banner.kilit { border-left-color: var(--crit); background: color-mix(in srgb, var(--crit) 12%, transparent); }
+.banner b { font-weight: 700; }
+.kalem-tablo td input[type=checkbox] { width: auto; }
+.kalem-tablo td input[type=text] { width: 220px; text-align: left; }
+.kalem-tablo td input[type=number] { width: 110px; }
+.ledger td.ad { font-weight: 500; }
+.ledger tr.toplam td { font-weight: 700; border-top: 2px solid var(--hairline); }
+.kural-liste td { white-space: normal; }
+ul.aciklama { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+ul.aciklama li { margin: 3px 0; }
 #filigran { display: none; }
 @media print {
   .actions, .no-print, nav.sekmeler, .donem-bar button, dialog { display: none !important; }
@@ -152,8 +163,8 @@ dialog .actions { margin-top: 10px; justify-content: flex-end; display: flex; }
         <select id="f-birim-tipi"><option value="normal">Normal birim</option><option value="entegre">Entegre / zorunlu düşük nüfus</option></select></div>
       <div class="field"><label for="f-nufus">Kayıtlı kişi sayısı</label><input type="number" id="f-nufus" min="0" step="1" placeholder="örn. 3400"></div>
       <div class="field"><label for="f-tutuklu">Tutuklu-hükümlü kayıtlı</label><input type="number" id="f-tutuklu" min="0" step="1" value="0"></div>
-      <div class="field"><label for="f-hekim-brut">Hekim brüt ödeme (opsiyonel, ₺)</label><input type="number" id="f-hekim-brut" min="0" step="1" placeholder="maaş etkisi için"></div>
-      <div class="field"><label for="f-asc-brut">ASÇ brüt ödeme (opsiyonel, ₺)</label><input type="number" id="f-asc-brut" min="0" step="1" placeholder="maaş etkisi için"></div>
+      <div class="field"><label for="f-hekim-brut">Hekim kayıtlı kişi ödemesi (brüt ₺)</label><input type="number" id="f-hekim-brut" min="0" step="1" placeholder="katsayının uygulandığı kalem"></div>
+      <div class="field"><label for="f-asc-brut">ASÇ kayıtlı kişi ödemesi (brüt ₺)</label><input type="number" id="f-asc-brut" min="0" step="1" placeholder="katsayının uygulandığı kalem"></div>
       <div class="checks">
         <label><input type="checkbox" id="f-puan"> Maaşa esas puan 1000'in altında</label>
         <label><input type="checkbox" id="f-yeni"> Yeni birim muafiyeti (ilk 18 ay)</label>
@@ -165,6 +176,7 @@ dialog .actions { margin-top: 10px; justify-content: flex-end; display: flex; }
     <button role="tab" data-sekme="AH" aria-selected="true">Hekim (AHB)</button>
     <button role="tab" data-sekme="ASC" aria-selected="false">Aile sağlığı çalışanı</button>
     <button role="tab" data-sekme="EKIP" aria-selected="false">Ekip</button>
+    <button role="tab" data-sekme="MAAS" aria-selected="false">Maaş</button>
   </nav>
 
   <div class="donem-bar">
@@ -238,6 +250,44 @@ dialog .actions { margin-top: 10px; justify-content: flex-end; display: flex; }
     </section>
   </div>
 
+  <div id="panel-MAAS" class="panel gizli">
+    <div class="banner" id="maas-banner"><b>TAHMİNİ / SİMÜLASYON.</b> Bu hesaplama karar destek ve kontrol amaçlıdır; kurumun resmî bordro/tahakkuk kaydının yerine geçmez. Tarama-takip katsayısı yalnızca <b>kayıtlı kişi ödemesine</b> uygulanır; diğer kalemler değişmez.</div>
+    <section class="card">
+      <div class="satir-arasi">
+        <h2 style="margin:0">Bordro girdileri — <span id="maas-donem-baslik"></span></h2>
+        <span class="rozet notr" id="maas-katsayi-rozet"></span>
+      </div>
+      <p class="hint">Kalem tutarlarını kendi bordronuzdan brüt olarak girin. Vergi/prim/damga niteliği kalem adından tahmin edilmez; kutucuklarla siz belirlersiniz (varsayılanlar doğrulanmamış kabul edilir).</p>
+      <div class="birim-grid">
+        <div class="field"><label for="m-kisi">Kimin bordrosu</label>
+          <select id="m-kisi"><option value="AH">Aile hekimi</option><option value="ASC">Aile sağlığı çalışanı</option></select></div>
+        <div class="field"><label for="m-sg">Sosyal güvenlik rejimi</label>
+          <select id="m-sg"><option value="BELIRSIZ">Belirsiz (hesap kilitlenir)</option><option value="SGK_5510_4C">5510 4/c (2008 sonrası)</option><option value="PENSION_5434">5434 Emekli Sandığı (geçiş)</option></select></div>
+        <div class="field"><label for="m-kumulatif">Yıl içi önceki GV matrahı (₺)</label><input type="number" id="m-kumulatif" min="0" step="1" placeholder="önceki ayların toplamı"></div>
+        <div class="field"><label for="m-diger">Diğer kesintiler toplamı (₺)</label><input type="number" id="m-diger" min="0" step="1" placeholder="sendika, BES, icra…"></div>
+      </div>
+      <div class="tablo-kap" style="margin-top:12px"><table class="kalem-tablo" id="m-kalemler"><thead><tr>
+        <th class="ad">Kalem</th><th>Brüt ₺</th><th>GV</th><th>Damga</th><th>PEK</th><th>Katsayıya tabi</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="actions" style="margin-top:10px"><button class="kucuk" id="m-kalem-ekle">+ Kalem ekle</button><button class="kucuk" id="m-varsayilan">Varsayılan kalemleri yükle</button></div>
+    </section>
+    <div class="tiles" id="tiles-MAAS"></div>
+    <section class="card">
+      <h2>Kesinti sırası (ledger)</h2>
+      <div class="tablo-kap"><table class="ledger" id="m-ledger"><tbody></tbody></table></div>
+    </section>
+    <section class="card">
+      <h2>Öncelikli hamlelerin net etkisi</h2>
+      <p class="hint">Katsayı sekmesindeki öneriler, bu bordroya göre aylık net TL'ye çevrilir.</p>
+      <ol class="hamleler" id="m-hamleler"></ol>
+    </section>
+    <section class="card">
+      <h2>Açıklama zinciri ve kullanılan kurallar</h2>
+      <ul class="aciklama" id="m-aciklama"></ul>
+      <div class="tablo-kap" style="margin-top:10px"><table class="kural-liste" id="m-kurallar"><thead><tr><th class="ad">Kural</th><th>Sürüm</th><th>Durum</th><th class="ad">Kaynak</th></tr></thead><tbody></tbody></table></div>
+      <p class="hint" style="margin-top:8px">Durumlar: VERIFIED resmî belge hash'iyle doğrulandı; PROVISIONAL resmî kaynak görüldü, hash yok; RESEARCH_REQUIRED parametre eksik. Doğrulanmamış kural varken sonuç TAHMİNİ etiketiyle gösterilir.</p>
+    </section>
+  </div>
+
   <p class="dipnot">
     Hesaplar, Aile Hekimliği Tarama ve Takip Katsayısına İlişkin Yönerge ile HYP Tarama ve Takip Kılavuzu (14.04.2026, Bölüm 1) esas alınarak yapılır; bilgilendirme amaçlıdır, resmî hesap için Bakanlık sistemleri geçerlidir. Kişi/hasta verisi işlenmez; tüm veriler yalnızca bu cihazda saklanır. Derleme: __DERLEME_ZAMANI__
   </p>
@@ -278,6 +328,9 @@ DİYABET TARAMASI	60	55	0
 /*__MOTOR__*/
 /* ================== LİSANS — src/lisans.js ================== */
 /*__LISANS__*/
+/* ================== BORDRO — src/bordro-motoru.js ================== */
+/*__BORDRO__*/
+const KURAL_SETI = __KURALLAR__;
 /* ================== UYGULAMA ================== */
 const LISANS_ACIK_ANAHTAR = __ACIK_ANAHTAR__;
 const AY_ADLARI = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
@@ -292,6 +345,10 @@ const durum = {
   surum: 2, aktifSekme: 'AH', aktifDonem: null, lisansAnahtari: '',
   birim: { ad: '', birimTipi: 'normal', nufus: null, tutuklu: 0, puanAlti: false, yeniBirim: false, hekimBrut: null, ascBrut: null },
   donemler: {},
+  maas: { kisi: 'AH', profil: {
+    AH: { sosyalGuvenlik: 'BELIRSIZ', oncekiKumulatif: null, digerKesinti: null, kalemler: null },
+    ASC: { sosyalGuvenlik: 'BELIRSIZ', oncekiKumulatif: null, digerKesinti: null, kalemler: null },
+  } },
 };
 const plan = { kod: 'DEMO', lisans: null, dev: false, neden: '' };
 
@@ -300,7 +357,7 @@ function kaydet() { try { localStorage.setItem(SAKLAMA, JSON.stringify(durum)); 
 function yukle() {
   try {
     const ham = localStorage.getItem(SAKLAMA);
-    if (ham) { const v = JSON.parse(ham); if (v && v.surum === 2) { Object.assign(durum, v); durum.birim = { ...durum.birim, ...(v.birim || {}) }; return; } }
+    if (ham) { const v = JSON.parse(ham); if (v && v.surum === 2) { const maasVarsayilan = durum.maas; Object.assign(durum, v); durum.birim = { ...durum.birim, ...(v.birim || {}) }; const vm = v.maas || {}, vp = vm.profil || {}; durum.maas = { kisi: vm.kisi === 'ASC' ? 'ASC' : 'AH', profil: { AH: { ...maasVarsayilan.profil.AH, ...(vp.AH || {}) }, ASC: { ...maasVarsayilan.profil.ASC, ...(vp.ASC || {}) } } }; return; } }
     const eski = localStorage.getItem('hyp-analitik-v1');
     if (eski) { v1Tasi(JSON.parse(eski)); kaydet(); }
   } catch (_) {}
@@ -369,6 +426,7 @@ function render() {
   planRozetiYaz();
   birimOzetiYaz();
   if (durum.aktifSekme === 'EKIP') renderEkip();
+  else if (durum.aktifSekme === 'MAAS') renderMaas();
   else { renderTablo(durum.aktifSekme); renderTiles(durum.aktifSekme); renderHamleler(durum.aktifSekme); renderGrafik(durum.aktifSekme); }
 }
 function planRozetiYaz() {
@@ -438,7 +496,7 @@ function renderTiles(grup) {
   if (grup === 'AH') {
     const brut = durum.birim.hekimBrut;
     const e = brut ? maasEtkisi(brut, h.katsayi) : null;
-    maasHtml = `<div class="tile"><div class="k">Maaş etkisi</div><div class="v">${e ? (e.fark >= 0 ? '+' : '') + fmtTL.format(e.fark) : '—'}</div><div class="s">${e ? `${fmtTL.format(brut)} × ${fmtK.format(h.katsayi)}` : 'Brüt ödeme girin'}</div></div>`;
+    maasHtml = `<div class="tile"><div class="k">Maaş etkisi</div><div class="v">${e ? (e.fark >= 0 ? '+' : '') + fmtTL.format(e.fark) : '—'}</div><div class="s">${e ? `kayıtlı kişi ödemesi ${fmtTL.format(brut)} × ${fmtK.format(h.katsayi)} (brüt)` : 'Kayıtlı kişi ödemesini girin'}</div></div>`;
   } else {
     const hekimVar = veriVar('AH', d);
     const kBirim = hekimVar ? donemHesabi('AH', d).katsayi : null;
@@ -446,7 +504,7 @@ function renderTiles(grup) {
     const brut = durum.birim.ascBrut;
     const e = brut ? maasEtkisi(brut, mc.carpan) : null;
     maasHtml = `<div class="tile"><div class="k">ASÇ maaş çarpanı</div><div class="v">${fmtK.format(mc.carpan)}</div><div class="s">${mc.gecerli === 'birim' ? 'Hekim katsayısı geçerli (%75 avantajı)' : mc.gecerli === 'muafiyet' ? 'Muafiyet' : hekimVar ? 'Kendi katsayısı geçerli' : 'Hekim verisi yok — kendi katsayısı'}</div></div>
-      <div class="tile"><div class="k">Maaş etkisi</div><div class="v">${e ? (e.fark >= 0 ? '+' : '') + fmtTL.format(e.fark) : '—'}</div><div class="s">${e ? `${fmtTL.format(brut)} × ${fmtK.format(mc.carpan)}` : 'Brüt ödeme girin'}</div></div>`;
+      <div class="tile"><div class="k">Maaş etkisi</div><div class="v">${e ? (e.fark >= 0 ? '+' : '') + fmtTL.format(e.fark) : '—'}</div><div class="s">${e ? `kayıtlı kişi ödemesi ${fmtTL.format(brut)} × ${fmtK.format(mc.carpan)} (brüt)` : 'Kayıtlı kişi ödemesini girin'}</div></div>`;
   }
   kap.innerHTML = `
     <div class="tile vurgu"><div class="k">${grup === 'AH' ? 'Tarama-takip katsayısı' : 'ASÇ katsayısı'} · ${donemAdi(d)}</div><div class="v">${dolu ? fmtK.format(h.katsayi) : '—'}</div><div class="s">${dolu ? rozet + ' ' + notK : 'Veri girin'}</div></div>
@@ -512,6 +570,149 @@ function renderGrafik(grup) {
   const bd = birimDurumu(birimParam());
   const noktalar = liste.filter((d) => veriVar(grup, d)).map((d) => ({ etiket: d, deger: donemHesabi(grup, d).katsayi }));
   ciz(`#grafik-${grup}`, [{ ad: grup, renk: 'var(--seri)', noktalar }], liste, bd.tavan);
+}
+
+/* --- maaş / bordro simülasyonu --- */
+function maasVarsayilanKalemler(kisi) {
+  const k = (kod, ad, katsayiyaTabi, gv = true, damga = true, pek = true) => ({ kod, ad, brut: null, gelirVergisi: gv, damga, sgkPek: pek, katsayiyaTabi });
+  if (kisi === 'ASC') return [
+    k('KAYITLI_KISI_ASC', 'Kayıtlı kişi ödemesi (ASÇ)', true),
+    k('SOSYOEKONOMIK_ASC', 'Sosyoekonomik gelişmişlik ödemesi', false),
+    k('DIGER_ASC', 'Diğer ödemeler', false),
+  ];
+  return [
+    k('KAYITLI_KISI', 'Kayıtlı kişi ödemesi', true),
+    k('SOSYOEKONOMIK', 'Sosyoekonomik gelişmişlik ödemesi', false),
+    k('ASM_GIDER', 'Aile sağlığı merkezi gider ödemesi', false, false, false, false),
+    k('GEZICI', 'Gezici sağlık hizmeti ödemesi', false, false, false, false),
+    k('TETKIK_SARF', 'Tetkik ve sarf malzemesi ödemesi', false, false, false, false),
+  ];
+}
+function maasProfil() { return durum.maas.profil[durum.maas.kisi]; }
+const ANA_KALEM = { AH: 'KAYITLI_KISI', ASC: 'KAYITLI_KISI_ASC' };
+function maasKalemleri() {
+  const kisi = durum.maas.kisi, p = maasProfil();
+  if (!p.kalemler) p.kalemler = maasVarsayilanKalemler(kisi);
+  // Birim kartındaki "kayıtlı kişi ödemesi" ile tek kaynak: kalem boşsa oradan doldurulur, kalem düzenlenince oraya yazılır.
+  const ana = p.kalemler.find((k) => k.kod === ANA_KALEM[kisi]);
+  const birimBrut = kisi === 'AH' ? durum.birim.hekimBrut : durum.birim.ascBrut;
+  if (ana && (ana.brut === null || ana.brut === undefined || ana.brut === '') && birimBrut) ana.brut = birimBrut;
+  return p.kalemler;
+}
+function maasCarpani(d) {
+  const kisi = durum.maas.kisi;
+  if (!d || !veriVar(kisi, d)) return { carpan: null, not: 'Bu dönem için katsayı verisi yok; kalemler katsayısız hesaplanır.' };
+  const h = donemHesabi(kisi, d);
+  if (kisi === 'AH') return { carpan: h.katsayi, not: `Hekim tarama-takip katsayısı ${fmtK.format(h.katsayi)}` };
+  const kBirim = veriVar('AH', d) ? donemHesabi('AH', d).katsayi : null;
+  const mc = ascMaasCarpani({ kAsc: h.katsayi, kBirim, muafiyet: h.muafiyet });
+  return { carpan: mc.carpan, not: `ASÇ maaş çarpanı ${fmtK.format(mc.carpan)} (${mc.gecerli === 'birim' ? 'hekim katsayısı geçerli' : mc.gecerli === 'muafiyet' ? 'muafiyet' : 'kendi katsayısı'})` };
+}
+function maasGirdi(carpan) {
+  const d = durum.aktifDonem, p = maasProfil();
+  const kalemler = maasKalemleri().filter((k) => k.brut !== null && k.brut !== undefined && k.brut !== '').map((k) => ({ ...k, brut: Number(k.brut) || 0 }));
+  return {
+    tarih: d ? `${d}-15` : new Date().toISOString().slice(0, 10),
+    sosyalGuvenlik: p.sosyalGuvenlik,
+    oncekiKumulatifMatrah: Number(p.oncekiKumulatif) || 0,
+    digerKesintiler: p.digerKesinti ? [{ ad: 'Diğer', tutar: Number(p.digerKesinti) }] : [],
+    kalemler: carpan ? katsayiUygula(kalemler, carpan) : kalemler,
+    kurallar: KURAL_SETI.kurallar,
+  };
+}
+function renderMaas() { renderMaasForm(); renderMaasSonuc(); }
+function renderMaasForm() {
+  const p = maasProfil();
+  $('#m-kisi').value = durum.maas.kisi;
+  $('#m-sg').value = p.sosyalGuvenlik;
+  $('#m-kumulatif').value = p.oncekiKumulatif ?? '';
+  $('#m-diger').value = p.digerKesinti ?? '';
+  const kalemler = maasKalemleri();
+  $('#m-kalemler tbody').innerHTML = kalemler.map((k, i) => `<tr>
+    <td class="ad"><input type="text" data-i="${i}" data-alan="ad" value="${(k.ad || '').replace(/"/g, '&quot;')}"></td>
+    <td><input type="number" min="0" step="1" data-i="${i}" data-alan="brut" value="${k.brut ?? ''}" placeholder="brüt"></td>
+    <td><input type="checkbox" data-i="${i}" data-alan="gelirVergisi" ${k.gelirVergisi ? 'checked' : ''} title="Gelir vergisine tabi"></td>
+    <td><input type="checkbox" data-i="${i}" data-alan="damga" ${k.damga ? 'checked' : ''} title="Damga vergisine tabi"></td>
+    <td><input type="checkbox" data-i="${i}" data-alan="sgkPek" ${k.sgkPek ? 'checked' : ''} title="Prime esas kazanca dahil"></td>
+    <td><input type="checkbox" data-i="${i}" data-alan="katsayiyaTabi" ${k.katsayiyaTabi ? 'checked' : ''} title="Tarama-takip katsayısı uygulanır"></td>
+    <td><button class="kucuk" data-sil="${i}" title="Kalemi sil">✕</button></td></tr>`).join('');
+}
+function renderMaasSonuc() {
+  const d = durum.aktifDonem;
+  $('#maas-donem-baslik').textContent = d ? donemAdi(d) : 'dönem yok';
+  const { carpan, not } = maasCarpani(d);
+  $('#maas-katsayi-rozet').textContent = not;
+  const sonuc = bordroHesapla(maasGirdi(carpan));
+  const banner = $('#maas-banner');
+  banner.classList.toggle('kilit', sonuc.durum === 'KILITLI');
+  banner.innerHTML = sonuc.durum === 'KILITLI'
+    ? `<b>HESAP KİLİTLİ.</b> ${sonuc.kilitNedenleri.join(' ')}`
+    : `<b>${sonuc.etiket}.</b> Bu hesaplama karar destek ve kontrol amaçlıdır; kurumun resmî bordro/tahakkuk kaydının yerine geçmez. Tarama-takip katsayısı yalnızca <b>katsayıya tabi</b> işaretli kalemlere uygulanır.`;
+
+  const o = sonuc.ozet;
+  const kilitli = sonuc.durum === 'KILITLI';
+  const brutOncesi = maasKalemleri().reduce((t, k) => t + (Number(k.brut) || 0), 0);
+  $('#tiles-MAAS').innerHTML = `
+    <div class="tile"><div class="k">Brüt (katsayı sonrası)</div><div class="v">${kilitli ? '—' : fmtTL.format(o.brutToplam)}</div><div class="s">${carpan && !kilitli ? `katsayı öncesi ${fmtTL.format(brutOncesi)}` : 'katsayı uygulanmadı'}</div></div>
+    <div class="tile"><div class="k">Kesintiler</div><div class="v">${kilitli ? '—' : fmtTL.format(o.sgKisi + o.gelirVergisi + o.damgaVergisi + o.digerKesintiler)}</div><div class="s">${kilitli ? '' : `SG ${fmtTL.format(o.sgKisi)} · GV ${fmtTL.format(o.gelirVergisi)} · damga ${fmtTL.format(o.damgaVergisi)}`}</div></div>
+    <div class="tile vurgu"><div class="k">Net ödenecek · ${sonuc.etiket.toLowerCase()}</div><div class="v">${kilitli ? '—' : fmtTL.format(o.net)}</div><div class="s">${kilitli ? 'girdileri tamamlayın' : `yeni kümülatif matrah ${fmtTL.format(o.yeniKumulatifMatrah)}`}</div></div>
+    <div class="tile"><div class="k">İşveren maliyeti</div><div class="v">${kilitli ? '—' : fmtTL.format(o.isverenMaliyeti)}</div><div class="s">${kilitli ? '' : `işveren primi ${fmtTL.format(o.sgIsveren)}`}</div></div>`;
+
+  const led = [
+    ['BRÜT HAKEDİŞ', o.brutToplam, ''],
+    ['− SGK / emekli keseneği (kişi)', -o.sgKisi, `matrah ${fmtTL.format(o.sgMatrah)}`],
+    ['− Gelir vergisi', -o.gelirVergisi, `matrah ${fmtTL.format(o.gvMatrah)}`],
+    ['− Damga vergisi', -o.damgaVergisi, ''],
+    ['− Diğer kesintiler', -o.digerKesintiler, ''],
+  ];
+  $('#m-ledger tbody').innerHTML = kilitli ? '<tr><td class="ad" colspan="3">Hesap kilitli.</td></tr>' :
+    led.map(([a, t, n]) => `<tr><td class="ad">${a}</td><td>${fmtTL.format(t)}</td><td style="text-align:left;color:var(--muted)">${n}</td></tr>`).join('') +
+    `<tr class="toplam"><td class="ad">= NET ÖDENECEK</td><td>${fmtTL.format(o.net)}</td><td></td></tr>`;
+
+  $('#m-aciklama').innerHTML = [...sonuc.aciklama.map((a) => `<li>${a}</li>`), ...sonuc.uyarilar.map((u) => `<li><span class="rozet uyari">uyarı</span> ${u}</li>`)].join('') || '<li>Kalem girildiğinde açıklama zinciri burada listelenir.</li>';
+  const durumRozet = (st) => st === 'VERIFIED' ? 'iyi' : st === 'PROVISIONAL' ? 'uyari' : 'kotu';
+  $('#m-kurallar tbody').innerHTML = sonuc.kullanilanKurallar.map((k) => `<tr><td class="ad">${k.rule_id}</td><td>v${k.version}</td><td><span class="rozet ${durumRozet(k.status)}">${k.status}</span></td><td class="ad">${k.url ? `<a href="${k.url}" target="_blank" rel="noopener">${k.kaynak}</a>` : k.kaynak}</td></tr>`).join('') || '<tr><td class="ad" colspan="4">—</td></tr>';
+
+  // hamlelerin net etkisi
+  const kap = $('#m-hamleler');
+  if (kilitli || !carpan || !d) { kap.innerHTML = '<li>Katsayı verisi ve tamamlanmış bordro girdisi olduğunda hesaplanır.</li>'; return; }
+  const kisi = durum.maas.kisi;
+  const h = donemHesabi(kisi, d);
+  const adaylar = h.ayrinti.filter((a) => a.kriter.aktif && a.yuzde !== null && a.seviye !== 'azami' && a.azamiIcinKalan > 0 && !h.buyukBirim && !h.muafiyet)
+    .map((a) => {
+      const yeniHam = h.hamKatsayi / a.katsayi * kriterKatsayisi(a.kriter.azami, a.kriter);
+      const bd = birimDurumu(birimParam());
+      let yeniK = bd.tavan !== null ? Math.min(yeniHam, bd.tavan) : yeniHam;
+      let yeniCarpan = yeniK;
+      if (kisi === 'ASC') { const kBirim = veriVar('AH', d) ? donemHesabi('AH', d).katsayi : null; yeniCarpan = ascMaasCarpani({ kAsc: yeniK, kBirim, muafiyet: h.muafiyet }).carpan; }
+      const f = netFark(maasGirdi(null), carpan, yeniCarpan);
+      return { a, f, yeniCarpan };
+    }).filter((x) => x.f && x.f.fark > 0.5).sort((x, y) => (y.f.fark / y.a.azamiIcinKalan) - (x.f.fark / x.a.azamiIcinKalan)).slice(0, 4);
+  kap.innerHTML = adaylar.length ? adaylar.map(({ a, f }) => `<li><strong>${a.kriter.ad}</strong>: azami için <b>+${a.azamiIcinKalan}</b> işlem → aylık net <b>+${fmtTL.format(f.fark)}</b> (brüt +${fmtTL.format(f.brutFark)})</li>`).join('')
+    : '<li>Katsayıyı artıracak hamle kalmadı veya tavan/büyük birim kuralı nedeniyle net etkisi yok.</li>';
+}
+function maasDinleyicileri() {
+  $('#m-kisi').addEventListener('change', (e) => { durum.maas.kisi = e.target.value; kaydet(); renderMaas(); });
+  $('#m-sg').addEventListener('change', (e) => { maasProfil().sosyalGuvenlik = e.target.value; kaydet(); renderMaasSonuc(); });
+  $('#m-kumulatif').addEventListener('change', (e) => { maasProfil().oncekiKumulatif = sayi(e.target.value); kaydet(); renderMaasSonuc(); });
+  $('#m-diger').addEventListener('change', (e) => { maasProfil().digerKesinti = sayi(e.target.value); kaydet(); renderMaasSonuc(); });
+  $('#m-kalemler').addEventListener('change', (e) => {
+    const el = e.target; if (el.dataset.i === undefined) return;
+    const k = maasKalemleri()[+el.dataset.i]; if (!k) return;
+    if (el.type === 'checkbox') k[el.dataset.alan] = el.checked;
+    else if (el.dataset.alan === 'brut') {
+      k.brut = sayi(el.value);
+      if (k.kod === 'KAYITLI_KISI') { durum.birim.hekimBrut = k.brut; $('#f-hekim-brut').value = k.brut ?? ''; }
+      else if (k.kod === 'KAYITLI_KISI_ASC') { durum.birim.ascBrut = k.brut; $('#f-asc-brut').value = k.brut ?? ''; }
+    } else k[el.dataset.alan] = el.value;
+    kaydet(); renderMaasSonuc();
+  });
+  $('#m-kalemler').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-sil]'); if (!b) return;
+    maasKalemleri().splice(+b.dataset.sil, 1); kaydet(); renderMaas();
+  });
+  $('#m-kalem-ekle').addEventListener('click', () => { maasKalemleri().push({ kod: 'KALEM_' + Date.now(), ad: 'Yeni kalem', brut: null, gelirVergisi: true, damga: true, sgkPek: true, katsayiyaTabi: false }); kaydet(); renderMaas(); });
+  $('#m-varsayilan').addEventListener('click', () => { if (confirm('Bu kişi için kalemler varsayılan listeyle değiştirilsin mi?')) { maasProfil().kalemler = maasVarsayilanKalemler(durum.maas.kisi); kaydet(); renderMaas(); } });
 }
 
 /* --- grafik (SVG, bağımlılıksız) --- */
@@ -659,6 +860,8 @@ function dinleyicileriBagla() {
     durum.birim.tutuklu = sayi($('#f-tutuklu').value) ?? 0;
     durum.birim.hekimBrut = sayi($('#f-hekim-brut').value);
     durum.birim.ascBrut = sayi($('#f-asc-brut').value);
+    const esle = (kisi, brut) => { const k = (durum.maas.profil[kisi].kalemler || []).find((x) => x.kod === ANA_KALEM[kisi]); if (k) k.brut = brut; };
+    esle('AH', durum.birim.hekimBrut); esle('ASC', durum.birim.ascBrut);
     durum.birim.puanAlti = $('#f-puan').checked;
     durum.birim.yeniBirim = $('#f-yeni').checked;
     kaydet(); render();
@@ -701,6 +904,7 @@ function dinleyicileriBagla() {
   $('#lisans-kaldir').addEventListener('click', () => { durum.lisansAnahtari = ''; kaydet(); lisansUygula(''); $('#dlg-lisans').close(); });
   $('#lisans-kapat').addEventListener('click', () => $('#dlg-lisans').close());
   $('#btn-ornek').addEventListener('click', ornekYukle);
+  maasDinleyicileri();
 }
 
 function ornekYukle() {

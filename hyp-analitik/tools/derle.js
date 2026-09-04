@@ -6,6 +6,8 @@
  * app/sablon.html içindeki yer tutucular:
  *   /*__MOTOR__*\/    → src/hyp-katsayi.js (export'lar soyulmuş)
  *   /*__LISANS__*\/   → src/lisans.js (export'lar soyulmuş)
+ *   /*__BORDRO__*\/   → src/bordro-motoru.js (export'lar soyulmuş)
+ *   __KURALLAR__      → kurallar/2026-kurallar.json
  *   __ACIK_ANAHTAR__  → tools/lisans/<kid>.acik.json (varsayılan: dev)
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -26,6 +28,8 @@ const acikAnahtar = existsSync(anahtarYolu) ? readFileSync(anahtarYolu, 'utf8').
 let html = readFileSync(join(kok, 'app', 'sablon.html'), 'utf8')
   .replace('/*__MOTOR__*/', () => soy('src/hyp-katsayi.js'))
   .replace('/*__LISANS__*/', () => soy('src/lisans.js'))
+  .replace('/*__BORDRO__*/', () => soy('src/bordro-motoru.js'))
+  .replace('__KURALLAR__', () => readFileSync(join(kok, 'kurallar', '2026-kurallar.json'), 'utf8').trim())
   .replace('__ACIK_ANAHTAR__', () => acikAnahtar)
   .replace('__DERLEME_ZAMANI__', () => new Date().toISOString().slice(0, 10));
 

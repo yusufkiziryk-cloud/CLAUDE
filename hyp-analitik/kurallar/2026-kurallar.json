@@ -1,0 +1,158 @@
+{
+  "_aciklama": "Tarih-sürümlü kural verisi. Kod içine sihirli sayı gömülmez; her kural yürürlük aralığı, kaynak ve durum taşır (bilgi-tabani/kamu-maas/06). PROVISIONAL/RESEARCH_REQUIRED kurallar üretim bordrosunda sessiz kullanılamaz: motor sonucu TAHMİNİ etiketler veya kilitler (14 §9). VERIFIED için resmi belge indirilip sha256 alanı doldurulmalıdır (18).",
+  "_bilgiOnceligi": "Resmî yürürlükteki mevzuat > tarihli HMB/SGK/GİB düzenlemeleri > toplu sözleşme/hakem kurulu > resmî kılavuzlar > yardımcı açıklamalar > ikincil kaynaklar.",
+  "kurallar": [
+    {
+      "rule_id": "HMB_KATSAYI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-06-30",
+      "parameters": { "aylikKatsayi": 1.387871, "tabanAylikKatsayi": 22.722793, "yanOdemeKatsayi": 0.440141 },
+      "source": {
+        "authority": "HMB",
+        "document_name": "2026 Yılı Ocak Ayına Ait Mali ve Sosyal Haklara İlişkin Genelge",
+        "official_url": "https://www.hmb.gov.tr/duyuru/2026-yili-ocak-ayina-ait-mali-ve-sosyal-haklara-iliskin-genelge",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Bilgi tabanı 17 §1 kontrol referansı; resmi PDF hash'i alınınca VERIFIED."
+    },
+    {
+      "rule_id": "HMB_KATSAYI",
+      "version": 2,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-07-01",
+      "effective_to": "2026-12-31",
+      "parameters": { "aylikKatsayi": 1.575512, "tabanAylikKatsayi": 25.794915, "yanOdemeKatsayi": 0.499649, "tavan399": 86231.60, "tavan7_15754": 76873.55 },
+      "source": {
+        "authority": "HMB",
+        "document_name": "2026 Yılı Temmuz Ayına Ait Mali ve Sosyal Haklara İlişkin Genelge",
+        "official_url": "https://ms.hmb.gov.tr/uploads/2026/07/2026-Yili-Temmuz-Ayina-Ait-Mali-ve-Sosyal-Haklara-Iliskin-Genelge-9b5304ed658d77cb.pdf",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Bilgi tabanı 17 §1 kontrol referansı."
+    },
+    {
+      "rule_id": "GV_UCRET_TARIFESI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-12-31",
+      "parameters": {
+        "dilimler": [
+          { "ustSinir": 190000, "oran": 0.15 },
+          { "ustSinir": 400000, "oran": 0.20 },
+          { "ustSinir": 1500000, "oran": 0.27 },
+          { "ustSinir": 5300000, "oran": 0.35 },
+          { "ustSinir": null, "oran": 0.40 }
+        ]
+      },
+      "source": {
+        "authority": "GİB",
+        "document_name": "332 Seri No.lu Gelir Vergisi Genel Tebliği — 2026 ücret gelirleri tarifesi (GVK md.103)",
+        "official_url": "https://cdn.gib.gov.tr/api/gibportal-file/file/getFileResources?objectKey=arsiv%2Fyardim-kaynaklar%2Fyararli-bilgiler%2Fgelir-vergisi-tarifeleri%2Fgelir-vergisi-tarifesi-2026.pdf",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Kümülatif matrah üzerinden uygulanır (05 §1-2). Kontrol: 190.000→28.500; 400.000→70.500; 1.500.000→367.500; 5.300.000→1.697.500."
+    },
+    {
+      "rule_id": "GVK_63_PRIM_INDIRIMI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "parameters": { "kisiPrimleriMatrahtanDusulur": true },
+      "source": {
+        "authority": "GİB",
+        "document_name": "193 sayılı GVK md.63/2 — sigorta primleri ve emekli aidatının ücret matrahından indirimi",
+        "official_url": "https://www.mevzuat.gov.tr/",
+        "sha256": null
+      },
+      "verified_at": null,
+      "notes": "Bilgi tabanı 05 §2 'legal_deductions_before_tax' alanının kaynağı; madde metniyle doğrulanacak."
+    },
+    {
+      "rule_id": "SGK_5510_4C_ORANLARI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-12-31",
+      "parameters": { "myoKisi": 0.09, "myoIsveren": 0.12, "gssKisi": 0.05, "gssIsveren": 0.075 },
+      "source": {
+        "authority": "SGK",
+        "document_name": "4/c Kapsamındaki Sigortalıların Prim ve Prime İlişkin İşlemleri (2026)",
+        "official_url": "https://www.sgk.gov.tr/Content/Post/51eb246d-88b5-4356-ba97-3af847ec4ded/4c-Kapsamindaki-Sigortalilarin-Prim-ve-Prime-Iliskin-Islemleri-2026-01-12-12-07-35",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Fiili hizmet süresi zammı ilave işveren primi ayrı kuraldır (bu motorda yok)."
+    },
+    {
+      "rule_id": "EMEKLI_5434_ORANLARI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "parameters": { "sahisKesenegi": 0.16, "kurumKarsiligi": 0.20, "artisFarkiOrani": 1.0 },
+      "source": {
+        "authority": "SGK",
+        "document_name": "5434 sayılı Kanun ile 5510 sayılı Kanun ayrımı — resmi açıklama",
+        "official_url": "https://www.sgk.gov.tr/Content/Post/52a2428a-9603-4aa1-bbeb-7746432953b6/5434-sayili-Kanun-ile-5510-sayili-Kanun-2022-08-18-11-26-15",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Emekli keseneğine esas aylık, gelir vergisi matrahından farklı kavramdır (05 §6); %100 artış farkı ve kurumca karşılanan GSS bu motorda uygulanmaz, uyarı verilir."
+    },
+    {
+      "rule_id": "DAMGA_UCRET_ORANI",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-12-31",
+      "parameters": { "oran": 0.00759 },
+      "source": {
+        "authority": "GİB",
+        "document_name": "488 sayılı Damga Vergisi Kanunu (1) sayılı tablo IV/1-b — ücretlerde binde 7,59",
+        "official_url": "https://www.gib.gov.tr/",
+        "sha256": null
+      },
+      "verified_at": null,
+      "notes": "Bilgi tabanında oran yok; genel bilinen oran girildi, yıllık Damga Vergisi Genel Tebliği ile doğrulanacak. Damgadan istisna kalemler kalem profilinde işaretlenir."
+    },
+    {
+      "rule_id": "ASGARI_UCRET_GV_ISTISNASI",
+      "version": 1,
+      "status": "RESEARCH_REQUIRED",
+      "effective_from": "2026-01-01",
+      "effective_to": "2026-12-31",
+      "parameters": { "aylikIstisnaMatrahi": null, "aylikDamgaIstisnasi": null },
+      "source": {
+        "authority": "GİB",
+        "document_name": "GVK 23/18 ve 319 Seri No.lu Tebliğ — 2026 asgari ücret tutarına bağlı istisna",
+        "official_url": "https://intvrg.gib.gov.tr/hazirbeyan/assets/pdf/DUYURU_UNIVERSAL_2026_2026_Ucret_Geliri.pdf",
+        "sha256": null
+      },
+      "verified_at": null,
+      "notes": "2026 brüt asgari ücret ve istisna tutarları bilgi tabanında yok; parametre girilmeden istisna uygulanmaz, sonuç TAHMİNİ kalır (05 §3, 17 §3)."
+    },
+    {
+      "rule_id": "EK40_ILAVE_ODEME",
+      "version": 1,
+      "status": "PROVISIONAL",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "parameters": { "gosterge": 15965, "gelirVergisi": false, "sgkPek": false, "damga": true },
+      "source": {
+        "authority": "GİB",
+        "document_name": "375 sayılı KHK ek md.40 — ilave ödeme (15.965 × aylık katsayı); vergi/prim istisnası özel hüküm",
+        "official_url": "https://gib.gov.tr/mevzuat/kanun/438/ozelge/38831",
+        "sha256": null
+      },
+      "verified_at": "2026-08-27",
+      "notes": "Profil başka kalemlere kopyalanmaz (05 §4). Aile hekimliği sözleşmelilerinde uygulanabilirliği ayrıca doğrulanacak."
+    }
+  ]
+}
