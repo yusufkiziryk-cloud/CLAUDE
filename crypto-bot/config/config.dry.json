@@ -76,16 +76,8 @@
             "method": "StaticPairList"
         }
     ],
-    "telegram": {
-        "enabled": false,
-        "//": "Optional by design. The bot must run without a token or chat id."
-    },
-    "api_server": {
-        "enabled": false,
-        "listen_ip_address": "127.0.0.1",
-        "listen_port": 8080,
-        "CORS_origins": []
-    },
+    "//telegram": "Deliberately ABSENT, not merely disabled. freqtrade's schema requires token and chat_id whenever a telegram block exists, even with enabled=false - so an empty block would force a fake token into the config. Notifications are opt-in via a separate overlay file; see docs/RUNBOOK.md.",
+    "//api_server": "Deliberately ABSENT. freqtrade's schema requires username, password and jwt_secret_key whenever the block exists, so a disabled block would force placeholder credentials into a committed file. No block means no REST/UI listener at all - which is what we want. scripts/safe-run.py still refuses any config that enables it on a non-loopback address.",
     "bot_name": "kripto-dryrun",
     "initial_state": "running",
     "force_entry_enable": false,

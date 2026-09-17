@@ -1,0 +1,15 @@
+{
+    "//": "OPTIONAL overlay for environments where outbound HTTPS goes through a TLS-terminating proxy (corporate egress, sandboxed CI). Not needed on a normal machine. Pass it AFTER the main config: --config config/config.dry.json --config config/proxy-overlay.json",
+    "//why": "ccxt sets trust_env=False on both its requests session and its aiohttp session, so the standard REQUESTS_CA_BUNDLE / SSL_CERT_FILE / HTTPS_PROXY variables are ignored and TLS verification fails against the proxy CA. Enabling trust_env makes ccxt honour them. TLS verification stays ON.",
+    "exchange": {
+        "ccxt_config": {
+            "trust_env": true,
+            "requests_trust_env": true,
+            "aiohttp_trust_env": true
+        },
+        "ccxt_async_config": {
+            "trust_env": true,
+            "aiohttp_trust_env": true
+        }
+    }
+}
