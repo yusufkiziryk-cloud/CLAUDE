@@ -36,6 +36,7 @@ from pathlib import Path
 import talib.abstract as ta
 from pandas import DataFrame
 
+from freqtrade.exceptions import OperationalException
 from freqtrade.persistence import Trade
 from freqtrade.strategy import IStrategy, stoploss_from_absolute
 
@@ -138,6 +139,7 @@ class BaselineTrend4h(IStrategy):
         self.policy = load_policy(POLICY_PATH)
         self._store: RiskStore | None = None
         self._gate: EntryGate | None = None
+        self._writer_lock_owner: str | None = None
         params = self.policy.strategy
         self.ema_fast_period = params["ema_fast"]
         self.ema_slow_period = params["ema_slow"]
@@ -187,6 +189,24 @@ class BaselineTrend4h(IStrategy):
         is NOT exercised by backtesting and must be tested separately.
         """
         now = datetime.now(timezone.utc)
+
+        # One bot, one account, one order writer. A second instance pointed at
+        # the same state must not start, because both would size positions
+        # against a budget the other is also spending.
+        if self.runmode not in SIMULATED_RUNMODES:
+            owner = f"{self.__class__.__name__}:{self.runmode}"
+            acquired, message = self.store.acquire_writer_lock(owner, now)
+            if not acquired:
+                self.store.set_state(BotState.STOPPED, message, now)
+                raise OperationalException(
+                    f"REFUSING TO START - {message}\n"
+                    "Note that this lock only protects against a second process on THIS "
+                    "machine. It cannot stop another host trading the same account; V1 is "
+                    "limited to a single host by design (see docs/RUNBOOK.md)."
+                )
+            self._writer_lock_owner = owner
+            logger.info("writer lock: %s", message)
+
         if self.runmode in SIMULATED_RUNMODES:
             self.store.set_state(
                 BotState.READY,

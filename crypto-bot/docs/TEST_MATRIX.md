@@ -14,26 +14,26 @@ tests that read public exchange endpoints).
 | T04 | Zero/negative ATR, NaN, stale price, missing equity, risk exception | `VERIFIED` | `test_sizing.py`, `test_risk_gate.py`, `test_capabilities.py` |
 | T05 | Exchange minimum, precision, framework clamp | `VERIFIED` | `test_sizing.py`, `test_risk_gate.py` (second gate) |
 | T06 | Two simultaneous signals against the last budget | `VERIFIED` | `test_risk_gate.py` |
-| T07 | Partial fill, fee currency, dust | `PARTIAL` | `test_risk_gate.py` covers partial fill, out-of-order events and reservation accounting. **Fee-in-base and dust accounting are not yet tested.** |
-| T08 | Timeout after exchange acceptance | `PARTIAL` | `UNKNOWN` state holds budget and is tested. **The full query-and-reconcile loop is not implemented.** |
-| T09 | Cancel/fill race, duplicated and reordered events | `PARTIAL` | monotonic fill handling tested. **Full race simulation against a stateful fake exchange is not implemented.** |
-| T10 | Forced crash at intent / submit / fill | `PARTIAL` | reservations and locks survive a store reopen. **Process-level crash injection not implemented.** |
-| T11 | Second bot instance on the same account | `NOT_RUN` | single-writer enforcement not implemented |
+| T07 | Partial fill, fee currency, dust | `VERIFIED` | `test_risk_gate.py` (reservation accounting), `test_fills_and_exits.py` (fee in base/quote/third token, dust classification) |
+| T08 | Timeout after exchange acceptance | `VERIFIED` | `test_order_lifecycle.py` - the venue keeps the order, the client never hears back; `UNKNOWN`, no second order, resolved only by querying |
+| T09 | Cancel/fill race, duplicated and reordered events | `VERIFIED` | `test_order_lifecycle.py` - fill wins the race, duplicates applied once, reordering never reduces the fill |
+| T10 | Forced crash at intent / submit / fill | `VERIFIED` | `test_order_lifecycle.py` - store reopened at each stage; event dedup survives a restart |
+| T11 | Second bot instance on the same account | `VERIFIED` | `test_single_writer_t11.py` (10 tests) - lease-based writer lock, takeover only after an abandoned lease |
 | T12 | Open-position loss crosses the daily/weekly limit | `VERIFIED` | `test_risk_gate.py` - including that recovery in the same period does not unlock |
 | T13 | Period rollover, restart, missing/corrupt risk record | `VERIFIED` | `test_risk_gate.py` |
-| T14 | External balance change or unrecognised order | `PARTIAL` | states and locks exist; **detection is not wired to a live feed** |
-| T15 | Stop, emergency exit and losing normal exit are never vetoed | `PARTIAL` | `confirm_trade_exit` returns `True` unconditionally and is exercised in backtests. **No dedicated unit test.** |
-| T16 | Stop does not fill; price gaps | `NOT_RUN` | needs the stateful fake exchange |
+| T14 | External balance change or unrecognised order | `PARTIAL` | `reconcile()` refuses to adopt, cancel or close unrecognised orders and flags them for an operator. **Not wired to a live balance feed.** |
+| T15 | Stop, emergency exit and losing normal exit are never vetoed | `VERIFIED` | `test_fills_and_exits.py` - every exit reason, a 60% loss, plus a structural check that no `return False` path exists |
+| T16 | Stop does not fill; price gaps | `VERIFIED` | `test_order_lifecycle.py` - bounded repricing, a hard slippage floor, an explicit "position STILL OPEN" alert, and a gap that leaves a resting sell untouched |
 | T17 | 429, 5xx, disconnect, clock skew | `PARTIAL` | collector has bounded jittered backoff; `FUTURE_TIMESTAMPS` detects skew. **Order-path retry semantics not tested.** |
-| T18 | DB lock, disk full, corrupt snapshot | `PARTIAL` | atomic write + fsync + rename implemented; unknown schema version refused. **Disk-full injection not run.** |
+| T18 | DB lock, disk full, corrupt snapshot | `PARTIAL` | atomic write + fsync + rename; unknown schema version refused; terminal states immune to late events. **Disk-full injection not run.** |
 | T19 | Missing, open, duplicate, unordered candles; wrong market type | `VERIFIED` | `test_data_quality_t19.py` (21 tests) |
 | T20 | Future candles mutated; past signals must not change | `VERIFIED` | `test_lookahead_t20.py` - truncation, x3 mutation, single-candle mutation |
 | T21 | Warm-up length and candle limit sensitivity | `VERIFIED` | `test_lookahead_t20.py` - signal-level, three evaluation windows |
-| T22 | A shared risk scenario across backtest / replay / dry-run | `NOT_RUN` | replay harness not built |
+| T22 | A shared risk scenario across backtest / replay / dry-run | `VERIFIED` | `test_risk_replay_t22.py` - identical decisions across paths, plus `src/kripto/risk/coverage.py` declaring what each path cannot model |
 | T23 | Deliberately bad strategy and insufficient data | `PARTIAL` | the real strategy produced `INSUFFICIENT_EVIDENCE` honestly; **no automated eligibility engine** |
 | T24 | No Telegram; watchdog outage; loop frozen with process alive | `NOT_RUN` | watchdog not implemented |
 | T25 | Canary secrets in logs, exceptions, URLs, reports | `VERIFIED` | `test_redaction.py` (10 tests) |
-| T26 | Re-run from a clean directory reproduces the result | `PARTIAL` | collector idempotency and merge stability verified; backtests wipe their own risk state. **No end-to-end clean-room reproduction script.** |
+| T26 | Re-run from a clean directory reproduces the result | `PARTIAL` | collector idempotency verified; the backtest reproduced -5.33% / 12 trades / PF 0.13 identically after unrelated code changes. **No single clean-room script yet.** |
 
 ## Requirement → test mapping (selected invariants)
 
@@ -55,13 +55,26 @@ tests that read public exchange endpoints).
 
 ## Honest gaps
 
-The `NOT_RUN` rows are not oversights to be discovered later; they are the
-work that has not been done. The largest is the **stateful fake exchange**
-(T09, T16, T22 and the deeper halves of T08/T10/T14) - without it, the order
-lifecycle is designed and unit-tested but not adversarially exercised.
+The stateful fake venue (`tests/fake_exchange.py`) now exists and closed
+T08, T09, T10, T16 and T22. It keeps real order state, fills as the price
+moves, and injects the specific failures venues produce: an accepted order
+whose response is lost, a cancel that loses a race to a fill, duplicated and
+reordered event delivery, and a price that gaps past a resting order.
 
-`T11` (single-writer enforcement) and `T24` (watchdog) are unimplemented
-features, not untested ones.
+The lifecycle protections were **mutation-tested**: removing the duplicate
+event guard, allowing stale fills to move the filled amount backwards, and
+treating `UNKNOWN` as safe to resubmit each broke exactly the tests meant to
+catch them. The tests are not vacuous.
+
+Still genuinely open:
+
+- **`T24` (watchdog)** is an unimplemented feature, not an untested one.
+  Loop liveness, data freshness, reconciliation age and clock skew are
+  specified in `policy.yaml` but nothing measures them at runtime.
+- **`T14`** has the reconciliation logic but no live balance feed behind it.
+- **`T17`/`T18`** lack fault injection at the transport and filesystem level.
+- **`T23`** has no automated eligibility engine; the verdict was reached by
+  applying the thresholds by hand.
 
 **A local fake passing is not "verified on the exchange".** Everything above
 was exercised against public read endpoints and a simulated engine only.

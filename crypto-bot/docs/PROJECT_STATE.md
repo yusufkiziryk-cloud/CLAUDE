@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-09-17, end of the build session.
+Last updated: 2026-09-17, after the order-lifecycle work.
 
 ## Where things stand
 
@@ -9,12 +9,12 @@ Last updated: 2026-09-17, end of the build session.
 | Faz 0 - review and plan | **DONE**, approved |
 | Faz 1 - safe skeleton | **DONE** (Docker path `NOT_RUN` - no daemon here) |
 | Faz 2 - market data | **DONE** |
-| Faz 3 - strategy, risk, order correctness | **PARTIAL** - risk layer done; order lifecycle partially tested |
+| Faz 3 - strategy, risk, order correctness | **DONE** - risk layer and order lifecycle both adversarially tested |
 | Faz 4 - honest research report | **DONE** - verdict `INSUFFICIENT_EVIDENCE` |
 | Faz 5 - monitoring and handover | **PARTIAL** - runbook done; watchdog, weekly report and the 4-8 week observation not done |
 | Faz 6 - live readiness assessment | **DONE** - live remains blocked |
 
-Tests: **176 passing** offline, **180** including public-endpoint tests.
+Tests: **243 passing** offline, **247** including public-endpoint tests.
 
 ## Decisions made, and why
 
@@ -58,23 +58,48 @@ Tests: **176 passing** offline, **180** including public-endpoint tests.
 4. The collector's incremental path used `min()` where it needed the recent
    window, re-downloading the entire history on every run.
 
+## What the order-lifecycle work added
+
+- `src/kripto/orders/lifecycle.py` - durable order state machine. Sending,
+  acceptance, filling and cancellation are four separate observations;
+  collapsing any two is what produces duplicate orders and phantom positions.
+- `src/kripto/orders/executor.py` - submit / resolve / cancel, plus an
+  emergency exit that reprices a **bounded** number of times within a hard
+  slippage floor and then alerts that the position is still open.
+- `src/kripto/risk/fills.py` - net fill accounting by fee currency, and dust
+  classification. Dust is reported, never cleared by buying more.
+- `src/kripto/risk/coverage.py` - a machine-readable declaration of what each
+  run path can and cannot model.
+- `tests/fake_exchange.py` - stateful venue with fault injection.
+- Single-writer lease in the risk store, wired into `bot_start`.
+
+The lifecycle protections were mutation-tested: removing the duplicate-event
+guard, allowing stale fills to move the filled amount backwards, and treating
+`UNKNOWN` as safe to resubmit each broke exactly the tests meant to catch
+them.
+
 ## Open risks
 
-- Order lifecycle (cancel/fill races, unresolved orders, crash recovery) is
-  designed and partially unit-tested but not adversarially exercised. The
-  stateful fake exchange does not exist yet.
-- No single-writer enforcement: a second bot instance on the same account is
-  not prevented (T11).
-- No watchdog: loop liveness, data freshness, reconciliation age and clock
-  skew are specified in the policy but not measured by a running component.
+- **No watchdog (T24).** Nothing measures loop liveness, data freshness,
+  reconciliation age or clock skew at runtime. Combined with the absence of
+  an exchange-side stop, this is now the sharpest remaining edge: a stop that
+  lives in a process nobody is watching.
+- **Reconciliation is not wired to a live feed (T14).** The logic exists and
+  refuses to guess; nothing calls it on a schedule against real balances.
+- **No transport or filesystem fault injection (T17, T18).**
+- The single-writer lock protects one machine only. Nothing here can stop a
+  second host trading the same account, so V1 stays single-host by design.
 - The container this was built in is ephemeral, so nothing long-running was
   started.
 
 ## The exact next step
 
-Build the **stateful fake exchange** in `tests/`, then close T08, T09, T10,
-T16 and T22 against it. That is the largest remaining gap between "designed
-correctly" and "demonstrated correct", and every later phase depends on it.
+Build the **watchdog**: a read-only observer measuring loop heartbeat, last
+successful data update, last reconciliation, clock skew, API error rate and
+pending-order age, with the thresholds already declared in `policy.yaml`.
+Then wire reconciliation to run on a schedule (T14).
+
+The watchdog must not become a second order writer and must not carry keys.
 
 Reproduction:
 

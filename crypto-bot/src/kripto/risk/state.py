@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import socket
 import sqlite3
 import uuid
 from contextlib import contextmanager
@@ -213,6 +215,14 @@ CREATE TABLE IF NOT EXISTS stop_events (
     pair TEXT NOT NULL,
     occurred_at TEXT NOT NULL,
     counted INTEGER NOT NULL DEFAULT 1
+);
+CREATE TABLE IF NOT EXISTS writer_lock (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    owner TEXT NOT NULL,
+    host TEXT NOT NULL,
+    pid INTEGER NOT NULL,
+    acquired_at TEXT NOT NULL,
+    heartbeat_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_res_state ON reservations(state);
 CREATE INDEX IF NOT EXISTS idx_locks_cleared ON locks(cleared_at);
@@ -450,6 +460,83 @@ class RiskStore:
         """Called after a profitable exit, per the documented sequencing."""
         with self._tx() as conn:
             conn.execute("UPDATE stop_events SET counted=0 WHERE counted=1")
+
+    # -- single writer -----------------------------------------------------
+
+    def acquire_writer_lock(
+        self,
+        owner: str,
+        now: datetime,
+        *,
+        lease_seconds: float = 300.0,
+        force: bool = False,
+    ) -> tuple[bool, str]:
+        """Claim the right to be the only order writer for this account.
+
+        One bot, one account, one writer. A second instance pointed at the
+        same state file is refused, because two writers would each size
+        positions against a budget the other is also spending.
+
+        IMPORTANT AND DELIBERATELY NOT HIDDEN: this is a lock on a *file*. It
+        stops a second process on this machine. It does NOT stop a second
+        process on another machine pointed at the same exchange account -
+        nothing here can. V1 is therefore limited to a single host, and the
+        runbook says so.
+
+        A lease that has stopped being renewed for ``lease_seconds`` is
+        treated as abandoned and may be taken over, because otherwise a
+        crashed process would lock the account out forever.
+        """
+        host = socket.gethostname()
+        pid = os.getpid()
+        with self._tx() as conn:
+            row = conn.execute("SELECT * FROM writer_lock WHERE id=1").fetchone()
+            if row is not None and not force:
+                if row["owner"] == owner:
+                    conn.execute(
+                        "UPDATE writer_lock SET heartbeat_at=? WHERE id=1", (now.isoformat(),)
+                    )
+                    return True, "already held by this owner; lease renewed"
+
+                last_beat = datetime.fromisoformat(row["heartbeat_at"])
+                age = (now - last_beat).total_seconds()
+                if age < lease_seconds:
+                    return False, (
+                        f"another instance holds the writer lock: owner={row['owner']} "
+                        f"host={row['host']} pid={row['pid']}, last heartbeat {age:.0f}s ago. "
+                        "Refusing to become a second order writer for the same account."
+                    )
+                logger.warning(
+                    "taking over a writer lock abandoned %.0fs ago by %s (pid %s on %s)",
+                    age, row["owner"], row["pid"], row["host"],
+                )
+
+            conn.execute(
+                "INSERT INTO writer_lock(id, owner, host, pid, acquired_at, heartbeat_at) "
+                "VALUES (1, ?, ?, ?, ?, ?) "
+                "ON CONFLICT(id) DO UPDATE SET owner=excluded.owner, host=excluded.host, "
+                "pid=excluded.pid, acquired_at=excluded.acquired_at, "
+                "heartbeat_at=excluded.heartbeat_at",
+                (owner, host, pid, now.isoformat(), now.isoformat()),
+            )
+        return True, "writer lock acquired"
+
+    def heartbeat_writer_lock(self, owner: str, now: datetime) -> bool:
+        """Renew the lease. Returns False if this owner no longer holds it."""
+        with self._tx() as conn:
+            row = conn.execute("SELECT owner FROM writer_lock WHERE id=1").fetchone()
+            if row is None or row["owner"] != owner:
+                return False
+            conn.execute("UPDATE writer_lock SET heartbeat_at=? WHERE id=1", (now.isoformat(),))
+        return True
+
+    def release_writer_lock(self, owner: str) -> None:
+        with self._tx() as conn:
+            conn.execute("DELETE FROM writer_lock WHERE id=1 AND owner=?", (owner,))
+
+    def writer_lock_holder(self) -> dict | None:
+        row = self._conn.execute("SELECT * FROM writer_lock WHERE id=1").fetchone()
+        return dict(row) if row else None
 
     # -- reservations ------------------------------------------------------
 

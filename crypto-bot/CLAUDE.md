@@ -58,6 +58,15 @@ Durumlar: `READY`, `ENTRY_PAUSED`, `RECONCILING`, `RECOVERY_REQUIRED`,
 `STOPPED`. **Yalnızca `STOPPED` çıkış yönetimini durdurur.** Giriş kilidi
 stop yönetimini asla kapatmaz.
 
+Emir durumları (`src/kripto/orders/lifecycle.py`): gönderim, kabul, dolum ve
+iptal **dört ayrı gözlemdir**. Timeout bir başarısızlık değil `UNKNOWN`'dır
+ve sorgu ile çözülene kadar yeniden göndermeyi engeller. İptal *isteği* hiçbir
+şeyi serbest bırakmaz; yalnızca **doğrulanmış** iptal bırakır.
+
+Tek yazar: `store.acquire_writer_lock()`. Bu kilit yalnızca **bu makinedeki**
+ikinci süreci engeller; başka bir hosttan aynı hesaba bağlanmayı engelleyemez.
+V1 bu yüzden tek host ile sınırlıdır.
+
 ## Dikkat edilecek doğrulanmış davranışlar
 
 - Hyperliquid **spot**'ta `stoploss_on_exchange` **yok** (futures'ta var).

@@ -57,12 +57,26 @@ See [the research report](../reports/faz4/RESEARCH_REPORT.md). Verdict
 five pre-set criteria. 12 closed trades, one market regime, no untouched
 hold-out.
 
-### LIVE_BLOCKER 4 - order lifecycle not adversarially tested
+### LIVE_BLOCKER 4 - operational monitoring absent (reduced in scope)
 
-Cancel/fill races, unresolved-order recovery, crash injection and
-single-writer enforcement (T09, T10, T11, T16, T22) are designed and
-partially unit-tested, but the stateful fake exchange that would exercise
-them does not exist yet. See [TEST_MATRIX.md](TEST_MATRIX.md).
+The order lifecycle itself is no longer the gap. A stateful fake venue now
+exercises cancel/fill races, lost responses, crash recovery, duplicated and
+reordered events, bounded emergency repricing and single-writer enforcement
+(T08, T09, T10, T11, T16, T22), and those protections were mutation-tested.
+
+What remains:
+
+- **No watchdog (T24).** Nothing measures loop liveness, data freshness,
+  reconciliation age, clock skew, API error rate or pending-order age at
+  runtime. The thresholds exist in `policy.yaml`; no component reads them.
+- **Reconciliation is not wired to a live feed (T14).** The logic refuses to
+  adopt unrecognised orders and demands an operator, but nothing calls it on
+  a schedule against real balances.
+- **No transport or filesystem fault injection (T17, T18).**
+
+A bot-internal stop with no liveness monitoring is a stop that can stop
+without anyone noticing - which, given LIVE_BLOCKER 1, is the combination
+that matters most here.
 
 ### LIVE_BLOCKER 5 - no observation period
 
