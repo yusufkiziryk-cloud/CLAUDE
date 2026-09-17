@@ -40,9 +40,15 @@ def test_t01_shipped_config_is_a_safe_keyless_dry_run():
     assert config["trading_mode"] == "spot"
     assert config["margin_mode"] == ""
     assert config["order_types"]["stoploss_on_exchange"] is False
-    assert config["telegram"]["enabled"] is False
-    assert config["api_server"]["enabled"] is False
     assert config["force_entry_enable"] is False
+
+    # Absent, not merely disabled. freqtrade's schema demands a token for any
+    # telegram block and a username/password/jwt secret for any api_server
+    # block, even when enabled is false - so a "disabled" block would force
+    # placeholder credentials into a committed file. No block at all means no
+    # notifier and no listener.
+    assert not config.get("telegram", {}).get("enabled", False)
+    assert not config.get("api_server", {}).get("enabled", False)
 
 
 def test_t01_shipped_config_carries_no_credentials():

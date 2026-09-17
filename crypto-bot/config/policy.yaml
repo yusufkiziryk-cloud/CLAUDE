@@ -78,9 +78,24 @@ strategy:
   adx_min: 25
   atr_period: 14
   atr_stop_multiple: 2.5
-  # 200 candles is NOT assumed to be sufficient warm-up for EMA200.
-  # Recursive analysis in Faz 4 measures the real sensitivity.
-  startup_candles: 400
+  # MEASURED, not assumed. 200 candles is NOT enough warm-up for EMA200.
+  #
+  # freqtrade recursive-analysis (2026-09-17) puts EMA200 drift at -3.135%
+  # with a 200-candle warm-up and -0.204% at 400, converging to -0.001% at
+  # 1000. Indicator drift alone does not settle it though: a 0.2% difference
+  # may or may not flip a crossover. So signal impact was measured directly
+  # on BTC/USDC over three evaluation windows (800/1200/1500 candles), each
+  # compared against a 1600-candle warm-up:
+  #
+  #   warm-up  200: 4 / 5 / 3 differing entry signals
+  #   warm-up  300: 3 / 6 / 2
+  #   warm-up  400: 1 / 2 / 2
+  #   warm-up  600: 0 / 2 / 0     <- still unstable in one window
+  #   warm-up  800: 0 / 0 / 0     <- converged in all three
+  #
+  # 800 is the shortest warm-up at which the decisions stop changing.
+  # At 4h that is ~133 days of history consumed before the first signal.
+  startup_candles: 800
   trailing_stop_enabled: false
   position_adjustment_enabled: false
 

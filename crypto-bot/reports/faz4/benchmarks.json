@@ -1,0 +1,32 @@
+{
+  "period": "2025-09-01/2026-09-01",
+  "pairs": {
+    "BTC_USDC": {
+      "first": 107545.0,
+      "last": 78563.0,
+      "return_pct": -26.95,
+      "max_dd_pct": 53.54
+    },
+    "ETH_USDC": {
+      "first": 4408.1,
+      "last": 2467.7,
+      "return_pct": -44.02,
+      "max_dd_pct": 67.58
+    },
+    "SOL_USDC": {
+      "first": 198.48,
+      "last": 103.01,
+      "return_pct": -48.1,
+      "max_dd_pct": 75.14
+    }
+  },
+  "equal_weight_basket": {
+    "return_pct": -39.69,
+    "max_dd_pct": 64.17
+  },
+  "usdc_cash": {
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "note": "zero yield assumed; USDC still carries issuer/depeg risk"
+  }
+}

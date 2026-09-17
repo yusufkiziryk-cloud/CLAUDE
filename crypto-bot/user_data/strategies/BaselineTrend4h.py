@@ -61,10 +61,25 @@ POLICY_PATH = _REPO_ROOT / "config" / "policy.yaml"
 RISK_DB_BY_RUNMODE = {
     "backtest": _REPO_ROOT / "user_data" / "backtest" / "risk_state.sqlite",
     "hyperopt": _REPO_ROOT / "user_data" / "backtest" / "risk_state.sqlite",
+    "util_no_exchange": _REPO_ROOT / "user_data" / "backtest" / "risk_state.sqlite",
+    "util_exchange": _REPO_ROOT / "user_data" / "backtest" / "risk_state.sqlite",
     "dry_run": _REPO_ROOT / "user_data" / "dryrun" / "risk_state.sqlite",
     "live": _REPO_ROOT / "user_data" / "live" / "risk_state.sqlite",
 }
-SIMULATED_RUNMODES = {"backtest", "hyperopt"}
+# Run modes with no exchange to reconcile against. Listed EXPLICITLY rather
+# than derived as "not live", so that an unrecognised future run mode falls
+# through to RECONCILING (fail closed) instead of silently starting READY.
+# lookahead-analysis and recursive-analysis run as util_no_exchange; leaving
+# them out made those tools produce zero trades, which freqtrade reports as
+# "Test failed" - and a test that generates no trades is not a pass.
+SIMULATED_RUNMODES = {
+    "backtest",
+    "hyperopt",
+    "util_no_exchange",
+    "util_exchange",
+    "plot",
+    "other",
+}
 
 # Per-trade metadata keys. The initial stop and the ATR that produced it are
 # persisted so a restart re-derives exactly the same stop rather than
