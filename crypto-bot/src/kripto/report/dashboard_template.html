@@ -1,0 +1,671 @@
+<title>Kripto Bot Paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --ground:        #fbfaf7;
+    --panel:         #ffffff;
+    --panel-sunk:    #f3f1ec;
+    --line:          #e2ded4;
+    --line-strong:   #cdc7b8;
+    --ink:           #14161a;
+    --ink-2:         #4d525c;
+    --ink-3:         #7b8089;
+    --series-1:      #2a78d6;
+    --series-2:      #eb6834;
+    --series-3:      #1baf7a;
+    --series-4:      #eda100;
+    --ok:            #1e7d4f;
+    --warn:          #b7791f;
+    --crit:          #c0392b;
+    --ok-bg:         #e6f2ea;
+    --warn-bg:       #faf0dd;
+    --crit-bg:       #fae9e6;
+    --grid:          #ebe7de;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground:      #16171a;
+      --panel:       #1d1f23;
+      --panel-sunk:  #212429;
+      --line:        #2e3238;
+      --line-strong: #414750;
+      --ink:         #f2f1ec;
+      --ink-2:       #b6b8bd;
+      --ink-3:       #878a91;
+      --series-1:    #3987e5;
+      --series-2:    #d95926;
+      --series-3:    #199e70;
+      --series-4:    #c98500;
+      --ok:          #4caf7d;
+      --warn:        #d9a441;
+      --crit:        #e06a5c;
+      --ok-bg:       #182a21;
+      --warn-bg:     #2b2417;
+      --crit-bg:     #2e1d1a;
+      --grid:        #26292e;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground:      #16171a;
+    --panel:       #1d1f23;
+    --panel-sunk:  #212429;
+    --line:        #2e3238;
+    --line-strong: #414750;
+    --ink:         #f2f1ec;
+    --ink-2:       #b6b8bd;
+    --ink-3:       #878a91;
+    --series-1:    #3987e5;
+    --series-2:    #d95926;
+    --series-3:    #199e70;
+    --series-4:    #c98500;
+    --ok:          #4caf7d;
+    --warn:        #d9a441;
+    --crit:        #e06a5c;
+    --ok-bg:       #182a21;
+    --warn-bg:     #2b2417;
+    --crit-bg:     #2e1d1a;
+    --grid:        #26292e;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: Archivo, "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 28px 64px;
+  }
+
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+  .num  { font-variant-numeric: tabular-nums; }
+
+  /* ---------- masthead ---------- */
+  .masthead { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: baseline;
+              justify-content: space-between; border-bottom: 2px solid var(--ink);
+              padding-bottom: 14px; }
+  h1 { font-size: clamp(26px, 4.2vw, 38px); font-weight: 700; letter-spacing: -0.02em;
+       margin: 0; text-wrap: balance; }
+  .masthead .meta { font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em;
+                    text-transform: uppercase; }
+
+  /* ---------- verdict strip: the thesis ---------- */
+  .verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+              gap: 1px; background: var(--line); border: 1px solid var(--line);
+              margin-top: 22px; }
+  .verdict { background: var(--panel); padding: 14px 16px; display: flex; flex-direction: column;
+             gap: 4px; }
+  .verdict .k { font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase;
+                color: var(--ink-3); }
+  .verdict .v { font-family: "IBM Plex Mono", monospace; font-size: 15px; font-weight: 600;
+                display: flex; align-items: center; gap: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .d-ok { background: var(--ok); } .d-warn { background: var(--warn); }
+  .d-crit { background: var(--crit); }
+  .v-ok { color: var(--ok); } .v-warn { color: var(--warn); } .v-crit { color: var(--crit); }
+  .verdict .n { font-size: 12px; color: var(--ink-2); }
+
+  /* ---------- the honest headline ---------- */
+  .thesis { margin-top: 22px; border-left: 3px solid var(--series-1);
+            background: var(--panel-sunk); padding: 16px 18px; }
+  .thesis p { margin: 0; font-size: 15px; color: var(--ink); max-width: 68ch; }
+  .thesis p + p { margin-top: 8px; color: var(--ink-2); }
+  .thesis strong { font-weight: 600; }
+
+  /* ---------- stat tiles ---------- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+           gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 26px; }
+  .stat { background: var(--panel); padding: 14px 16px 16px; }
+  .stat .k { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+             color: var(--ink-3); }
+  .stat .v { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+             font-size: 27px; font-weight: 600; letter-spacing: -0.02em; margin-top: 3px;
+             line-height: 1.1; }
+  .stat .s { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 44px; }
+  h2 { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+       color: var(--ink-2); margin: 0 0 4px; }
+  .sub { font-size: 14px; color: var(--ink-2); margin: 0 0 16px; max-width: 72ch; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); padding: 18px 16px 14px; }
+
+  /* ---------- charts ---------- */
+  .chart-head { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center;
+                justify-content: space-between; margin-bottom: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 11px; height: 3px; border-radius: 2px; flex: none; }
+  .chart { position: relative; width: 100%; }
+  .chart svg { display: block; width: 100%; height: auto; }
+  .tip { position: absolute; pointer-events: none; opacity: 0; transition: opacity .1s;
+         background: var(--panel); border: 1px solid var(--line-strong);
+         padding: 8px 10px; font-size: 12.5px; box-shadow: 0 4px 14px rgba(0,0,0,.13);
+         min-width: 150px; z-index: 5; }
+  .tip .t-d { font-family: "IBM Plex Mono", monospace; color: var(--ink-3); font-size: 11px;
+              letter-spacing: .03em; margin-bottom: 5px; }
+  .tip .t-r { display: flex; align-items: center; gap: 7px; justify-content: space-between; }
+  .tip .t-r span:first-child { display: inline-flex; align-items: center; gap: 6px;
+                               color: var(--ink-2); }
+  .tip .t-v { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+              font-weight: 600; color: var(--ink); }
+
+  .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 20px; }
+
+  /* ---------- tables ---------- */
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th { text-align: left; font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase;
+       color: var(--ink-3); font-weight: 600; padding: 8px 12px 8px 0; white-space: nowrap;
+       border-bottom: 1px solid var(--line-strong); }
+  td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td.n { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+         text-align: right; padding-right: 18px; }
+  th.n { text-align: right; padding-right: 18px; }
+  tr:last-child td { border-bottom: none; }
+  .pos { color: var(--ok); } .neg { color: var(--crit); }
+  .tag { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; padding: 2px 7px;
+         background: var(--panel-sunk); border: 1px solid var(--line); }
+
+  /* ---------- blockers ---------- */
+  .blockers { list-style: none; margin: 0; padding: 0; counter-reset: b; }
+  .blockers li { counter-increment: b; display: grid; grid-template-columns: 34px 1fr;
+                 gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .blockers li:last-child { border-bottom: none; }
+  .blockers li::before { content: counter(b, decimal-leading-zero);
+                         font-family: "IBM Plex Mono", monospace; font-size: 12px;
+                         font-weight: 600; color: var(--crit); padding-top: 2px; }
+  .blockers h3 { margin: 0 0 3px; font-size: 14.5px; font-weight: 600; }
+  .blockers p { margin: 0; font-size: 13.5px; color: var(--ink-2); max-width: 74ch; }
+
+  /* ---------- health pills ---------- */
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px;
+          padding: 5px 11px; border: 1px solid var(--line); background: var(--panel-sunk);
+          font-family: "IBM Plex Mono", monospace; }
+
+  footer { margin-top: 52px; padding-top: 18px; border-top: 1px solid var(--line);
+           font-size: 12.5px; color: var(--ink-3); display: flex; flex-wrap: wrap;
+           gap: 6px 20px; justify-content: space-between; }
+  footer code { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <h1>Kripto Bot Paneli</h1>
+    <div class="meta mono">Hyperliquid spot · 4h · long-only</div>
+  </header>
+
+  <!-- The three facts that decide everything else -->
+  <div class="verdicts">
+    <div class="verdict">
+      <div class="k">Çalışma modu</div>
+      <div class="v v-ok"><span class="dot d-ok"></span>DRY-RUN</div>
+      <div class="n">Gerçek emir gönderilmedi. Anahtar yok.</div>
+    </div>
+    <div class="verdict">
+      <div class="k">Canlı durumu</div>
+      <div class="v v-crit"><span class="dot d-crit"></span>BLOCKED</div>
+      <div class="n">6 engel açık. En ağırı: borsada stop yok.</div>
+    </div>
+    <div class="verdict">
+      <div class="k">Araştırma kararı</div>
+      <div class="v v-crit"><span class="dot d-crit"></span>INSUFFICIENT_EVIDENCE</div>
+      <div class="n">5 eşiğin 4'ü başarısız. Eşik gevşetilmedi.</div>
+    </div>
+    <div class="verdict">
+      <div class="k">Test matrisi</div>
+      <div class="v v-warn"><span class="dot d-warn"></span><span id="tm-verified">–</span> VERIFIED</div>
+      <div class="n"><span id="tm-partial">–</span> kısmi, 0 çalıştırılmamış</div>
+    </div>
+  </div>
+
+  <div class="thesis">
+    <p><strong>Strateji al-tut'u geniş farkla geçti ve yine de para kaybetti.</strong>
+       Dönem sert bir ayı piyasasıydı: sepet %39,7 düştü, strateji %5,3.
+       Düşüş farkı bir büyüklük mertebesi.</p>
+    <p>Ama ayı piyasasında uzun benchmark'ı geçmek edge kanıtı değildir — çoğunlukla
+       nakitte duran her şey bunu yapar. 12 işlem, tek rejim ve dokunulmamış holdout
+       olmaması, hiçbir sonuca varmaya yetmiyor.</p>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <!-- ---------------- equity ---------------- -->
+  <section>
+    <h2>Equity eğrisi — al-tut ile karşılaştırma</h2>
+    <p class="sub">Hepsi dönem başında 100'e indekslendi. Kesikli çizgi = nakitte durmak (%0 getiri varsayımı).</p>
+    <div class="card">
+      <div class="chart-head">
+        <div class="legend" id="eq-legend"></div>
+        <div class="meta mono" style="font-size:11px;color:var(--ink-3)"
+             id="eq-period"></div>
+      </div>
+      <div class="chart" id="eq-chart">
+        <div class="tip" id="eq-tip"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- decisions + coverage ---------------- -->
+  <section class="two-col">
+    <div>
+      <h2>Giriş kararları</h2>
+      <p class="sub">Retler işin bilgilendirici yarısı: dört sinyalden iki işlem ile
+        dört yüz sinyalden iki işlem farklı sistemlerdir.</p>
+      <div class="card">
+        <div class="chart" id="dec-chart"><div class="tip" id="dec-tip"></div></div>
+      </div>
+    </div>
+    <div>
+      <h2>Veri kapsamı</h2>
+      <p class="sub">4h'de bir yıldan fazla geçmiş var; 5m yalnızca 17 gün.
+        Mum içi gerçekleşme doğrulaması bu yüzden <span class="tag">NOT_MODELED</span>.</p>
+      <div class="card">
+        <div class="chart-head"><div class="legend" id="cov-legend"></div></div>
+        <div class="chart" id="cov-chart"><div class="tip" id="cov-tip"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- trades ---------------- -->
+  <section>
+    <h2>İşlemler</h2>
+    <p class="sub">Backtest'in ürettiği 12 kapalı işlemin tamamı. 2 kazanç, 10 kayıp.</p>
+    <div class="card scroll">
+      <table id="trades">
+        <thead>
+          <tr>
+            <th>Çift</th><th>Giriş</th><th>Çıkış</th>
+            <th class="n">Giriş fiyatı</th><th class="n">Çıkış fiyatı</th>
+            <th class="n">Süre</th><th class="n">Sonuç</th><th class="n">USDC</th>
+            <th>Çıkış nedeni</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ---------------- watchdog ---------------- -->
+  <section>
+    <h2>Sağlık kontrolleri</h2>
+    <p class="sub">Watchdog süreç canlılığına bakmaz — botun geride bıraktığı kanıtın
+      yaşını ölçer. Gözlemci durum dosyasını <span class="tag">mode=ro</span> ile açar,
+      yani yazması yapısal olarak imkânsızdır.</p>
+    <div class="card">
+      <div class="pills">
+        <span class="pill"><span class="dot d-ok"></span>loop_heartbeat</span>
+        <span class="pill"><span class="dot d-ok"></span>candle_freshness</span>
+        <span class="pill"><span class="dot d-ok"></span>orderbook_freshness</span>
+        <span class="pill"><span class="dot d-ok"></span>reconcile_age</span>
+        <span class="pill"><span class="dot d-ok"></span>clock_skew</span>
+        <span class="pill"><span class="dot d-ok"></span>api_error_rate</span>
+        <span class="pill"><span class="dot d-ok"></span>pending_orders</span>
+        <span class="pill"><span class="dot d-ok"></span>storage</span>
+        <span class="pill"><span class="dot d-ok"></span>notifications</span>
+      </div>
+      <p class="sub" style="margin:14px 0 0">
+        Son dry-run çalıştırmasında dokuzu da yeşildi (exit 0). Toplam gözlenen çalışma
+        süresi <strong>dakikalarla</strong> ölçülüyor — gereken 4–8 hafta.
+        Aynı makinedeki watchdog, makinenin öldüğünü haber veremez.
+      </p>
+    </div>
+  </section>
+
+  <!-- ---------------- blockers ---------------- -->
+  <section>
+    <h2>Canlıya geçişi engelleyenler</h2>
+    <p class="sub">Numaralar <code class="mono">docs/LIVE_READINESS.md</code> içindeki
+      engel numaralarıyla aynıdır. Hepsi ayrı ayrı değerlendirilir; biri diğerinin
+      yerine geçmez.</p>
+    <div class="card">
+      <ol class="blockers">
+        <li>
+          <div>
+            <h3>Hyperliquid spot'ta borsa tarafı stop yok</h3>
+            <p>Kurulu freqtrade 2026.8'de doğrulandı: <span class="tag">stoploss_on_exchange</span>
+              spot için <span class="tag">False</span>, yalnızca futures'ta <span class="tag">True</span>.
+              Stop bot sürecinin içinde yaşar; süreç ölürse koruma da ölür.
+              Watchdog veya VPS bunun eşdeğeri değildir.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>İşlem gören varlıklar köprülenmiş, tek ihraççı</h3>
+            <p><span class="tag">BTC/USDC</span> (<span class="tag">@142</span>) aslında
+              <strong>UBTC</strong> — Unit köprüsü ihraçlı bir sarmalayıcı. ETH ve SOL de öyle,
+              ve üçü de aynı ihraççıdan. ccxt bu farkı isimlendirmede gizliyor.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Pozitif beklenti kanıtı yok</h3>
+            <p>12 kapalı işlem (alt sınır 50), tek rejim, dokunulmamış holdout yok.
+              Üç varlık aynı köprüden olduğu için gözlemler bağımsız da değil.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Taşıma ve dosya sistemi hata enjeksiyonu yapılmadı</h3>
+            <p>Disk dolması alarm üretiyor ama hiç tetiklenmedi; emir yolunun 429/5xx
+              altındaki davranışı sınanmadı. Dry-run'da borsa tarafı uzlaştırma
+              yapısal olarak test edilemiyor.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Gözlem süresi hiç başlamadı</h3>
+            <p>Gereken 4–8 haftanın sıfırı tamamlandı. Geliştirme ortamı geçici
+              olduğu için burada başlatılamıyor bile.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Anahtar yetkileri borsa tarafında doğrulanmadı</h3>
+            <p>API cüzdanının gerçekten çekim yapamadığı ve gerçekten spot ile
+              sınırlı olduğu <span class="tag">UNVERIFIED</span>. Yazılımdaki ayar,
+              borsada uygulanmış bir yetki kısıtı değildir.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    <div>Kaynak: <code>reports/faz4/</code> · <code>reports/data_manifest.json</code> ·
+      <code>user_data/backtest/risk_state.sqlite</code></div>
+    <div id="provenance" class="mono"></div>
+  </footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/{};
+
+const $ = (s) => document.querySelector(s);
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (v, d = 2) => v.toLocaleString('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+/* ---------------------------------------------------------------- stats */
+function renderStats() {
+  const h = DATA.headline;
+  const tiles = [
+    { k: 'Net getiri', v: (h.return_pct > 0 ? '+' : '') + fmt(h.return_pct) + '%',
+      s: fmt(h.start_equity, 0) + ' → ' + fmt(h.end_equity) + ' USDC',
+      cls: h.return_pct >= 0 ? 'pos' : 'neg' },
+    { k: 'Kapalı işlem', v: String(h.trades), s: h.wins + ' kazanç · ' + h.losses + ' kayıp' },
+    { k: 'Profit factor', v: fmt(h.profit_factor), s: 'eşik 1,10 — başarısız', cls: 'neg' },
+    { k: 'Maks. düşüş', v: fmt(h.max_dd_pct) + '%', s: 'eşik %10 — geçti', cls: 'pos' },
+    { k: 'İşlem başına', v: fmt(h.expectancy) + ' USDC', s: 'beklenti', cls: 'neg' },
+  ];
+  $('#stats').innerHTML = tiles.map(t =>
+    `<div class="stat"><div class="k">${t.k}</div>
+     <div class="v ${t.cls || ''}">${t.v}</div><div class="s">${t.s}</div></div>`).join('');
+
+  $('#tm-verified').textContent = DATA.test_matrix.VERIFIED || 0;
+  $('#tm-partial').textContent = DATA.test_matrix.PARTIAL || 0;
+  $('#eq-period').textContent = DATA.period.start + ' → ' + DATA.period.end;
+  $('#provenance').textContent = 'üretim: ' + DATA.generated;
+}
+
+/* ------------------------------------------------------------- equity */
+const EQ_SERIES = [
+  { key: 'strategy', label: 'Strateji', color: '--series-1', w: 2.6 },
+  { key: 'BTC', label: 'BTC al-tut', color: '--series-2', w: 1.8 },
+  { key: 'ETH', label: 'ETH al-tut', color: '--series-3', w: 1.8 },
+  { key: 'SOL', label: 'SOL al-tut', color: '--series-4', w: 1.8 },
+];
+
+function equitySeries() {
+  const byKey = { strategy: DATA.equity };
+  for (const k of Object.keys(DATA.benchmarks)) byKey[k] = DATA.benchmarks[k];
+  return EQ_SERIES.map(s => ({ ...s, pts: byKey[s.key] || [] })).filter(s => s.pts.length);
+}
+
+function renderEquity() {
+  const host = $('#eq-chart');
+  const tip = $('#eq-tip');
+  const W = host.clientWidth || 800;
+  const H = Math.max(280, Math.min(430, Math.round(W * 0.46)));
+  const M = { t: 16, r: W < 520 ? 16 : 62, b: 30, l: 44 };
+  const series = equitySeries();
+  if (!series.length) return;
+
+  const all = series.flatMap(s => s.pts.map(p => p.v));
+  let lo = Math.min(100, Math.min(...all)), hi = Math.max(100, Math.max(...all));
+  const pad = (hi - lo) * 0.10 || 5;
+  lo = Math.floor((lo - pad) / 10) * 10; hi = Math.ceil((hi + pad) / 10) * 10;
+
+  const n = series[0].pts.length;
+  const x = (i) => M.l + (i / (n - 1)) * (W - M.l - M.r);
+  const y = (v) => M.t + (1 - (v - lo) / (hi - lo)) * (H - M.t - M.b);
+
+  const ticks = [];
+  for (let v = lo; v <= hi + 0.001; v += Math.max(10, Math.round((hi - lo) / 5 / 10) * 10)) ticks.push(v);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Equity eğrisi">`;
+  for (const t of ticks) {
+    svg += `<line x1="${M.l}" y1="${y(t).toFixed(1)}" x2="${W - M.r}" y2="${y(t).toFixed(1)}"
+            stroke="${css('--grid')}" stroke-width="1"/>`;
+    svg += `<text x="${M.l - 8}" y="${(y(t) + 4).toFixed(1)}" text-anchor="end"
+            font-family="IBM Plex Mono, monospace" font-size="11" fill="${css('--ink-3')}">${t}</text>`;
+  }
+  // cash reference at 100
+  svg += `<line x1="${M.l}" y1="${y(100).toFixed(1)}" x2="${W - M.r}" y2="${y(100).toFixed(1)}"
+          stroke="${css('--ink-3')}" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.75"/>`;
+
+  // x labels: first, middle, last
+  const idxs = [0, Math.floor((n - 1) / 2), n - 1];
+  idxs.forEach((i, k) => {
+    const d = series[0].pts[i].d.slice(0, 7);
+    svg += `<text x="${x(i).toFixed(1)}" y="${H - 9}" font-family="IBM Plex Mono, monospace"
+            font-size="11" fill="${css('--ink-3')}"
+            text-anchor="${k === 0 ? 'start' : k === 2 ? 'end' : 'middle'}">${d}</text>`;
+  });
+
+  for (const s of series) {
+    const d = s.pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(p.v).toFixed(1)}`).join(' ');
+    svg += `<path d="${d}" fill="none" stroke="${css(s.color)}" stroke-width="${s.w}"
+            stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+
+  // direct end labels (relief for the light-mode contrast warning)
+  if (W >= 520) {
+    const placed = [];
+    for (const s of series) {
+      const last = s.pts[s.pts.length - 1];
+      let ly = y(last.v);
+      while (placed.some(p => Math.abs(p - ly) < 13)) ly += 13;
+      placed.push(ly);
+      svg += `<text x="${W - M.r + 8}" y="${(ly + 4).toFixed(1)}"
+              font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600"
+              fill="${css(s.color)}">${fmt(last.v, 1)}</text>`;
+    }
+  }
+
+  svg += `<line id="eq-cross" x1="0" y1="${M.t}" x2="0" y2="${H - M.b}"
+          stroke="${css('--line-strong')}" stroke-width="1" opacity="0"/>`;
+  for (const s of series) svg += `<circle class="eq-dot" r="4" fill="${css(s.color)}"
+          stroke="${css('--panel')}" stroke-width="2" opacity="0"/>`;
+  svg += `<rect x="${M.l}" y="${M.t}" width="${W - M.l - M.r}" height="${H - M.t - M.b}"
+          fill="transparent" id="eq-hit"/></svg>`;
+  host.querySelectorAll('svg').forEach(e => e.remove());
+  host.insertAdjacentHTML('afterbegin', svg);
+
+  $('#eq-legend').innerHTML = series.map(s =>
+    `<span><i class="swatch" style="background:${css(s.color)}"></i>${s.label}</span>`).join('')
+    + `<span><i class="swatch" style="background:${css('--ink-3')};height:2px"></i>Nakit (100)</span>`;
+
+  const hit = host.querySelector('#eq-hit');
+  const cross = host.querySelector('#eq-cross');
+  const dots = [...host.querySelectorAll('.eq-dot')];
+
+  const move = (ev) => {
+    const r = host.querySelector('svg').getBoundingClientRect();
+    const px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+    const scale = W / r.width;
+    const i = Math.max(0, Math.min(n - 1, Math.round(((px * scale) - M.l) / (W - M.l - M.r) * (n - 1))));
+    cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', '1');
+    series.forEach((s, k) => {
+      const p = s.pts[Math.min(i, s.pts.length - 1)];
+      dots[k].setAttribute('cx', x(i)); dots[k].setAttribute('cy', y(p.v));
+      dots[k].setAttribute('opacity', '1');
+    });
+    tip.innerHTML = `<div class="t-d">${series[0].pts[i].d}</div>` + series.map(s => {
+      const p = s.pts[Math.min(i, s.pts.length - 1)];
+      return `<div class="t-r"><span><i class="swatch" style="background:${css(s.color)}"></i>${s.label}</span>
+              <span class="t-v">${fmt(p.v, 1)}</span></div>`;
+    }).join('');
+    tip.style.opacity = '1';
+    const left = Math.min(Math.max(8, (x(i) / scale) - 80), r.width - 175);
+    tip.style.left = left + 'px';
+    tip.style.top = '12px';
+  };
+  const leave = () => { tip.style.opacity = '0'; cross.setAttribute('opacity', '0');
+                        dots.forEach(d => d.setAttribute('opacity', '0')); };
+  hit.addEventListener('mousemove', move);
+  hit.addEventListener('mouseleave', leave);
+  hit.addEventListener('touchmove', move, { passive: true });
+  hit.addEventListener('touchend', leave);
+}
+
+/* ---------------------------------------------------------- decisions */
+function renderDecisions() {
+  const host = $('#dec-chart'), tip = $('#dec-tip');
+  const rows = DATA.decisions.slice().sort((a, b) => b.n - a.n);
+  const W = host.clientWidth || 420;
+  const rowH = 40, M = { t: 6, r: 12, b: 6, l: W < 420 ? 128 : 168 };
+  const H = M.t + M.b + rows.length * rowH;
+  const max = Math.max(...rows.map(r => r.n));
+  const bw = W - M.l - M.r;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Giriş kararları">`;
+  rows.forEach((r, i) => {
+    const yy = M.t + i * rowH + 9;
+    const w = Math.max(3, (r.n / max) * bw);
+    const color = r.allowed ? css('--series-1') : css('--line-strong');
+    svg += `<rect class="dec-bar" data-i="${i}" x="${M.l}" y="${yy}" width="${w.toFixed(1)}"
+            height="21" rx="4" fill="${color}"/>`;
+    svg += `<text x="${M.l - 10}" y="${yy + 15}" text-anchor="end"
+            font-family="IBM Plex Mono, monospace" font-size="11" fill="${css('--ink-2')}">${r.code}</text>`;
+    svg += `<text x="${(M.l + w + 8).toFixed(1)}" y="${yy + 15}"
+            font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600"
+            fill="${css('--ink')}">${r.n}</text>`;
+  });
+  svg += `</svg>`;
+  host.querySelectorAll('svg').forEach(e => e.remove());
+  host.insertAdjacentHTML('afterbegin', svg);
+
+  host.querySelectorAll('.dec-bar').forEach(bar => {
+    bar.style.cursor = 'default';
+    bar.addEventListener('mouseenter', (ev) => {
+      const r = rows[+bar.dataset.i];
+      tip.innerHTML = `<div class="t-d">${r.code}</div>
+        <div class="t-r"><span>${r.allowed ? 'Kabul edilen giriş' : 'Reddedilen giriş'}</span>
+        <span class="t-v">${r.n}</span></div>`;
+      tip.style.opacity = '1';
+      const hb = host.getBoundingClientRect(), bb = bar.getBoundingClientRect();
+      tip.style.left = Math.min(Math.max(8, bb.left - hb.left), hb.width - 180) + 'px';
+      tip.style.top = (bb.top - hb.top + 26) + 'px';
+    });
+    bar.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+  });
+}
+
+/* ----------------------------------------------------------- coverage */
+function renderCoverage() {
+  const host = $('#cov-chart'), tip = $('#cov-tip');
+  const tfs = ['4h', '1h', '5m'];
+  const colors = ['--series-1', '--series-2', '--series-3'];
+  const pairs = [...new Set(DATA.coverage.map(c => c.pair))];
+  const W = host.clientWidth || 420;
+  const groupH = 62, M = { t: 6, r: 44, b: 6, l: W < 420 ? 74 : 86 };
+  const H = M.t + M.b + pairs.length * groupH;
+  const max = Math.max(...DATA.coverage.map(c => c.days));
+  const bw = W - M.l - M.r;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Veri kapsamı">`;
+  pairs.forEach((p, gi) => {
+    const gy = M.t + gi * groupH;
+    svg += `<text x="${M.l - 10}" y="${gy + 34}" text-anchor="end"
+            font-family="IBM Plex Mono, monospace" font-size="11.5" fill="${css('--ink-2')}">${p}</text>`;
+    tfs.forEach((tf, si) => {
+      const rec = DATA.coverage.find(c => c.pair === p && c.tf === tf);
+      if (!rec) return;
+      const yy = gy + 6 + si * 17;
+      const w = Math.max(2, (rec.days / max) * bw);
+      svg += `<rect class="cov-bar" data-p="${p}" data-tf="${tf}" data-d="${rec.days}"
+              data-r="${rec.rows}" x="${M.l}" y="${yy}" width="${w.toFixed(1)}" height="13" rx="3"
+              fill="${css(colors[si])}"/>`;
+      svg += `<text x="${(M.l + w + 7).toFixed(1)}" y="${yy + 11}"
+              font-family="IBM Plex Mono, monospace" font-size="10.5"
+              fill="${css('--ink-3')}">${Math.round(rec.days)}g</text>`;
+    });
+  });
+  svg += `</svg>`;
+  host.querySelectorAll('svg').forEach(e => e.remove());
+  host.insertAdjacentHTML('afterbegin', svg);
+
+  $('#cov-legend').innerHTML = tfs.map((tf, i) =>
+    `<span><i class="swatch" style="background:${css(colors[i])};height:9px;width:9px;border-radius:2px"></i>${tf}</span>`).join('');
+
+  host.querySelectorAll('.cov-bar').forEach(bar => {
+    bar.addEventListener('mouseenter', () => {
+      tip.innerHTML = `<div class="t-d">${bar.dataset.p} · ${bar.dataset.tf}</div>
+        <div class="t-r"><span>Kapsam</span><span class="t-v">${Math.round(bar.dataset.d)} gün</span></div>
+        <div class="t-r"><span>Mum</span><span class="t-v">${(+bar.dataset.r).toLocaleString('tr-TR')}</span></div>`;
+      tip.style.opacity = '1';
+      const hb = host.getBoundingClientRect(), bb = bar.getBoundingClientRect();
+      tip.style.left = Math.min(Math.max(8, bb.left - hb.left), hb.width - 180) + 'px';
+      tip.style.top = (bb.top - hb.top + 20) + 'px';
+    });
+    bar.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+  });
+}
+
+/* -------------------------------------------------------------- table */
+function renderTrades() {
+  $('#trades tbody').innerHTML = DATA.trades.map(t => `
+    <tr>
+      <td class="mono">${t.pair}</td>
+      <td class="mono" style="color:var(--ink-2)">${t.open.replace('T', ' ')}</td>
+      <td class="mono" style="color:var(--ink-2)">${t.close.replace('T', ' ')}</td>
+      <td class="n">${fmt(t.open_rate, 2)}</td>
+      <td class="n">${fmt(t.close_rate, 2)}</td>
+      <td class="n" style="color:var(--ink-2)">${fmt(t.hours, 0)}s</td>
+      <td class="n ${t.profit_pct >= 0 ? 'pos' : 'neg'}">${t.profit_pct > 0 ? '+' : ''}${fmt(t.profit_pct)}%</td>
+      <td class="n ${t.profit_abs >= 0 ? 'pos' : 'neg'}">${t.profit_abs > 0 ? '+' : ''}${fmt(t.profit_abs)}</td>
+      <td><span class="tag">${t.reason}</span></td>
+    </tr>`).join('');
+}
+
+function renderAll() { renderEquity(); renderDecisions(); renderCoverage(); }
+
+renderStats();
+renderTrades();
+renderAll();
+
+let rt;
+addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(renderAll, 140); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => setTimeout(renderAll, 50));
+new MutationObserver(() => setTimeout(renderAll, 50))
+  .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+</script>

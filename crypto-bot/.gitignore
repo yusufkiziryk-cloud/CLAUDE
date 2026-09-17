@@ -16,6 +16,9 @@ user_data/hyperopt_results/
 
 # Generated reports keep their manifests in git, not their bulk output.
 reports/**/raw/
+# The dashboard is regenerated from the artefacts on disk; the generator and
+# its template are what belong in git, not the 80KB of baked-in data.
+reports/dashboard.html
 
 # Never commit secrets, even by accident.
 .env

@@ -76,6 +76,21 @@ TLS'i sonlandıran bir vekil sunucunun arkasındaysanız sona
 değişkeni ve CLI birleştikten **sonraki** yapılandırmayı freqtrade'in kendi
 birleştiricisiyle hesaplar ve anahtarsız dry-run değilse reddeder.
 
+## Panel (tek dosya HTML)
+
+```bash
+.venv/bin/python scripts/dashboard.py     # reports/dashboard.html
+```
+
+Tarayıcıda açın. **Sunucu değil, dosya** — port açmaz, anahtar tutmaz, dışarı
+bir şey göndermez. Her şeyi diskteki mevcut çıktılardan okur: freqtrade'in
+yazdığı backtest arşivi, risk durumundaki kayıtlı giriş kararları ve veri
+manifesti. Kaynak yoksa uydurmaz, "yok" yazar.
+
+İçerik: equity eğrisi (al-tut ve nakit ile karşılaştırmalı), giriş kararları ve
+ret nedenleri, veri kapsamı, 12 işlemin tamamı, sağlık kontrolleri ve canlıya
+geçişi engelleyen 6 madde.
+
 ## Haftalık rapor
 
 ```bash

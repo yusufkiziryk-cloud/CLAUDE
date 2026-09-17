@@ -38,6 +38,7 @@ oku. Bu dosyayı büyütme.
 .venv/bin/python scripts/collect-data.py           # veri topla (artımlı)
 .venv/bin/python scripts/watchdog.py --state user_data/dryrun/risk_state.sqlite
 .venv/bin/python scripts/weekly-report.py --weeks 1
+.venv/bin/python scripts/dashboard.py              # reports/dashboard.html
 .venv/bin/python scripts/safe-run.py trade   --config config/config.dry.json
 .venv/bin/python scripts/safe-run.py backtesting --config config/config.dry.json \
     --strategy BaselineTrend4h --timerange 20250901-20260901 --enable-protections
