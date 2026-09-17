@@ -1,0 +1,9 @@
+# Direct dependencies, pinned. The full transitive set is in
+# requirements.lock.txt (generated with `pip freeze`).
+#
+# freqtrade is pinned to an exact release because this project's safety
+# checks read freqtrade internals (config merge order, exchange _ft_has
+# capability flags). An unpinned upgrade could silently turn a real check
+# into a no-op; tests/test_capabilities.py fails loudly if that happens.
+freqtrade==2026.8
+PyYAML==6.0.3

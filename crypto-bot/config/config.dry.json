@@ -1,0 +1,102 @@
+{
+    "$schema": "https://schema.freqtrade.io/schema.json",
+    "//": "DRY-RUN ONLY. This file must never contain credentials and must never set dry_run to false. scripts/safe-run.py refuses to start otherwise.",
+    "max_open_trades": 3,
+    "stake_currency": "USDC",
+    "stake_amount": 100,
+    "tradable_balance_ratio": 0.99,
+    "fiat_display_currency": "USD",
+    "dry_run": true,
+    "dry_run_wallet": 1000,
+    "cancel_open_orders_on_exit": false,
+    "trading_mode": "spot",
+    "margin_mode": "",
+    "timeframe": "4h",
+    "//minimal_roi": "Effectively disabled: a reachable ROI table would silently pre-empt the exit signal and the stop, which section 6 of the master instruction forbids.",
+    "minimal_roi": {
+        "0": 100
+    },
+    "//stoploss": "Hard backstop only. The real stop is the per-trade ATR stop supplied by custom_stoploss. -0.15 can only ever cut EARLIER than a wider ATR stop, never later, so it cannot enlarge the modelled loss.",
+    "stoploss": -0.15,
+    "trailing_stop": false,
+    "use_exit_signal": true,
+    "exit_profit_only": false,
+    "ignore_roi_if_entry_signal": false,
+    "//use_custom_stoploss": "Set on the strategy class, not here.",
+    "unfilledtimeout": {
+        "entry": 30,
+        "exit": 30,
+        "exit_timeout_count": 0,
+        "unit": "minutes"
+    },
+    "entry_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "order_types": {
+        "entry": "limit",
+        "exit": "limit",
+        "emergency_exit": "market",
+        "force_entry": "limit",
+        "force_exit": "market",
+        "//stoploss_on_exchange": "VERIFIED FALSE for Hyperliquid spot in freqtrade 2026.8 (Hyperliquid._ft_has). Setting it true would be silently ignored or rejected; the bot-internal stop is all we have. This is recorded as a LIVE_BLOCKER.",
+        "stoploss": "market",
+        "stoploss_on_exchange": false
+    },
+    "exchange": {
+        "name": "hyperliquid",
+        "//credentials": "Intentionally absent. A keyless dry run needs no wallet address and no private key. scripts/safe-run.py rejects startup if any credential field is populated.",
+        "pair_whitelist": [
+            "BTC/USDC",
+            "ETH/USDC",
+            "SOL/USDC"
+        ],
+        "//pair_whitelist_warning": "ccxt labels these BTC/ETH/SOL, but the exchange market ids are @142/@151/@156, whose real base tokens are UBTC/UETH/USOL - Unit-bridge issued wrappers, NOT native BTC/ETH/SOL. See docs/CAPABILITIES.md. Do not read these names as native assets.",
+        "pair_blacklist": [
+            ".*/USDT",
+            ".*/USDH",
+            ".*/USDE"
+        ],
+        "ccxt_config": {},
+        "ccxt_async_config": {}
+    },
+    "pairlists": [
+        {
+            "method": "StaticPairList"
+        }
+    ],
+    "telegram": {
+        "enabled": false,
+        "//": "Optional by design. The bot must run without a token or chat id."
+    },
+    "api_server": {
+        "enabled": false,
+        "listen_ip_address": "127.0.0.1",
+        "listen_port": 8080,
+        "CORS_origins": []
+    },
+    "bot_name": "kripto-dryrun",
+    "initial_state": "running",
+    "force_entry_enable": false,
+    "internals": {
+        "process_throttle_secs": 5
+    },
+    "dataformat_ohlcv": "feather",
+    "dataformat_trades": "feather",
+    "db_url": "sqlite:///user_data/dryrun/tradesv3.dryrun.sqlite",
+    "user_data_dir": "user_data",
+    "datadir": "user_data/data",
+    "logfile": "user_data/logs/freqtrade-dryrun.log",
+    "strategy": "BaselineTrend4h"
+}

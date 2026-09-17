@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Runtime state: databases, logs and downloaded market data are per-machine.
+user_data/dryrun/
+user_data/logs/
+user_data/data/
+user_data/backtest_results/
+user_data/hyperopt_results/
+
+# Generated reports keep their manifests in git, not their bulk output.
+reports/**/raw/
+
+# Never commit secrets, even by accident.
+.env
+.env.*
+!.env.example
+*.key
+*.pem

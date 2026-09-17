@@ -1,0 +1,68 @@
+# Dry-run runtime. There is no live-trading service in this file, by design.
+#
+# The image is pinned by immutable digest, not by a moving tag. `stable` and
+# `latest` are rebuilt in place, so pinning them would mean the bot silently
+# changes version between restarts - including the exchange capability flags
+# that this project's safety checks depend on.
+#
+# Digest recorded 2026-09-17 for freqtradeorg/freqtrade:2026.8 (linux/amd64).
+# To move to a new release: read its changelog, update the digest here, then
+# re-run `python -m pytest tests/test_capabilities.py` before trusting it.
+
+services:
+  freqtrade-dryrun:
+    image: freqtradeorg/freqtrade:2026.8@sha256:4d23160b501d2b34579e76f57ad75edfa274967cd0dd824ff1c1b86d8c166ab4
+    container_name: kripto-dryrun
+
+    # The official image already runs as the unprivileged "ftuser".
+    user: "1000:1000"
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+
+    # The Docker socket is deliberately NOT mounted. A container that can talk
+    # to the daemon is a container that can escape to the host.
+    volumes:
+      - ./user_data:/freqtrade/user_data:rw
+      - ./config:/freqtrade/config:ro
+      - ./src:/freqtrade/src:ro
+      - ./scripts:/freqtrade/scripts:ro
+
+    environment:
+      - PYTHONPATH=/freqtrade/src
+      # dry_run is NOT settable here. scripts/safe-run.py refuses to start if
+      # FREQTRADE__DRY_RUN is present with a false value.
+
+    # No ports are published. FreqUI/REST stay disabled in config.dry.json;
+    # if you ever enable them, bind to 127.0.0.1 only and never publish here.
+
+    entrypoint: ["python", "/freqtrade/scripts/safe-run.py"]
+    command: ["trade", "--config", "/freqtrade/config/config.dry.json"]
+
+    restart: "no"
+
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2g
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+    healthcheck:
+      # Liveness only. A passing healthcheck does NOT mean the trading loop is
+      # healthy - that is what the watchdog in src/kripto/ops measures.
+      test: ["CMD", "python", "-c", "import pathlib,sys; sys.exit(0)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

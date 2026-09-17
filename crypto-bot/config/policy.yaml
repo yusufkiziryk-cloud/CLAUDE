@@ -1,0 +1,92 @@
+# Kripto bot risk policy - DRY-RUN BASELINE
+#
+# These are STARTING ASSUMPTIONS for dry-run research, not personalised
+# investment advice and not a proven optimum. No live risk budget is approved
+# by this file. Every value here is a test hypothesis.
+#
+# This file is NOT a freqtrade config. None of these keys are freqtrade keys.
+# Unknown keys, negative values, NaN/Infinity and percent/ratio confusion are
+# all startup errors - see src/kripto/policy.py.
+
+meta:
+  schema_version: 1
+  policy_id: baseline-dryrun-v1
+  description: >-
+    4h long-only spot trend following on Hyperliquid spot (Unit-bridged
+    assets). Dry-run only. Live trading is blocked; see docs/LIVE_READINESS.md.
+
+exchange:
+  id: hyperliquid
+  trading_mode: spot
+  quote_currency: USDC
+  # VERIFIED 2026-09-17 against the installed freqtrade 2026.8 adapter:
+  # Hyperliquid._ft_has["stoploss_on_exchange"] is False for spot.
+  # (It is True only in _ft_has_futures.) This is a LIVE_BLOCKER.
+  stoploss_on_exchange_available: false
+
+risk:
+  starting_balance_quote: 1000      # simulated capital, not a real balance
+  risk_per_trade: 0.01              # 1% of equity to the modelled stop
+  max_open_positions: 3             # pending entries reserve a slot too
+  max_total_open_risk: 0.03         # open + pending, combined
+  max_asset_notional_fraction: 0.25 # per-asset notional cap, fraction of equity
+  max_portfolio_notional_fraction: 0.75
+  daily_loss_limit: 0.03            # from 00:00 UTC, open AND closed results
+  weekly_loss_limit: 0.06           # from Monday 00:00 UTC
+  max_drawdown_from_peak: 0.10      # permanent entry lock, operator review
+  consecutive_stop_count: 3
+  consecutive_stop_cooldown_hours: 24
+  pair_cooldown_candles: 2          # 4h candles after an exit, per pair
+  fee_reserve_fraction: 0.01        # held back so fees never overdraw cash
+  # UBTC/UETH/USOL are all Unit-bridge issued. They share price correlation
+  # AND a single bridge issuer, so they are one risk bucket, never three
+  # independent risks.
+  correlation_group: crypto-unit-bridged
+
+costs:
+  # Source: https://hyperliquid.gitbook.io/hyperliquid-docs/trading/fees
+  # Checked 2026-09-17. Spot tier 0: taker 0.070%, maker 0.040%.
+  # Conservative assumption: taker on both sides. No referral or HYPE-staking
+  # discount is assumed, because none is verified for this account.
+  entry_fee: 0.0007
+  exit_fee: 0.0007
+  exit_slippage_assumption: 0.002   # 20 bps adverse fill on the stop
+  emergency_exit_max_slippage: 0.01
+  # ccxt simulates Hyperliquid market orders as limit orders with a 5% cap.
+  # Documented in freqtrade exchanges.md and implied by
+  # Hyperliquid._ft_has["marketOrderRequiresPrice"] = True.
+  ccxt_market_order_slippage_cap: 0.05
+  fee_source: >-
+    https://hyperliquid.gitbook.io/hyperliquid-docs/trading/fees (checked
+    2026-09-17, spot tier 0, taker 0.070% / maker 0.040%)
+
+entry_gates:
+  max_spread_bps: 15
+  max_data_age_seconds: 900
+  min_book_depth_quote: 5000
+  max_price_deviation_bps: 50
+  min_daily_quote_volume: 1000000
+  # Hyperliquid._ft_has["tickers_have_bid_ask"] is False, so spread must come
+  # from an explicit L2 book call. No book data means no entry eligibility.
+  require_liquidity_data: true
+
+strategy:
+  timeframe: 4h
+  ema_fast: 50
+  ema_slow: 200
+  adx_period: 14
+  adx_min: 25
+  atr_period: 14
+  atr_stop_multiple: 2.5
+  # 200 candles is NOT assumed to be sufficient warm-up for EMA200.
+  # Recursive analysis in Faz 4 measures the real sensitivity.
+  startup_candles: 400
+  trailing_stop_enabled: false
+  position_adjustment_enabled: false
+
+operations:
+  max_reconcile_age_seconds: 900
+  heartbeat_interval_seconds: 60
+  max_clock_skew_seconds: 5
+  max_pending_order_age_seconds: 1800
+  notification_outage_entry_halt_seconds: 3600
