@@ -82,6 +82,56 @@ The image is pinned by immutable digest, runs as a non-root user with
 This path has never been started here. Verify it on your own machine before
 relying on it.
 
+## Watchdog
+
+```bash
+.venv/bin/python scripts/watchdog.py --state user_data/dryrun/risk_state.sqlite
+.venv/bin/python scripts/watchdog.py --state ... --interval 60    # keep watching
+.venv/bin/python scripts/watchdog.py --state ... --json           # machine readable
+```
+
+Exit code: `0` healthy, `1` warning, `2` critical - so cron or a supervisor
+can act on it without parsing the text.
+
+It opens the state file **read-only** (SQLite `mode=ro`), so it cannot write
+even if asked to. It holds no credentials, sends no orders and is not a
+standby trader.
+
+What it measures, and why none of it is "is the process up":
+
+| Check | Catches |
+|---|---|
+| `loop_heartbeat` | the process is alive but the loop has stopped going round |
+| `candle_freshness` | the data feed is behind, measured against the expected last **closed** candle |
+| `orderbook_freshness` | the book snapshot is stale - a **separate clock** from candle age |
+| `reconcile_age` | records have drifted from the authoritative ledger |
+| `clock_skew` | local and venue clocks disagree |
+| `api_error_rate` | the venue is failing too often to act on its answers |
+| `pending_orders` | an order has been pending far too long |
+| `storage` | not enough free disk to guarantee a durable write |
+| `notifications` | nobody would see an alert |
+
+A completed 4h candle is legitimately **4 to 8 hours old**, so candle
+freshness compares against the expected last closed candle rather than a flat
+age. An order book snapshot that old would be meaningless, which is why the
+two have separate thresholds. Sharing one would give you either constant
+false alarms or a blind spot.
+
+The bot also runs these checks in-process each loop and pauses **entries** on
+its own when they fail. No check can ever stop exit management: the strongest
+action available is halting entries or calling a human.
+
+### What the watchdog cannot do
+
+A watchdog on the same host cannot tell you the host died - it dies with it.
+For that you need a heartbeat to something off-box (a dead-man switch: the bot
+pings an external service, and the service alerts when the pings stop).
+
+This repository does **not** start, configure or pay for such a service. If
+you want one, you choose and run it. Until then, accept that a host failure
+is silent - which matters more here than usual, because with no exchange-side
+stop an unmanaged position has no protection at all.
+
 ## Restart
 
 1. The bot starts in `RECONCILING` and takes no entries.

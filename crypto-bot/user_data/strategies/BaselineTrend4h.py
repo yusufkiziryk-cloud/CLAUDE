@@ -49,6 +49,16 @@ if str(_REPO_ROOT / "src") not in sys.path:
 from kripto.money import ZERO, dec, to_float  # noqa: E402
 from kripto.policy import load_policy  # noqa: E402
 from kripto.risk.equity import AssetHolding, compute_equity  # noqa: E402
+from kripto.ops.health import (  # noqa: E402
+    EXCHANGE_TIME,
+    LAST_CANDLE_OPEN,
+    LAST_ORDERBOOK_UPDATE,
+    LAST_RECONCILE,
+    HealthRecorder,
+    read_signal,
+)
+from kripto.orders.lifecycle import OrderLedger  # noqa: E402
+from kripto.ops.watchdog import Action, Level, Watchdog  # noqa: E402
 from kripto.risk.gate import EntryGate, GateContext  # noqa: E402
 from kripto.risk.state import BotState, RiskStore  # noqa: E402
 
@@ -140,6 +150,9 @@ class BaselineTrend4h(IStrategy):
         self._store: RiskStore | None = None
         self._gate: EntryGate | None = None
         self._writer_lock_owner: str | None = None
+        self._health: HealthRecorder | None = None
+        self._watchdog: Watchdog | None = None
+        self._ledger: OrderLedger | None = None
         params = self.policy.strategy
         self.ema_fast_period = params["ema_fast"]
         self.ema_slow_period = params["ema_slow"]
@@ -177,6 +190,31 @@ class BaselineTrend4h(IStrategy):
         if self._gate is None:
             self._gate = EntryGate(self.store, self.policy)
         return self._gate
+
+    @property
+    def ledger(self) -> OrderLedger:
+        if self._ledger is None:
+            self._ledger = OrderLedger(self.store)
+        return self._ledger
+
+    @property
+    def health(self) -> HealthRecorder:
+        if self._health is None:
+            self._health = HealthRecorder(self.store)
+        return self._health
+
+    @property
+    def watchdog(self) -> Watchdog:
+        """In-process health checks.
+
+        The same checks also run out-of-process (scripts/watchdog.py) against
+        a read-only connection. Two callers, one set of rules: the in-process
+        one can pause entries, the external one can tell a human when the bot
+        is the thing that broke.
+        """
+        if self._watchdog is None:
+            self._watchdog = Watchdog(self.store.path, self.policy, timeframe=self.timeframe)
+        return self._watchdog
 
     def bot_start(self, **kwargs) -> None:
         """Live and dry runs start reconciling, never ready.
@@ -221,6 +259,187 @@ class BaselineTrend4h(IStrategy):
                 now,
             )
             logger.info("risk state set to RECONCILING at startup")
+
+    def bot_loop_start(self, current_time: datetime, **kwargs) -> None:
+        """Record health, then act on it.
+
+        Runs before the pairs are processed. Anything that goes wrong here is
+        swallowed: a failure in the monitoring layer must never take down the
+        loop it is monitoring, and it must never interfere with exits.
+        """
+        if self.runmode in SIMULATED_RUNMODES:
+            return
+        try:
+            self._record_health(current_time)
+            self._maybe_reconcile(current_time)
+            report = self.watchdog.run(now=current_time)
+
+            if report.action in (Action.HALT_ENTRIES, Action.OPERATOR_REQUIRED):
+                target = (
+                    BotState.RECOVERY_REQUIRED
+                    if report.action is Action.OPERATOR_REQUIRED
+                    else BotState.ENTRY_PAUSED
+                )
+                reasons = "; ".join(f"{c.name}: {c.message}" for c in report.failures)
+                if self.store.get_state() is not target:
+                    logger.error("health check -> %s: %s", target.value, reasons)
+                    # Entries stop. Exits keep running: every state except
+                    # STOPPED manages exits, and the watchdog may never set
+                    # STOPPED.
+                    self.store.set_state(target, f"watchdog: {reasons}", current_time)
+            elif (
+                # Recovery keys off the recommended ACTION, not the level. A
+                # standing WARN that recommends nothing (say, an unsampled
+                # clock) must not hold entries paused indefinitely - that
+                # would turn every minor gap in observability into a silent
+                # trading halt.
+                report.action is Action.NONE
+                and self.store.get_state() is BotState.ENTRY_PAUSED
+                and not self.store.active_locks(current_time)
+            ):
+                logger.info("health recovered and no risk locks remain; entries resume")
+                self.store.set_state(BotState.READY, "health recovered", current_time)
+        except Exception as exc:  # noqa: BLE001
+            logger.error(
+                "health monitoring failed (%s: %s) - the trading loop continues; "
+                "monitoring must never take down what it monitors",
+                type(exc).__name__, exc,
+            )
+        finally:
+            # The heartbeat is written LAST, so a hang inside the work above
+            # stops the heartbeat instead of faking one.
+            try:
+                self.health.heartbeat(current_time)
+            except Exception:  # noqa: BLE001
+                logger.error("could not write the loop heartbeat", exc_info=True)
+
+    def _maybe_reconcile(self, now: datetime) -> None:
+        """Agree with the authoritative records before allowing entries.
+
+        A restart begins in RECONCILING and stays there until this succeeds.
+        Reconciliation is also re-run once the last one goes stale, so a bot
+        that has drifted stops entering rather than carrying on regardless.
+
+        SCOPE, stated rather than implied: in a dry run the authoritative
+        record is freqtrade's own simulated trade ledger, because nothing was
+        ever sent to the venue. That means this path verifies our bookkeeping
+        against the engine's, NOT against an exchange. Venue-side
+        reconciliation stays PARTIAL for dry-run in src/kripto/risk/coverage.py
+        and is a live-readiness gate, not a solved problem.
+        """
+        last = read_signal(self.store._conn, LAST_RECONCILE)
+        max_age = to_float(self.policy.operations["max_reconcile_age_seconds"])
+        state = self.store.get_state()
+        due = (
+            state is BotState.RECONCILING
+            or last is None
+            or last.age_seconds(now) > max_age / 2
+        )
+        if not due:
+            return
+
+        ledger = self.ledger
+        open_trades = Trade.get_open_trades()
+        known_positions = {t.pair for t in open_trades}
+
+        open_orders = []
+        for trade in open_trades:
+            for order in trade.orders:
+                if order.ft_is_open:
+                    open_orders.append(
+                        {
+                            "id": order.order_id,
+                            "clientOrderId": getattr(order, "ft_order_tag", "") or "",
+                            "filled": float(order.filled or 0),
+                            "amount": float(order.amount or 0),
+                            "status": order.status,
+                        }
+                    )
+
+        result = ledger.reconcile(
+            open_orders=open_orders,
+            recent_fills=[],
+            known_positions=known_positions,
+            now=now,
+            history_complete=True,
+        )
+
+        if result.requires_operator:
+            logger.error(
+                "reconciliation could not be completed: unresolved=%s unrecognised_orders=%s "
+                "unrecognised_positions=%s. Unrecognised orders and positions are NEVER "
+                "adopted, cancelled or closed automatically.",
+                result.unresolved, result.unrecognised_orders, result.unrecognised_positions,
+            )
+            self.store.set_state(
+                BotState.RECOVERY_REQUIRED,
+                "reconciliation incomplete; operator review required",
+                now,
+            )
+            return
+
+        self.health.record(LAST_RECONCILE, now, detail=f"{len(open_orders)} open order(s)")
+        if state is BotState.RECONCILING:
+            logger.info("reconciliation complete; records agree")
+            self.store.set_state(BotState.READY, "records agree", now)
+
+    def _record_health(self, now: datetime) -> None:
+        """Write the evidence the watchdog reads."""
+        for pair in self.dp.current_whitelist():
+            dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+            if dataframe is not None and not dataframe.empty:
+                self.health.record(
+                    LAST_CANDLE_OPEN, now,
+                    value=dataframe["date"].iloc[-1].to_pydatetime().isoformat(),
+                    detail=pair,
+                )
+                break
+
+        try:
+            book = self.dp.orderbook(self.dp.current_whitelist()[0], 1)
+            if book:
+                self.health.record(LAST_ORDERBOOK_UPDATE, now)
+                self.health.record_api_call(now, ok=True, endpoint="orderbook")
+        except Exception as exc:  # noqa: BLE001
+            self.health.record_api_call(now, ok=False, endpoint="orderbook")
+            logger.debug("order book sample failed: %s", exc)
+
+        self._sample_exchange_time(now)
+
+        self.health.prune_api_calls(
+            now, to_float(self.policy.operations["api_error_window_seconds"]) * 4
+        )
+
+    _last_time_sample: datetime | None = None
+
+    def _sample_exchange_time(self, now: datetime) -> None:
+        """Measure clock skew against the venue, occasionally.
+
+        Public read, no credentials. Sampled on an interval rather than every
+        loop: skew drifts slowly, and a per-loop call would spend rate limit
+        on a number that barely moves.
+        """
+        interval = to_float(self.policy.operations["max_reconcile_age_seconds"]) / 2
+        if (
+            self._last_time_sample is not None
+            and (now - self._last_time_sample).total_seconds() < interval
+        ):
+            return
+        try:
+            api = self.dp._exchange._api
+            if not api.has.get("fetchTime"):
+                return
+            millis = api.fetch_time()
+            self.health.record(
+                EXCHANGE_TIME,
+                now,
+                value=datetime.fromtimestamp(millis / 1000, tz=timezone.utc).isoformat(),
+            )
+            self.health.record_api_call(now, ok=True, endpoint="fetch_time")
+            self._last_time_sample = now
+        except Exception as exc:  # noqa: BLE001
+            self.health.record_api_call(now, ok=False, endpoint="fetch_time")
+            logger.debug("could not sample exchange time: %s", exc)
 
     # ------------------------------------------------------------------
     # Signals

@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-09-17, after the order-lifecycle work.
+Last updated: 2026-09-17, after the watchdog work.
 
 ## Where things stand
 
@@ -11,10 +11,10 @@ Last updated: 2026-09-17, after the order-lifecycle work.
 | Faz 2 - market data | **DONE** |
 | Faz 3 - strategy, risk, order correctness | **DONE** - risk layer and order lifecycle both adversarially tested |
 | Faz 4 - honest research report | **DONE** - verdict `INSUFFICIENT_EVIDENCE` |
-| Faz 5 - monitoring and handover | **PARTIAL** - runbook done; watchdog, weekly report and the 4-8 week observation not done |
+| Faz 5 - monitoring and handover | **PARTIAL** - watchdog and runbook done; weekly report and the 4-8 week observation not done |
 | Faz 6 - live readiness assessment | **DONE** - live remains blocked |
 
-Tests: **243 passing** offline, **247** including public-endpoint tests.
+Tests: **280 passing** offline, **284** including public-endpoint tests.
 
 ## Decisions made, and why
 
@@ -78,28 +78,61 @@ guard, allowing stale fills to move the filled amount backwards, and treating
 `UNKNOWN` as safe to resubmit each broke exactly the tests meant to catch
 them.
 
+## What the watchdog work added
+
+- `src/kripto/ops/health.py` - signals the bot leaves behind as it works, and
+  a read-only accessor. The observer's SQLite connection uses `mode=ro`, so
+  it is structurally incapable of writing rather than merely forbidden to.
+- `src/kripto/ops/watchdog.py` - nine checks, none of which look at whether
+  the process is up. The same functions run in-process (the bot pauses its
+  own entries) and out-of-process (a human gets told when the bot is the
+  broken thing).
+- `src/kripto/ops/notifier.py` - bounded, redacting, never-raising delivery.
+  A dead transport cannot stop stop-loss management or grow a queue without
+  limit.
+- `scripts/watchdog.py` - standalone observer, exit code 0/1/2.
+- Reconciliation wired into `bot_loop_start`, which closed T14 and is what
+  lets a restart actually reach `READY`.
+
+Verified end to end on a real dry run: writer lock acquired, `RECONCILING` ->
+reconciled -> `READY`, a first-loop pause while no data existed yet, then
+recovery, with the external watchdog reporting all nine checks green.
+
+## Bugs the end-to-end run caught
+
+5. **Sample age was being reported as clock skew.** The stored venue
+   timestamp was compared against the *current* local time instead of the
+   local time when the sample was taken, so a real 0.1s skew was reported as
+   93s - and halted entries. Unit tests had not caught it because they
+   sampled and checked at the same instant.
+6. **Recovery keyed off the health LEVEL instead of the recommended ACTION.**
+   A standing WARN with no action (an unsampled clock) held entries paused
+   indefinitely, turning a minor observability gap into a silent trading halt.
+
 ## Open risks
 
-- **No watchdog (T24).** Nothing measures loop liveness, data freshness,
-  reconciliation age or clock skew at runtime. Combined with the absence of
-  an exchange-side stop, this is now the sharpest remaining edge: a stop that
-  lives in a process nobody is watching.
-- **Reconciliation is not wired to a live feed (T14).** The logic exists and
-  refuses to guess; nothing calls it on a schedule against real balances.
-- **No transport or filesystem fault injection (T17, T18).**
+- **No transport or filesystem fault injection (T17, T18).** Low disk is
+  alarmed on but has never been induced; the order path's behaviour under
+  429/5xx is untested.
+- **Venue-side reconciliation is PARTIAL.** In a dry run nothing is ever
+  sent, so the loop reconciles against freqtrade's simulated ledger, not an
+  exchange.
+- **A same-host watchdog cannot report a dead host.** A dead-man heartbeat to
+  an off-box service would cover it; nothing here starts or pays for one.
 - The single-writer lock protects one machine only. Nothing here can stop a
   second host trading the same account, so V1 stays single-host by design.
-- The container this was built in is ephemeral, so nothing long-running was
-  started.
+- The container this was built in is ephemeral: total observed runtime is
+  minutes, against a required 4-8 weeks.
 
 ## The exact next step
 
-Build the **watchdog**: a read-only observer measuring loop heartbeat, last
-successful data update, last reconciliation, clock skew, API error rate and
-pending-order age, with the thresholds already declared in `policy.yaml`.
-Then wire reconciliation to run on a schedule (T14).
+**The weekly report** (Faz 5's remaining piece): realised and open PnL, all
+costs, equity and drawdown, benchmarks, entry/refusal counts with reasons,
+locks, data gaps, outages and simulation limitations, as reproducible local
+Markdown plus machine-readable JSON.
 
-The watchdog must not become a second order writer and must not carry keys.
+After that, the honest remaining work is not code. It is running the thing
+for 4-8 weeks on a machine that stays up, which this environment cannot do.
 
 Reproduction:
 

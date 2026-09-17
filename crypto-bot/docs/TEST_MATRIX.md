@@ -21,17 +21,17 @@ tests that read public exchange endpoints).
 | T11 | Second bot instance on the same account | `VERIFIED` | `test_single_writer_t11.py` (10 tests) - lease-based writer lock, takeover only after an abandoned lease |
 | T12 | Open-position loss crosses the daily/weekly limit | `VERIFIED` | `test_risk_gate.py` - including that recovery in the same period does not unlock |
 | T13 | Period rollover, restart, missing/corrupt risk record | `VERIFIED` | `test_risk_gate.py` |
-| T14 | External balance change or unrecognised order | `PARTIAL` | `reconcile()` refuses to adopt, cancel or close unrecognised orders and flags them for an operator. **Not wired to a live balance feed.** |
+| T14 | External balance change or unrecognised order | `VERIFIED` | `test_order_lifecycle.py` + the strategy's `_maybe_reconcile`, which runs on every loop, drops to `RECOVERY_REQUIRED` on anything unexplained, and never adopts, cancels or closes an unrecognised order. **Dry-run reconciles against freqtrade's simulated ledger, not the venue** - see `coverage.py`. |
 | T15 | Stop, emergency exit and losing normal exit are never vetoed | `VERIFIED` | `test_fills_and_exits.py` - every exit reason, a 60% loss, plus a structural check that no `return False` path exists |
 | T16 | Stop does not fill; price gaps | `VERIFIED` | `test_order_lifecycle.py` - bounded repricing, a hard slippage floor, an explicit "position STILL OPEN" alert, and a gap that leaves a resting sell untouched |
-| T17 | 429, 5xx, disconnect, clock skew | `PARTIAL` | collector has bounded jittered backoff; `FUTURE_TIMESTAMPS` detects skew. **Order-path retry semantics not tested.** |
+| T17 | 429, 5xx, disconnect, clock skew | `PARTIAL` | collector has bounded jittered backoff; clock skew measured against the venue and alarmed on; API error rate tracked over a rolling window with a minimum sample. **Transport-level fault injection on the order path not run.** |
 | T18 | DB lock, disk full, corrupt snapshot | `PARTIAL` | atomic write + fsync + rename; unknown schema version refused; terminal states immune to late events. **Disk-full injection not run.** |
 | T19 | Missing, open, duplicate, unordered candles; wrong market type | `VERIFIED` | `test_data_quality_t19.py` (21 tests) |
 | T20 | Future candles mutated; past signals must not change | `VERIFIED` | `test_lookahead_t20.py` - truncation, x3 mutation, single-candle mutation |
 | T21 | Warm-up length and candle limit sensitivity | `VERIFIED` | `test_lookahead_t20.py` - signal-level, three evaluation windows |
 | T22 | A shared risk scenario across backtest / replay / dry-run | `VERIFIED` | `test_risk_replay_t22.py` - identical decisions across paths, plus `src/kripto/risk/coverage.py` declaring what each path cannot model |
 | T23 | Deliberately bad strategy and insufficient data | `PARTIAL` | the real strategy produced `INSUFFICIENT_EVIDENCE` honestly; **no automated eligibility engine** |
-| T24 | No Telegram; watchdog outage; loop frozen with process alive | `NOT_RUN` | watchdog not implemented |
+| T24 | No Telegram; watchdog outage; loop frozen with process alive | `VERIFIED` | `test_watchdog_t24.py` (37 tests) - frozen-loop detection, candle vs book clocks, clock skew, API error rate, disk, bounded non-blocking notifications, and a read-only observer connection |
 | T25 | Canary secrets in logs, exceptions, URLs, reports | `VERIFIED` | `test_redaction.py` (10 tests) |
 | T26 | Re-run from a clean directory reproduces the result | `PARTIAL` | collector idempotency verified; the backtest reproduced -5.33% / 12 trades / PF 0.13 identically after unrelated code changes. **No single clean-room script yet.** |
 
@@ -66,15 +66,29 @@ event guard, allowing stale fills to move the filled amount backwards, and
 treating `UNKNOWN` as safe to resubmit each broke exactly the tests meant to
 catch them. The tests are not vacuous.
 
+The watchdog (`src/kripto/ops/`) closed T24 and, with reconciliation wired
+into the loop, T14. Its checks were mutation-tested too: replacing the
+candle-boundary maths with a naive age threshold, sharing one staleness
+threshold between candles and the order book, and opening the state file
+read-write each broke exactly the tests meant to catch them.
+
+An end-to-end dry run exercised the whole path: writer lock acquired,
+`RECONCILING` -> reconciled -> `READY`, first-loop pause while no data
+existed yet, then recovery, with the external watchdog reporting all checks
+green and exiting 0.
+
 Still genuinely open:
 
-- **`T24` (watchdog)** is an unimplemented feature, not an untested one.
-  Loop liveness, data freshness, reconciliation age and clock skew are
-  specified in `policy.yaml` but nothing measures them at runtime.
-- **`T14`** has the reconciliation logic but no live balance feed behind it.
 - **`T17`/`T18`** lack fault injection at the transport and filesystem level.
+  The collector retries with bounded jittered backoff and the storage check
+  alarms on low disk, but neither has been exercised by injecting the fault.
 - **`T23`** has no automated eligibility engine; the verdict was reached by
   applying the thresholds by hand.
+- **`T26`** reproduces in practice but has no single clean-room script.
+- **Venue-side reconciliation is still only PARTIAL in dry run.** Nothing was
+  ever sent to the exchange, so there is nothing there to reconcile against;
+  the loop verifies our bookkeeping against freqtrade's simulated ledger.
+  This is a live-readiness gate, not a solved problem.
 
 **A local fake passing is not "verified on the exchange".** Everything above
 was exercised against public read endpoints and a simulated engine only.

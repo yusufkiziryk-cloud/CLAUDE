@@ -33,9 +33,10 @@ oku. Bu dosyayı büyütme.
 ## Komutlar
 
 ```bash
-.venv/bin/python -m pytest -m "not network"        # hızlı test (176)
+.venv/bin/python -m pytest -m "not network"        # hızlı test (280)
 .venv/bin/python -m pytest                         # + kamu uç testleri
 .venv/bin/python scripts/collect-data.py           # veri topla (artımlı)
+.venv/bin/python scripts/watchdog.py --state user_data/dryrun/risk_state.sqlite
 .venv/bin/python scripts/safe-run.py trade   --config config/config.dry.json
 .venv/bin/python scripts/safe-run.py backtesting --config config/config.dry.json \
     --strategy BaselineTrend4h --timerange 20250901-20260901 --enable-protections
@@ -62,6 +63,21 @@ Emir durumları (`src/kripto/orders/lifecycle.py`): gönderim, kabul, dolum ve
 iptal **dört ayrı gözlemdir**. Timeout bir başarısızlık değil `UNKNOWN`'dır
 ve sorgu ile çözülene kadar yeniden göndermeyi engeller. İptal *isteği* hiçbir
 şeyi serbest bırakmaz; yalnızca **doğrulanmış** iptal bırakır.
+
+Watchdog (`src/kripto/ops/`): **süreç canlılığına bakmaz.** Botun geride
+bıraktığı kanıtın yaşına bakar. Gözlemci state dosyasını `mode=ro` ile açar,
+yani yazması **yapısal olarak** imkânsızdır; anahtar taşımaz, emir göndermez.
+Hiçbir kontrol çıkış yönetimini durduramaz — en güçlü öneri girişleri
+durdurmak veya operatör çağırmaktır.
+
+Tamamlanmış bir 4h mumu meşru olarak **4-8 saat yaşındadır**; mum tazeliği düz
+yaş eşiğiyle değil, beklenen son **kapanmış** mumla karşılaştırılır. Order book
+bayatlığı **ayrı bir saattir**. İkisine tek eşik vermek ya sürekli yanlış
+alarm ya da kör nokta üretir.
+
+Saat sapması, örneğin **alındığı andaki** yerel saatle karşılaştırılır. Şimdiki
+zamanla karşılaştırmak sapmayı değil örneğin yaşını ölçer (0.1s sapma 93s
+görünmüştü).
 
 Tek yazar: `store.acquire_writer_lock()`. Bu kilit yalnızca **bu makinedeki**
 ikinci süreci engeller; başka bir hosttan aynı hesaba bağlanmayı engelleyemez.

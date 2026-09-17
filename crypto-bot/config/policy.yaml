@@ -105,3 +105,12 @@ operations:
   max_clock_skew_seconds: 5
   max_pending_order_age_seconds: 1800
   notification_outage_entry_halt_seconds: 3600
+  # Book staleness is a DIFFERENT clock from candle age. A completed 4h candle
+  # is legitimately up to ~8 hours old; an order book snapshot that old is
+  # meaningless. Conflating the two produces either constant false alarms or a
+  # blind spot, depending on which threshold wins.
+  max_orderbook_age_seconds: 60
+  max_api_error_rate: 0.25
+  api_error_window_seconds: 300
+  min_free_disk_mb: 200
+  heartbeat_miss_tolerance: 5

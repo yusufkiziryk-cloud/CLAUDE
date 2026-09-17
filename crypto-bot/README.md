@@ -13,7 +13,7 @@ botu. Freqtrade 2026.8 üzerine kurulu; risk katmanı ayrı ve saf Python.
 
 | Soru | Cevap |
 |---|---|
-| Yazılım çalışıyor mu? | Evet. 176 test geçiyor, backtest uçtan uca koşuyor. |
+| Yazılım çalışıyor mu? | Evet. 280 test geçiyor; backtest ve dry-run uçtan uca koşuyor. |
 | Strateji kârlı mı? | **Hayır, kanıt yok.** Son 12 ayda -%5.33, 12 işlem. Karar: `INSUFFICIENT_EVIDENCE`. |
 | Canlıya hazır mı? | **Hayır.** 6 ayrı canlı engeli var. |
 | Gerçek para riski var mı? | Yok. Anahtar yok, emir yok, fon hareketi kodu yok. |
@@ -76,6 +76,30 @@ TLS'i sonlandıran bir vekil sunucunun arkasındaysanız sona
 değişkeni ve CLI birleştikten **sonraki** yapılandırmayı freqtrade'in kendi
 birleştiricisiyle hesaplar ve anahtarsız dry-run değilse reddeder.
 
+## İzleme (watchdog)
+
+```bash
+.venv/bin/python scripts/watchdog.py --state user_data/dryrun/risk_state.sqlite
+.venv/bin/python scripts/watchdog.py --state ... --interval 60   # sürekli izle
+```
+
+Çıkış kodu: `0` sağlıklı, `1` uyarı, `2` kritik.
+
+Gözlemci state dosyasını **salt okunur** açar (SQLite `mode=ro`), yani yazması
+yapısal olarak imkânsızdır. Anahtar taşımaz, emir göndermez.
+
+**Süreç canlılığına bakmaz.** Bir süreç ayakta olup döngüsü donmuş olabilir;
+kontroller botun geride bıraktığı kanıtın yaşını ölçer: döngü heartbeat'i, veri
+tazeliği, order book yaşı, son uzlaştırma, saat sapması, API hata oranı,
+bekleyen emir yaşı, disk ve bildirim sağlığı.
+
+Hiçbir kontrol çıkış yönetimini durduramaz — en güçlü öneri **girişleri**
+durdurmak veya operatör çağırmaktır.
+
+**Yapamadığı şey:** aynı makinedeki watchdog, makinenin kendisi öldüğünde haber
+veremez — onunla birlikte ölür. Bunun için makine dışına heartbeat gönderen bir
+"dead-man" servisi gerekir; bu depo öyle bir servis başlatmaz veya satın almaz.
+
 ## Durdurma — üç ayrı şey
 
 | Amaç | Yapılacak | Açık pozisyonlara etkisi |
@@ -100,8 +124,9 @@ pozisyonun hiçbir koruması kalmaz.
    ccxt bu farkı isimlendirmede gizliyor.
 3. **Stratejinin pozitif beklentisi kanıtlanmadı.** 12 işlem, tek rejim,
    dokunulmamış holdout yok.
-4. **Emir yaşam döngüsü tam sınanmadı.** İptal/dolum yarışı, belirsiz emir
-   kurtarma ve çoklu-örnek koruması henüz test edilmedi.
+4. **Toplam gözlenen çalışma süresi dakikalarla ölçülüyor**, gereken 4-8 hafta.
+   Taşıma ve dosya sistemi hata enjeksiyonu (T17/T18) yapılmadı; dry-run'da
+   borsa tarafı uzlaştırma yapısal olarak test edilemiyor.
 5. **Docker bu ortamda hiç ayağa kaldırılmadı** (daemon yok).
 
 ## Belgeler

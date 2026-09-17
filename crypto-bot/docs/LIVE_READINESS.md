@@ -57,26 +57,29 @@ See [the research report](../reports/faz4/RESEARCH_REPORT.md). Verdict
 five pre-set criteria. 12 closed trades, one market regime, no untouched
 hold-out.
 
-### LIVE_BLOCKER 4 - operational monitoring absent (reduced in scope)
+### LIVE_BLOCKER 4 - monitoring exists but has never been observed running (much reduced)
 
-The order lifecycle itself is no longer the gap. A stateful fake venue now
-exercises cancel/fill races, lost responses, crash recovery, duplicated and
-reordered events, bounded emergency repricing and single-writer enforcement
-(T08, T09, T10, T11, T16, T22), and those protections were mutation-tested.
+The order lifecycle and the monitoring layer are both built and tested. A
+stateful fake venue exercises cancel/fill races, lost responses, crash
+recovery, duplicated and reordered events, bounded emergency repricing and
+single-writer enforcement (T08-T11, T16, T22). The watchdog closes T24 and,
+with reconciliation wired into the loop, T14. All of it was mutation-tested,
+and an end-to-end dry run took the bot from `RECONCILING` through
+reconciliation to `READY` with every external check green.
 
 What remains:
 
-- **No watchdog (T24).** Nothing measures loop liveness, data freshness,
-  reconciliation age, clock skew, API error rate or pending-order age at
-  runtime. The thresholds exist in `policy.yaml`; no component reads them.
-- **Reconciliation is not wired to a live feed (T14).** The logic refuses to
-  adopt unrecognised orders and demands an operator, but nothing calls it on
-  a schedule against real balances.
-- **No transport or filesystem fault injection (T17, T18).**
-
-A bot-internal stop with no liveness monitoring is a stop that can stop
-without anyone noticing - which, given LIVE_BLOCKER 1, is the combination
-that matters most here.
+- **No transport or filesystem fault injection (T17, T18).** Low disk is
+  alarmed on; it has not been induced. The order path's retry behaviour under
+  429/5xx has not been exercised.
+- **Venue-side reconciliation is `PARTIAL`.** In a dry run nothing was ever
+  sent, so the loop reconciles our bookkeeping against freqtrade's simulated
+  ledger. Reconciling against a real venue is untested by construction.
+- **A same-host watchdog cannot report a dead host.** A dead-man heartbeat to
+  an off-box service would cover it; this repository does not start or pay
+  for one. Combined with LIVE_BLOCKER 1, a host failure means an unmanaged
+  position and nobody told.
+- **Total runtime observed: minutes, not weeks.** See LIVE_BLOCKER 5.
 
 ### LIVE_BLOCKER 5 - no observation period
 

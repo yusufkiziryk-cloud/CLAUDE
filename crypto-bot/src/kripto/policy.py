@@ -123,6 +123,24 @@ SCHEMA: dict[str, dict[str, Field]] = {
         "max_clock_skew_seconds": Field("positive_number", minimum=1),
         "max_pending_order_age_seconds": Field("positive_number", minimum=1),
         "notification_outage_entry_halt_seconds": Field("positive_number", minimum=1),
+        "max_orderbook_age_seconds": Field(
+            "positive_number",
+            minimum=1,
+            doc="Book staleness. NOT the same clock as candle age - a 4h candle is "
+            "legitimately hours old, a book snapshot is not.",
+        ),
+        "max_api_error_rate": Field(
+            "fraction", maximum=1.0, doc="Error fraction over the rolling API window."
+        ),
+        "api_error_window_seconds": Field("positive_number", minimum=10),
+        "min_free_disk_mb": Field("positive_number", minimum=1),
+        "heartbeat_miss_tolerance": Field(
+            "positive_number",
+            minimum=1,
+            maximum=100,
+            doc="How many heartbeat intervals may be missed before the loop is "
+            "considered frozen.",
+        ),
     },
 }
 

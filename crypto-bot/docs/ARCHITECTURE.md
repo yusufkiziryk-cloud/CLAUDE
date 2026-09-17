@@ -100,6 +100,36 @@ minimum. Step 9 turns both back into fail-closed.
 
 No freqtrade core file is patched or monkey-patched.
 
+## Monitoring
+
+```
+  bot loop ──writes──► health signals (same SQLite file)
+                              │
+                              ├──► in-process checks ──► pause OWN entries
+                              │
+                              └──► scripts/watchdog.py ──► alert a human
+                                   (mode=ro connection)
+```
+
+One set of check functions, two callers. The in-process caller can act; the
+out-of-process one exists precisely for the case where the bot is the broken
+thing and cannot act on its own behalf.
+
+The observer's connection is opened `mode=ro`, so writing raises rather than
+being merely discouraged. No check may recommend anything stronger than
+halting entries or calling a human - stopping exit management is not an
+available action.
+
+Two timing details that are easy to get wrong and are therefore pinned by
+tests:
+
+- A completed 4h candle is legitimately **4-8 hours old**. Freshness compares
+  against the expected last *closed* candle, not a flat age. Order book
+  staleness is a **separate clock** with its own threshold.
+- Clock skew compares the venue timestamp against the local time **when the
+  sample was taken**. Comparing against "now" measures sample age instead,
+  which once reported a real 0.1s skew as 93s.
+
 ## Environment separation
 
 Backtest, dry-run and any future live run keep separate risk-state files,
