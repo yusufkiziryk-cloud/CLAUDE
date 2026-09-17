@@ -1,0 +1,98 @@
+{
+  "period": {
+    "start": "2025-09-02T00:00:00+00:00",
+    "end": "2026-09-01T00:00:00+00:00",
+    "days": 7.0
+  },
+  "mode": "backtest-replay",
+  "generated_at": "2026-09-17T21:46:21.761339+00:00",
+  "versions": {
+    "freqtrade": "2026.8",
+    "ccxt": "4.5.78",
+    "python": "3.11.15",
+    "policy_id": "baseline-dryrun-v1",
+    "policy_hash": "sha256:5de0dd5b37546625b9e8d339c08ccb6e4ae33b884be98cb6d623f5313102d355"
+  },
+  "trades": {
+    "closed": 0,
+    "open": 0,
+    "realised_pnl": "0",
+    "open_pnl": "0",
+    "fees_paid": "0",
+    "gross_profit": "0",
+    "gross_loss": "0",
+    "profit_factor": null,
+    "win_rate": null,
+    "expectancy": null,
+    "wins": 0,
+    "losses": 0,
+    "exit_reasons": {},
+    "per_pair": {}
+  },
+  "equity": {
+    "start": null,
+    "end": null,
+    "peak": "991.8499859631",
+    "max_drawdown": null
+  },
+  "benchmarks": {
+    "buy & hold BTC_USDC": {
+      "first": 107545.0,
+      "last": 78563.0,
+      "return_pct": -26.95,
+      "max_dd_pct": 53.54
+    },
+    "buy & hold ETH_USDC": {
+      "first": 4408.1,
+      "last": 2467.7,
+      "return_pct": -44.02,
+      "max_dd_pct": 67.58
+    },
+    "buy & hold SOL_USDC": {
+      "first": 198.48,
+      "last": 103.01,
+      "return_pct": -48.1,
+      "max_dd_pct": 75.14
+    },
+    "equal-weight basket": {
+      "return_pct": -39.69,
+      "max_dd_pct": 64.17
+    },
+    "hold USDC (0% yield assumed)": {
+      "return_pct": 0.0,
+      "max_dd_pct": 0.0,
+      "note": "zero yield assumed; USDC still carries issuer/depeg risk"
+    }
+  },
+  "decisions": {
+    "accepted": 12,
+    "refused": 25,
+    "refusal_reasons": {
+      "NO_RISK_BUDGET": 1,
+      "ASSET_CAP_REACHED": 18,
+      "RESERVATION_REFUSED": 6
+    }
+  },
+  "locks": [],
+  "data_gaps": [],
+  "outages": {
+    "api_calls": 0,
+    "api_errors": 0,
+    "api_error_rate": 0.0,
+    "notifications_failing_since": null
+  },
+  "limitations": [
+    "backtest: NOT_MODELED -> cancel_fill_race, exchange_side_stop, intra_candle_fill_order, order_lifecycle_states, reconciliation_on_restart, single_writer_enforcement, slippage",
+    "replay: NOT_MODELED -> exchange_side_stop",
+    "dry_run: NOT_MODELED -> cancel_fill_race, exchange_side_stop, intra_candle_fill_order",
+    "Open-position PnL is reported as zero: valuing it needs a current price, which a report generated after the fact does not have."
+  ],
+  "assessment": {
+    "verdict": "OBSERVATION_IN_PROGRESS",
+    "reasons": [
+      "only 7.0 of 28 required observation days have elapsed; no conclusion is available yet"
+    ],
+    "observed_days": 7.0,
+    "required_days": 28
+  }
+}

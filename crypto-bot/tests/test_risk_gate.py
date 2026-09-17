@@ -545,3 +545,47 @@ def test_period_loss_fraction_adjusts_for_an_external_deposit():
 def test_drawdown_from_peak():
     assert drawdown_from_peak(peak_equity=dec("1200"), current_equity=dec("1080")) == dec("0.1")
     assert drawdown_from_peak(peak_equity=dec("1200"), current_equity=dec("1300")) == 0
+
+
+# --------------------------------------------------------------------------
+# Decision recording (feeds the weekly report)
+# --------------------------------------------------------------------------
+
+
+def test_every_entry_decision_is_recorded(gate, store):
+    """Refusals are the more informative half of the record. Keeping them only
+    in the log file means they vanish the first time logs rotate."""
+    entry(gate, make_ctx(), intent_id="rec-1")                       # accepted
+    entry(gate, make_ctx(stale=("BTC",)), intent_id="rec-2")         # refused
+
+    rows = store.entry_decisions_between(NOW - timedelta(hours=1), NOW + timedelta(hours=1))
+
+    assert len(rows) == 2
+    assert {r["code"] for r in rows} == {"ACCEPTED", "EQUITY_UNUSABLE"}
+    accepted = next(r for r in rows if r["allowed"])
+    assert accepted["pair"] == "BTC/USDC"
+    assert accepted["binding_cap"], "the binding cap should be recorded for accepted entries"
+
+
+def test_decision_recording_never_breaks_a_trade(gate, store, monkeypatch):
+    """Reporting is not allowed to block trading. If recording fails, the
+    decision still stands - but it must be logged loudly, not silently."""
+    def explode(**_kwargs):
+        raise RuntimeError("disk full")
+
+    monkeypatch.setattr(store, "record_entry_decision", explode)
+
+    decision = entry(gate, make_ctx(), intent_id="rec-3")
+
+    assert decision.allowed, "a reporting failure must not veto an approved entry"
+
+
+def test_refused_decisions_carry_their_reason(gate, store):
+    entry(gate, make_ctx(), intent_id="r1")
+    entry(gate, make_ctx(), intent_id="r1")  # duplicate intent -> refused
+
+    rows = store.entry_decisions_between(NOW - timedelta(hours=1), NOW + timedelta(hours=1))
+    refused = [r for r in rows if not r["allowed"]]
+
+    assert refused
+    assert "already reserved" in refused[0]["reason"]

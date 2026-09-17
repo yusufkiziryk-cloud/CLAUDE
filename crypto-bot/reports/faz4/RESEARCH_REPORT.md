@@ -5,6 +5,12 @@ strategy `FAILS` the pre-set screen.**
 
 It is not a candidate for observation. Run date 2026-09-17.
 
+> **Evidence note (added later).** The figures below were re-verified with
+> `--cache none`. freqtrade caches backtest results for a day and reuses them
+> silently when the strategy file is unchanged, so some earlier "re-run"
+> checks in this project were cache hits. The numbers held up; the evidence
+> behind them had to be re-established. See `docs/TEST_MATRIX.md`.
+
 ## Run identity
 
 | | |

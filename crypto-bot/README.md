@@ -13,7 +13,7 @@ botu. Freqtrade 2026.8 üzerine kurulu; risk katmanı ayrı ve saf Python.
 
 | Soru | Cevap |
 |---|---|
-| Yazılım çalışıyor mu? | Evet. 280 test geçiyor; backtest ve dry-run uçtan uca koşuyor. |
+| Yazılım çalışıyor mu? | Evet. 301 test geçiyor; backtest ve dry-run uçtan uca koşuyor. |
 | Strateji kârlı mı? | **Hayır, kanıt yok.** Son 12 ayda -%5.33, 12 işlem. Karar: `INSUFFICIENT_EVIDENCE`. |
 | Canlıya hazır mı? | **Hayır.** 6 ayrı canlı engeli var. |
 | Gerçek para riski var mı? | Yok. Anahtar yok, emir yok, fon hareketi kodu yok. |
@@ -75,6 +75,35 @@ TLS'i sonlandıran bir vekil sunucunun arkasındaysanız sona
 `scripts/safe-run.py` tek desteklenen giriş noktasıdır. Dosya, ortam
 değişkeni ve CLI birleştikten **sonraki** yapılandırmayı freqtrade'in kendi
 birleştiricisiyle hesaplar ve anahtarsız dry-run değilse reddeder.
+
+## Haftalık rapor
+
+```bash
+.venv/bin/python scripts/weekly-report.py --weeks 1
+```
+
+`reports/weekly/` altına Markdown + JSON yazar. Dışarı hiçbir şey gönderilmez,
+anahtar kullanılmaz.
+
+İçerik: gerçekleşmiş PnL, tüm ücretler, equity/düşüş, benchmarklar, **her giriş
+kararı ve ret nedeni**, risk kilitleri, veri boşlukları, kesintiler ve ilgili
+çalışma yolunun modelleyemediği şeyler.
+
+Üç şeyi bilerek yapmaz:
+
+- **Bitmemiş gözlemi bitmiş göstermez.** Gerekli gün sayısının altında karar
+  `OBSERVATION_IN_PROGRESS` olur.
+- **Geçen süreyi kanıt saymaz.** Gün sayısı dolsa bile en az 50 kapanmış işlem
+  yoksa `INSUFFICIENT_EVIDENCE` döner.
+- **Tanımsız oranı iyi oran diye göstermez.** Kaybeden işlem yokken profit
+  factor "undefined" yazar, mükemmel skor değil.
+
+İşlemsiz bir hafta boş rapor değil bir sonuçtur; ret nedenleri tablosu onu
+açıklar.
+
+> **Dikkat:** freqtrade backtest sonuçlarını bir gün önbellekler ve strateji
+> dosyası değişmediyse sessizce yeniden kullanır. `safe-run.py` bu yüzden
+> `--cache none` geçer. Kanıt üreten çalıştırmalarda cache'e güvenmeyin.
 
 ## İzleme (watchdog)
 

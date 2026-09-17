@@ -160,7 +160,52 @@ class EntryGate:
 
     # -- the decision ------------------------------------------------------
 
+    def _log_decision(self, pair: str, intent_id: str, now, decision: EntryDecision) -> None:
+        try:
+            self.store.record_entry_decision(
+                now=now,
+                pair=pair,
+                intent_id=intent_id,
+                allowed=decision.allowed,
+                code=decision.code,
+                reason=decision.reason,
+                amount_base=decision.amount_base,
+                binding_cap=(
+                    decision.sizing.binding_cap if decision.sizing is not None else ""
+                ),
+            )
+        except Exception:  # noqa: BLE001
+            # Reporting must never be able to block a trading decision.
+            logger.warning("could not record the entry decision", exc_info=True)
+
     def evaluate_entry(
+        self,
+        *,
+        pair: str,
+        intent_id: str,
+        entry_price: Decimal,
+        stop_price: Decimal,
+        amount_step: Decimal,
+        min_order_amount: Decimal,
+        min_order_cost: Decimal,
+        ctx: GateContext,
+        liquidity_cap_base: Decimal | None = None,
+    ) -> EntryDecision:
+        decision = self._evaluate_entry(
+            pair=pair,
+            intent_id=intent_id,
+            entry_price=entry_price,
+            stop_price=stop_price,
+            amount_step=amount_step,
+            min_order_amount=min_order_amount,
+            min_order_cost=min_order_cost,
+            ctx=ctx,
+            liquidity_cap_base=liquidity_cap_base,
+        )
+        self._log_decision(pair, intent_id, ctx.now, decision)
+        return decision
+
+    def _evaluate_entry(
         self,
         *,
         pair: str,

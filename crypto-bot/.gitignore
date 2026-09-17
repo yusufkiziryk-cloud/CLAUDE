@@ -7,6 +7,8 @@ __pycache__/
 
 # Runtime state: databases, logs and downloaded market data are per-machine.
 user_data/dryrun/
+user_data/backtest/
+user_data/live/
 user_data/logs/
 user_data/data/
 user_data/backtest_results/

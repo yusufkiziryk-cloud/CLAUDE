@@ -82,6 +82,46 @@ The image is pinned by immutable digest, runs as a non-root user with
 This path has never been started here. Verify it on your own machine before
 relying on it.
 
+## Weekly report
+
+```bash
+.venv/bin/python scripts/weekly-report.py --weeks 1
+.venv/bin/python scripts/weekly-report.py --weeks 1 --observation-started 2026-09-20T00:00:00
+```
+
+Writes a Markdown file and a JSON file into `reports/weekly/`. Nothing is
+sent anywhere and no credential is used.
+
+It reports realised PnL, all fees, equity and drawdown, benchmarks, every
+entry decision with its refusal reason, risk locks, data gaps, outages, and
+what the run path cannot model.
+
+Three things it deliberately refuses to do:
+
+- **Call an unfinished observation finished.** Below
+  `REQUIRED_OBSERVATION_DAYS` the verdict is `OBSERVATION_IN_PROGRESS` and no
+  conclusion is offered. Pass `--observation-started` so it counts continuous
+  observation rather than just this week.
+- **Treat elapsed time as evidence.** Past the day count it still returns
+  `INSUFFICIENT_EVIDENCE` until there are at least 50 closed trades.
+- **Report an undefined ratio as a good one.** A profit factor with no losing
+  trades prints as "undefined", not as a perfect score.
+
+A zero-trade week is a result, not an empty report: the refusal-reason table
+is what explains it.
+
+### Backtest caching
+
+freqtrade caches backtest results for a day and **silently reuses** them when
+the strategy file has not changed - printing a complete result table with no
+hint that nothing ran. Changes outside the strategy file (the risk layer, the
+policy, the data) are invisible to the cache key.
+
+`scripts/safe-run.py` therefore passes `--cache none` by default for
+`backtesting`, `lookahead-analysis` and `recursive-analysis`, and prints a
+note saying so. Pass `--cache day` explicitly if you want the old behaviour,
+and do not rely on it for anything you intend to call evidence.
+
 ## Watchdog
 
 ```bash

@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-09-17, after the watchdog work.
+Last updated: 2026-09-17, after the weekly-report work.
 
 ## Where things stand
 
@@ -11,10 +11,10 @@ Last updated: 2026-09-17, after the watchdog work.
 | Faz 2 - market data | **DONE** |
 | Faz 3 - strategy, risk, order correctness | **DONE** - risk layer and order lifecycle both adversarially tested |
 | Faz 4 - honest research report | **DONE** - verdict `INSUFFICIENT_EVIDENCE` |
-| Faz 5 - monitoring and handover | **PARTIAL** - watchdog and runbook done; weekly report and the 4-8 week observation not done |
+| Faz 5 - monitoring and handover | **PARTIAL** - watchdog, weekly report and runbook done; the 4-8 week observation cannot be run here |
 | Faz 6 - live readiness assessment | **DONE** - live remains blocked |
 
-Tests: **280 passing** offline, **284** including public-endpoint tests.
+Tests: **301 passing** offline, **305** including public-endpoint tests.
 
 ## Decisions made, and why
 
@@ -124,15 +124,40 @@ recovery, with the external watchdog reporting all nine checks green.
 - The container this was built in is ephemeral: total observed runtime is
   minutes, against a required 4-8 weeks.
 
+## What the weekly-report work added
+
+- Entry decisions are now **persisted**, not just logged. Refusals with their
+  reasons are the half that explains a quiet week, and log files rotate.
+- `src/kripto/report/weekly.py` + `scripts/weekly-report.py`: local Markdown
+  and JSON, nothing sent anywhere. Its verdict ladder refuses to conclude
+  before the observation is long enough AND has enough closed trades.
+- `scripts/safe-run.py` passes `--cache none` for evidence-producing
+  commands.
+
+## Bug found by the end-to-end run, and a claim that had to be withdrawn
+
+7. **Entry-decision recording appeared broken and was not.** freqtrade caches
+   backtest results for a day and silently reuses them when the strategy file
+   is unchanged - printing a complete result table while running nothing.
+   Changes outside the strategy file are invisible to the cache key, so the
+   new recording code never executed. Several earlier "re-ran the backtest"
+   checks in this project were cache hits, **including the one cited as
+   evidence that the result reproduced**. A genuine `--cache none` run gives
+   the same -5.33% / 12 trades / PF 0.13, so the numbers held - but the
+   evidence had to be re-established rather than re-worded.
+8. `_log_decision` referenced `EntryDecision.binding_cap`, which lives on
+   `SizingResult`. The deliberate catch-all around decision recording did its
+   job (trading was unaffected) and hid the bug; the warning it logged is how
+   it surfaced.
+
 ## The exact next step
 
-**The weekly report** (Faz 5's remaining piece): realised and open PnL, all
-costs, equity and drawdown, benchmarks, entry/refusal counts with reasons,
-locks, data gaps, outages and simulation limitations, as reproducible local
-Markdown plus machine-readable JSON.
+The remaining work is **not code**. It is running the bot for 4-8 weeks on a
+machine that stays up, collecting 5m data forward the whole time, and
+generating a weekly report each week.
 
-After that, the honest remaining work is not code. It is running the thing
-for 4-8 weeks on a machine that stays up, which this environment cannot do.
+This environment cannot do that: the container is ephemeral and total
+observed runtime is minutes. Everything else in Faz 5 is delivered.
 
 Reproduction:
 

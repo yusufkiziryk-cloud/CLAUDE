@@ -39,6 +39,14 @@ DEFAULT_POLICY = REPO_ROOT / "config" / "policy.yaml"
 # strictest treatment plus an explicit --dry-run.
 TRADING_COMMANDS = {"trade"}
 
+# Commands whose output is evidence. freqtrade caches backtest results for a
+# day and silently REUSES them when the strategy file is unchanged - printing
+# a full result table with no hint that nothing ran. Every change outside the
+# strategy file (the risk layer, the policy, the data) is then invisible, and
+# a "reproduced identically" claim becomes a cache hit. So these commands
+# default to --cache none; pass --cache explicitly to opt back in.
+UNCACHED_COMMANDS = {"backtesting", "lookahead-analysis", "recursive-analysis"}
+
 
 def extract_config_paths(argv: list[str]) -> list[str]:
     """Collect every -c/--config argument, in the order freqtrade sees them."""
@@ -101,6 +109,13 @@ def main(argv: list[str] | None = None) -> int:
     if command in TRADING_COMMANDS and "--dry-run" not in forwarded:
         # Belt and braces: freqtrade's own flag also strips exchange secrets.
         forwarded.append("--dry-run")
+
+    if command in UNCACHED_COMMANDS and not any(a.startswith("--cache") for a in forwarded):
+        forwarded.extend(["--cache", "none"])
+        print(
+            "note           : --cache none applied. freqtrade would otherwise reuse "
+            "today's cached result and print it as if it had just run."
+        )
 
     from freqtrade.main import main as freqtrade_main
 

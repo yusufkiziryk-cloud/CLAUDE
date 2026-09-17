@@ -33,10 +33,11 @@ oku. Bu dosyayı büyütme.
 ## Komutlar
 
 ```bash
-.venv/bin/python -m pytest -m "not network"        # hızlı test (280)
+.venv/bin/python -m pytest -m "not network"        # hızlı test (301)
 .venv/bin/python -m pytest                         # + kamu uç testleri
 .venv/bin/python scripts/collect-data.py           # veri topla (artımlı)
 .venv/bin/python scripts/watchdog.py --state user_data/dryrun/risk_state.sqlite
+.venv/bin/python scripts/weekly-report.py --weeks 1
 .venv/bin/python scripts/safe-run.py trade   --config config/config.dry.json
 .venv/bin/python scripts/safe-run.py backtesting --config config/config.dry.json \
     --strategy BaselineTrend4h --timerange 20250901-20260901 --enable-protections
@@ -99,6 +100,13 @@ V1 bu yüzden tek host ile sınırlıdır.
 - `freqtrade download-data` bu borsada çalışmaz → `scripts/collect-data.py`.
 - `lookahead-analysis` `dry_run_wallet`'ı 1e9 yapar → gerçek risk politikasını
   test etmez. Durumlu stratejide yanlış pozitif verir.
+- **Freqtrade backtest sonuçlarını bir gün boyunca ÖNBELLEKLER** ve strateji
+  dosyası değişmediyse sessizce yeniden kullanır — tam sonuç tablosunu basar,
+  hiçbir uyarı vermez. Cache anahtarı strateji dosyasının DIŞINDAKİ
+  değişiklikleri (risk katmanı, politika, veri) görmez. `safe-run.py` bu
+  yüzden `backtesting`/`lookahead-analysis`/`recursive-analysis` için
+  varsayılan olarak `--cache none` geçer. Kanıt üreten hiçbir çalıştırmada
+  cache'e güvenme.
 
 ## Belgeler
 

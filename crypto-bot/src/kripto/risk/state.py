@@ -216,6 +216,18 @@ CREATE TABLE IF NOT EXISTS stop_events (
     occurred_at TEXT NOT NULL,
     counted INTEGER NOT NULL DEFAULT 1
 );
+CREATE TABLE IF NOT EXISTS entry_decisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    decided_at TEXT NOT NULL,
+    pair TEXT NOT NULL,
+    intent_id TEXT NOT NULL,
+    allowed INTEGER NOT NULL,
+    code TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    amount_base TEXT NOT NULL DEFAULT '0',
+    binding_cap TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_decisions_time ON entry_decisions(decided_at);
 CREATE TABLE IF NOT EXISTS writer_lock (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     owner TEXT NOT NULL,
@@ -460,6 +472,55 @@ class RiskStore:
         """Called after a profitable exit, per the documented sequencing."""
         with self._tx() as conn:
             conn.execute("UPDATE stop_events SET counted=0 WHERE counted=1")
+
+    # -- entry decisions ---------------------------------------------------
+
+    def record_entry_decision(
+        self,
+        *,
+        now: datetime,
+        pair: str,
+        intent_id: str,
+        allowed: bool,
+        code: str,
+        reason: str = "",
+        amount_base: Decimal | None = None,
+        binding_cap: str = "",
+    ) -> None:
+        """Log every entry decision, accepted AND refused.
+
+        Refusals are the more interesting half. A week with two trades and
+        four hundred refusals is a completely different system from a week
+        with two trades and four signals, and only the recorded reasons can
+        tell those apart. Keeping them only in the log file means they are
+        gone the first time logs rotate.
+        """
+        with self._tx() as conn:
+            conn.execute(
+                "INSERT INTO entry_decisions(decided_at, pair, intent_id, allowed, code, "
+                "reason, amount_base, binding_cap) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    now.isoformat(), pair, intent_id, 1 if allowed else 0, code,
+                    reason[:500], str(amount_base or ZERO), binding_cap,
+                ),
+            )
+
+    def entry_decisions_between(
+        self, start: datetime, end: datetime
+    ) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM entry_decisions WHERE decided_at >= ? AND decided_at < ? "
+            "ORDER BY decided_at",
+            (start.isoformat(), end.isoformat()),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def locks_between(self, start: datetime, end: datetime) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM locks WHERE created_at >= ? AND created_at < ? ORDER BY created_at",
+            (start.isoformat(), end.isoformat()),
+        ).fetchall()
+        return [dict(r) for r in rows]
 
     # -- single writer -----------------------------------------------------
 

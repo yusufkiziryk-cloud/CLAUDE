@@ -33,7 +33,7 @@ tests that read public exchange endpoints).
 | T23 | Deliberately bad strategy and insufficient data | `PARTIAL` | the real strategy produced `INSUFFICIENT_EVIDENCE` honestly; **no automated eligibility engine** |
 | T24 | No Telegram; watchdog outage; loop frozen with process alive | `VERIFIED` | `test_watchdog_t24.py` (37 tests) - frozen-loop detection, candle vs book clocks, clock skew, API error rate, disk, bounded non-blocking notifications, and a read-only observer connection |
 | T25 | Canary secrets in logs, exceptions, URLs, reports | `VERIFIED` | `test_redaction.py` (10 tests) |
-| T26 | Re-run from a clean directory reproduces the result | `PARTIAL` | collector idempotency verified; the backtest reproduced -5.33% / 12 trades / PF 0.13 identically after unrelated code changes. **No single clean-room script yet.** |
+| T26 | Re-run from a clean directory reproduces the result | `PARTIAL` | collector idempotency verified; the backtest genuinely re-derives -5.33% / 12 trades / PF 0.13 with `--cache none`. **No single clean-room script yet.** See the correction note below. |
 
 ## Requirement → test mapping (selected invariants)
 
@@ -52,6 +52,27 @@ tests that read public exchange endpoints).
 | The future cannot change the past | `test_t20_*` |
 | Secrets never reach a log | `test_t25_*` |
 | Capability assumptions are re-checked on upgrade | `test_capabilities.py` |
+
+## Correction: an earlier reproducibility claim rested on a cache hit
+
+freqtrade caches backtest results for a day and **silently reuses** them when
+the strategy file is unchanged, printing a full result table with no
+indication that nothing ran. Several "re-ran the backtest" checks in this
+project were therefore cache hits, including the one first cited as evidence
+that the result reproduced.
+
+The numbers turned out to be right - a genuine `--cache none` run produces
+the same -5.33% / 12 trades / PF 0.13 - but the evidence behind the original
+claim was not. The claim has been re-established, not merely re-worded.
+
+Two consequences, both acted on:
+
+- `scripts/safe-run.py` now passes `--cache none` by default for
+  `backtesting`, `lookahead-analysis` and `recursive-analysis`, and says so
+  on stdout. Pass `--cache` explicitly to opt back in.
+- Any change OUTSIDE the strategy file - the risk layer, the policy, the
+  data - is invisible to the cache key. That is what made the entry-decision
+  recording appear broken when it was working: the backtest never ran.
 
 ## Honest gaps
 
