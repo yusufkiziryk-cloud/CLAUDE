@@ -1,0 +1,174 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-09-17T20:18:10.115837+00:00",
+  "exchange": "hyperliquid",
+  "source_url": "https://api.hyperliquid.xyz/info (candleSnapshot, spotMeta)",
+  "//source_warning": "Every row below was fetched from the exchange named above. Data from any other venue must never be merged into these files or labelled as this exchange's history.",
+  "environment": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.44-fc-v33-x86_64-with-glibc2.39"
+  },
+  "markets": {
+    "@142": {
+      "market_id": "@142",
+      "freqtrade_pair": "BTC/USDC",
+      "real_base_token": "UBTC",
+      "real_quote_token": "USDC",
+      "token_full_name": "Unit Bitcoin",
+      "is_bridged_wrapper": true,
+      "is_canonical": false,
+      "base_token_id": "0x8f254b963e8468305d409b33aa137c67",
+      "evm_contract": {
+        "address": "0x9fdbda0a5e284c32744d2f17ee5c74b284993463",
+        "evm_extra_wei_decimals": -2
+      },
+      "size_decimals": 5,
+      "mid_price": "76546.5",
+      "day_notional_volume": "67587392.8067199588"
+    },
+    "@151": {
+      "market_id": "@151",
+      "freqtrade_pair": "ETH/USDC",
+      "real_base_token": "UETH",
+      "real_quote_token": "USDC",
+      "token_full_name": "Unit Ethereum",
+      "is_bridged_wrapper": true,
+      "is_canonical": false,
+      "base_token_id": "0xe1edd30daaf5caac3fe63569e24748da",
+      "evm_contract": {
+        "address": "0xbe6727b535545c67d5caa73dea54865b92cf7907",
+        "evm_extra_wei_decimals": 9
+      },
+      "size_decimals": 4,
+      "mid_price": "2451.95",
+      "day_notional_volume": "16997603.0696499981"
+    },
+    "@156": {
+      "market_id": "@156",
+      "freqtrade_pair": "SOL/USDC",
+      "real_base_token": "USOL",
+      "real_quote_token": "USDC",
+      "token_full_name": "Unit Solana",
+      "is_bridged_wrapper": true,
+      "is_canonical": false,
+      "base_token_id": "0x49b67c39f5566535de22b29b0e51e685",
+      "evm_contract": {
+        "address": "0x068f321fa8fb9f0d135f290ef6a3e2813e1c8a29",
+        "evm_extra_wei_decimals": 1
+      },
+      "size_decimals": 3,
+      "mid_price": "101.095",
+      "day_notional_volume": "7891357.310385"
+    }
+  },
+  "coverage": [
+    {
+      "pair": "BTC/USDC",
+      "market_id": "@142",
+      "timeframe": "4h",
+      "rows": 3552,
+      "first_date": "2025-02-03T00:00:00+00:00",
+      "last_date": "2026-09-17T20:00:00+00:00",
+      "span_days": 591.83,
+      "requests_made": 1,
+      "history_truncated_by_api": false,
+      "earliest_reachable": "2025-02-03T00:00:00+00:00",
+      "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/BTC_USDC-4h.feather",
+      "file_hash": "sha256:7045e75654281e4b880b22d2fd5c06215a8bcb651b1758447c93ab8be82e8b28",
+      "notes": [],
+      "quality": {
+        "pair": "BTC/USDC",
+        "timeframe": "4h",
+        "rows": 3552,
+        "first_date": "2025-02-03 00:00:00+0000",
+        "last_date": "2026-09-17 20:00:00+0000",
+        "tradable": true,
+        "gaps": [],
+        "findings": [
+          {
+            "code": "INCOMPLETE_LAST_CANDLE",
+            "severity": "WARN",
+            "message": "the last candle opening 2026-09-17 20:00:00+0000 has not closed yet at 2026-09-17T20:18:09.292611+00:00; it must be dropped before any signal is computed",
+            "rows": 1,
+            "first_date": "2026-09-17 20:00:00+0000",
+            "last_date": ""
+          }
+        ]
+      }
+    },
+    {
+      "pair": "ETH/USDC",
+      "market_id": "@151",
+      "timeframe": "4h",
+      "rows": 3243,
+      "first_date": "2025-03-26T12:00:00+00:00",
+      "last_date": "2026-09-17T20:00:00+00:00",
+      "span_days": 540.33,
+      "requests_made": 1,
+      "history_truncated_by_api": false,
+      "earliest_reachable": "2025-03-26T12:00:00+00:00",
+      "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/ETH_USDC-4h.feather",
+      "file_hash": "sha256:0f9ee048e88d634069222e14b702b037e52e82825271411e94213034d3a29649",
+      "notes": [],
+      "quality": {
+        "pair": "ETH/USDC",
+        "timeframe": "4h",
+        "rows": 3243,
+        "first_date": "2025-03-26 12:00:00+0000",
+        "last_date": "2026-09-17 20:00:00+0000",
+        "tradable": true,
+        "gaps": [],
+        "findings": [
+          {
+            "code": "INCOMPLETE_LAST_CANDLE",
+            "severity": "WARN",
+            "message": "the last candle opening 2026-09-17 20:00:00+0000 has not closed yet at 2026-09-17T20:18:09.566641+00:00; it must be dropped before any signal is computed",
+            "rows": 1,
+            "first_date": "2026-09-17 20:00:00+0000",
+            "last_date": ""
+          }
+        ]
+      }
+    },
+    {
+      "pair": "SOL/USDC",
+      "market_id": "@156",
+      "timeframe": "4h",
+      "rows": 2974,
+      "first_date": "2025-05-10T08:00:00+00:00",
+      "last_date": "2026-09-17T20:00:00+00:00",
+      "span_days": 495.5,
+      "requests_made": 1,
+      "history_truncated_by_api": false,
+      "earliest_reachable": "2025-05-10T08:00:00+00:00",
+      "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/SOL_USDC-4h.feather",
+      "file_hash": "sha256:d3d43510fc0672121aaa264f44866947bc8af4bf2e4a8d435126b6320dfd2fc6",
+      "notes": [],
+      "quality": {
+        "pair": "SOL/USDC",
+        "timeframe": "4h",
+        "rows": 2974,
+        "first_date": "2025-05-10 08:00:00+0000",
+        "last_date": "2026-09-17 20:00:00+0000",
+        "tradable": true,
+        "gaps": [],
+        "findings": [
+          {
+            "code": "INCOMPLETE_LAST_CANDLE",
+            "severity": "WARN",
+            "message": "the last candle opening 2026-09-17 20:00:00+0000 has not closed yet at 2026-09-17T20:18:09.823046+00:00; it must be dropped before any signal is computed",
+            "rows": 1,
+            "first_date": "2026-09-17 20:00:00+0000",
+            "last_date": ""
+          }
+        ]
+      }
+    }
+  ],
+  "collection_notes": [
+    "ccxt/freqtrade label these markets BTC/ETH/SOL. The tokens actually traded are UBTC/UETH/USOL, Unit-bridge issued wrappers. They carry issuer and bridge risk that native assets do not, and they share ONE issuer, so they are a single risk bucket.",
+    "Missing candles are recorded as gaps and are never forward-filled.",
+    "4h coverage does not imply 5m coverage: the per-call cap of 5000 candles bounds short timeframes to a much shorter window."
+  ],
+  "total_api_requests": 5
+}

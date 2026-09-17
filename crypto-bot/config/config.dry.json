@@ -96,7 +96,7 @@
     "dataformat_trades": "feather",
     "db_url": "sqlite:///user_data/dryrun/tradesv3.dryrun.sqlite",
     "user_data_dir": "user_data",
-    "datadir": "user_data/data",
+    "datadir": "user_data/data/hyperliquid",
     "logfile": "user_data/logs/freqtrade-dryrun.log",
     "strategy": "BaselineTrend4h"
 }
