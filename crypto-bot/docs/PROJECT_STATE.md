@@ -174,6 +174,23 @@ recovery, with the external watchdog reporting all nine checks green.
 `[Service]` is silently ignored, which would have produced an unbounded
 restart loop with no warning. It belongs in `[Unit]`.
 
+## Clean-room install: still not verified end to end
+
+Faz 1's acceptance criterion was "a verified installation path in a clean
+environment". Part of it is now measured, part is still open:
+
+- `VERIFIED`: the partial-clone command (2.9 MB and ~1s, versus 109 MB and
+  16,081 files for a full clone, with the repository's 61 MB APK never
+  fetched); the directory-flattening step including dotfiles; and that
+  `ta_lib` installs from a manylinux wheel carrying its own `.so`, so no
+  TA-Lib C library or build toolchain is needed on x86_64 / Python 3.11.
+- `BLOCKED`: `pip install` into a genuinely fresh venv. PyPI returned HTTP
+  503 consistently while this was attempted.
+- `NOT_RUN`: the 330 tests against that fresh clone.
+
+The suite does pass in the venv built at the start of this session, but that
+is not the same claim as "installs cleanly from scratch".
+
 ## The exact next step
 
 The remaining work is **not code**. It is running the bot for 4-8 weeks on a

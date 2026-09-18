@@ -26,8 +26,29 @@ Uygun **değil**:
 ölürse pozisyonun koruması da ölür. Makinenin ayakta kalması, stratejinin bir
 parçası.
 
+### Gereken paketler
+
+Taze bir Debian/Ubuntu sunucuda yalnızca bunlar:
+
 ```bash
-# makinede, root olarak
+sudo apt update
+sudo apt install -y python3 python3-venv git
+```
+
+**Derleme aracı gerekmiyor.** freqtrade TA-Lib'e bağlıdır ve TA-Lib bir C
+kütüphanesidir — ama `ta_lib` artık manylinux wheel'i olarak geliyor ve kendi
+`.so` dosyasını paketin içinde taşıyor. Bu kurulumda doğruladım: sistemde
+`libta_lib` yok, wheel `cp311-cp311-manylinux_2_17_x86_64` etiketli ve
+`ta_lib.libs/` altındaki kendi kütüphanesine bağlı.
+
+> Bu **x86_64 + Python 3.11** için doğrulandı. ARM sunucuda (aarch64) ya da
+> farklı bir Python sürümünde uygun wheel olmayabilir; o durumda TA-Lib'i
+> kaynaktan derlemek gerekir ve `build-essential` istersiniz. Önce wheel'siz
+> deneyin, patlarsa o zaman ekleyin.
+
+### Kullanıcı ve dizin
+
+```bash
 sudo adduser --system --group --home /opt/kripto-bot kripto
 sudo mkdir -p /opt/kripto-bot /etc/kripto
 sudo chown kripto:kripto /opt/kripto-bot
@@ -36,15 +57,30 @@ sudo chown kripto:kripto /opt/kripto-bot
 > Bot **kendi kullanıcısıyla** çalışır, root ile değil. Sırlar ileride
 > yalnızca o kullanıcının okuyabileceği yerde durur.
 
-### Kurulum
+### Depoyu al
+
+Bu depo birden fazla projeyi barındırıyor ve geçmişinde 61 MB'lık bir APK var.
+Tamamını klonlamak 109 MB `.git` ve 16.000 dosya indirir; botun ihtiyacı olan
+89 dosya. Kısmi klon kullanın:
 
 ```bash
 sudo -u kripto -s
 cd /opt/kripto-bot
-git clone -b claude/new-session-uqw4yn \
-    https://github.com/yusufkiziryk-cloud/CLAUDE .tmp
-mv .tmp/crypto-bot/* .tmp/crypto-bot/.[!.]* . && rm -rf .tmp
 
+git init -q .
+git remote add origin https://github.com/yusufkiziryk-cloud/CLAUDE.git
+git sparse-checkout set --no-cone crypto-bot
+git fetch --depth 1 --filter=blob:none origin claude/new-session-uqw4yn
+git checkout FETCH_HEAD
+
+mv crypto-bot/* crypto-bot/.[!.]* . 2>/dev/null; rmdir crypto-bot
+```
+
+Ölçtüm: **2,9 MB / ~1 saniye**, tam klonda 109 MB / ~8 saniye. APK hiç inmiyor.
+
+### Kur ve doğrula
+
+```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m pytest -m "not network"      # 330 test geçmeli
@@ -52,7 +88,28 @@ python3 -m venv .venv
 exit
 ```
 
+Tam sürüm kilidi isterseniz `requirements.lock.txt` kullanın — 88 paket,
+hepsi sabitlenmiş.
+
 **Doğrulama:** testler geçti ve `reports/data_manifest.json` oluştu.
+
+### D1'de neyin doğrulandığı, neyin doğrulanmadığı
+
+Bu adımın tamamını çalıştıramadım. Ne ölçüldü, ne ölçülemedi:
+
+| Ne | Durum |
+|---|---|
+| Kısmi klon (`sparse-checkout` + `--filter=blob:none`) | `VERIFIED` — 2,9 MB / ~1 sn / 89 dosya, APK inmiyor |
+| Tam klonun maliyeti | `VERIFIED` — 109 MB `.git`, 16.081 dosya |
+| `mv crypto-bot/* crypto-bot/.[!.]* .` adımı | `VERIFIED` — nokta dosyalar dahil doğru taşınıyor |
+| TA-Lib wheel'den geliyor, C kütüphanesi gerekmiyor | `VERIFIED` — paket `ta_lib.libs/` içindeki kendi `.so`'suna bağlı, sistemde `libta_lib` yok |
+| **Temiz venv'e sıfırdan `pip install`** | **`BLOCKED`** — PyPI bu oturumda tutarlı biçimde HTTP 503 döndü |
+| **330 testin temiz klonda geçmesi** | **`NOT_RUN`** — kurulum tamamlanamadı |
+
+Kurulum bu oturumun başında bir kez başarıyla yapıldı (freqtrade 2026.8,
+ccxt 4.5.78, 330 test yeşil) — ama o zaten var olan bir venv'di, temiz klon
+değil. **Temiz ortamda kurulum yolu hâlâ sizin makinenizde doğrulanacak.**
+Patlarsa çıktıyı bana gönderin; görmeden tahmin yürütmeyeceğim.
 
 ---
 
