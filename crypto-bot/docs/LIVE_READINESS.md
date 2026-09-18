@@ -7,6 +7,11 @@ not authorise it. Going live is a manual operator procedure that a human
 performs deliberately, with their own capital decision, on infrastructure
 this session never touched.
 
+The operator-executed checklist that goes with this report is
+[GO_LIVE_CHECKLIST.md](GO_LIVE_CHECKLIST.md). It lists what must be true and
+what the operator must do by hand. It is a checklist, not an approval, and
+nothing in this repository executes it.
+
 ## Gates
 
 Each gate is assessed separately. All must pass; none substitutes for another.

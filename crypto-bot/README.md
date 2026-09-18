@@ -185,6 +185,7 @@ pozisyonun hiçbir koruması kalmaz.
 | [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md) | gereksinim ↔ test eşlemesi ve açık boşluklar |
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | başlat/durdur, restart, kesinti, anahtar iptali |
 | [docs/LIVE_READINESS.md](docs/LIVE_READINESS.md) | canlı engelleri |
+| [docs/GO_LIVE_CHECKLIST.md](docs/GO_LIVE_CHECKLIST.md) | **elle uygulanacak canlıya geçiş kontrol listesi** |
 | [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md) | son durum ve sıradaki adım |
 
 ## Kapsam dışı

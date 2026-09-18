@@ -113,7 +113,7 @@ V1 bu yüzden tek host ile sınırlıdır.
 
 `docs/ARCHITECTURE.md` · `docs/CAPABILITIES.md` · `docs/RISK_POLICY.md` ·
 `docs/RESEARCH_PLAN.md` · `docs/TEST_MATRIX.md` · `docs/RUNBOOK.md` ·
-`docs/LIVE_READINESS.md` · `docs/PROJECT_STATE.md` ·
+`docs/LIVE_READINESS.md` · `docs/GO_LIVE_CHECKLIST.md` · `docs/PROJECT_STATE.md` ·
 `reports/faz4/RESEARCH_REPORT.md`
 
 Bir faz bitince `docs/PROJECT_STATE.md` dosyasını güncelle: son doğrulanmış
