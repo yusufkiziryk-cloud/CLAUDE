@@ -1,0 +1,21 @@
+[Unit]
+Description=Kripto bot weekly report
+
+[Service]
+Type=oneshot
+User=kripto
+Group=kripto
+WorkingDirectory=/opt/kripto-bot
+
+ExecStart=/opt/kripto-bot/.venv/bin/python scripts/weekly-report.py --weeks 1
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+CapabilityBoundingSet=
+ReadWritePaths=/opt/kripto-bot/reports
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kripto-weekly-report

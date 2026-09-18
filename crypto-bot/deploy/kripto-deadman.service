@@ -1,0 +1,45 @@
+# Off-box heartbeat, GATED ON HEALTH.
+#
+# The ping only goes out while the health checks pass. A heartbeat that fires
+# unconditionally monitors the timer, not the bot - it would keep saying
+# "alive" with the trading loop frozen. Here, a CRITICAL check means silence,
+# and silence is what makes the external service alert you.
+#
+# The URL is a capability, not a setting. Put it in a file only this user can
+# read, outside the repository:
+#   install -m 600 /dev/null /etc/kripto/deadman.url
+#   printf '%s' 'https://...' | sudo tee /etc/kripto/deadman.url >/dev/null
+#   sudo chown kripto:kripto /etc/kripto/deadman.url
+
+[Unit]
+Description=Kripto bot dead-man heartbeat
+After=kripto-bot.service
+
+[Service]
+Type=simple
+User=kripto
+Group=kripto
+WorkingDirectory=/opt/kripto-bot
+
+ExecStart=/opt/kripto-bot/.venv/bin/python scripts/deadman.py \
+    --state user_data/dryrun/risk_state.sqlite \
+    --url-file /etc/kripto/deadman.url \
+    --interval 60
+
+Restart=always
+RestartSec=15
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+CapabilityBoundingSet=
+ReadOnlyPaths=/opt/kripto-bot
+ReadOnlyPaths=/etc/kripto
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kripto-deadman
+
+[Install]
+WantedBy=multi-user.target

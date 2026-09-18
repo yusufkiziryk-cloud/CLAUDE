@@ -1,0 +1,24 @@
+# Daily backup, verified by restoring it.
+
+[Unit]
+Description=Kripto bot backup (verified)
+
+[Service]
+Type=oneshot
+User=kripto
+Group=kripto
+WorkingDirectory=/opt/kripto-bot
+
+ExecStart=/opt/kripto-bot/.venv/bin/python scripts/backup.py \
+    --state-dir user_data/dryrun --out backups --keep 14 --verify
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+CapabilityBoundingSet=
+ReadWritePaths=/opt/kripto-bot/backups
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kripto-backup

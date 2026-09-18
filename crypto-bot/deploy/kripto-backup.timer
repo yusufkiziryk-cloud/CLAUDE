@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily verified backup of the kripto bot state
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 UTC
+# Take the backup even if the machine was asleep at 03:30.
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

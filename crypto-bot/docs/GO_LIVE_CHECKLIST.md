@@ -110,6 +110,9 @@ Hepsi geçmeden diğer kapılara bakmanın anlamı yok.
 
 ## Kapı D — Altyapı
 
+> **Adım adım kurulum:** [`../deploy/README.md`](../deploy/README.md)
+> — systemd birimleri, dead-man kurulumu ve her maddenin tatbikatı orada.
+
 - [ ] **D1.** **Ayakta kalan** bir makine var — kapağı kapanan dizüstü değil.
   *Neden:* Borsa tarafı stop olmadığı için, süreç öldüğünde pozisyonun
   koruması da ölür.

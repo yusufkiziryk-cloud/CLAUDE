@@ -33,12 +33,14 @@ oku. Bu dosyayı büyütme.
 ## Komutlar
 
 ```bash
-.venv/bin/python -m pytest -m "not network"        # hızlı test (301)
+.venv/bin/python -m pytest -m "not network"        # hızlı test (330)
 .venv/bin/python -m pytest                         # + kamu uç testleri
 .venv/bin/python scripts/collect-data.py           # veri topla (artımlı)
 .venv/bin/python scripts/watchdog.py --state user_data/dryrun/risk_state.sqlite
 .venv/bin/python scripts/weekly-report.py --weeks 1
 .venv/bin/python scripts/dashboard.py              # reports/dashboard.html
+.venv/bin/python scripts/backup.py --verify        # yedek al + geri yukleyerek dogrula
+.venv/bin/python scripts/deadman.py --state ...    # saglik kosullu heartbeat
 .venv/bin/python scripts/safe-run.py trade   --config config/config.dry.json
 .venv/bin/python scripts/safe-run.py backtesting --config config/config.dry.json \
     --strategy BaselineTrend4h --timerange 20250901-20260901 --enable-protections
@@ -80,6 +82,19 @@ alarm ya da kör nokta üretir.
 Saat sapması, örneğin **alındığı andaki** yerel saatle karşılaştırılır. Şimdiki
 zamanla karşılaştırmak sapmayı değil örneğin yaşını ölçer (0.1s sapma 93s
 görünmüştü).
+
+Dead-man (`scripts/deadman.py`): ping **sağlık durumuna bağlıdır**. Koşulsuz
+ping atan bir heartbeat zamanlayıcıyı izler, botu değil — döngü donmuşken de
+"yaşıyorum" der. Burada CRITICAL varsa ping gitmez ve **sessizlik alarmdır**.
+URL bir yetenektir: depoya girmez, loglara maskesiz yazılmaz.
+
+Yedek (`scripts/backup.py`): canlı SQLite, `Connection.backup()` ile
+kopyalanır — `cp` yırtık sayfa yakalayabilir. `--verify` yedeği geçici dizine
+gerçekten geri yükler, `integrity_check` ve satır sayısı karşılaştırması yapar.
+Geri yüklenmemiş yedek, yedek değil umuttur.
+
+Kalıcı kurulum: `deploy/` (systemd birimleri + adım adım kılavuz). Birimler
+yalnızca dry-run başlatır; canlı varyantı yoktur ve eklenmemelidir.
 
 Tek yazar: `store.acquire_writer_lock()`. Bu kilit yalnızca **bu makinedeki**
 ikinci süreci engeller; başka bir hosttan aynı hesaba bağlanmayı engelleyemez.

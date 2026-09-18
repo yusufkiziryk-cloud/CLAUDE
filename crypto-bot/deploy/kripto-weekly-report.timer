@@ -1,0 +1,9 @@
+[Unit]
+Description=Weekly report every Monday
+
+[Timer]
+OnCalendar=Mon *-*-* 06:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

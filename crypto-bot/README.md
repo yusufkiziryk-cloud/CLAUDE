@@ -76,6 +76,13 @@ TLS'i sonlandıran bir vekil sunucunun arkasındaysanız sona
 değişkeni ve CLI birleştikten **sonraki** yapılandırmayı freqtrade'in kendi
 birleştiricisiyle hesaplar ve anahtarsız dry-run değilse reddeder.
 
+## Kalıcı kurulum
+
+Botu kendi makinenizde 7/24 çalıştırmak için:
+[`deploy/README.md`](deploy/README.md) — systemd birimleri, watchdog, makine
+dışı dead-man heartbeat ve doğrulanan yedek. Kurulum dry-run'dır; canlı bir
+varyantı yoktur.
+
 ## Panel (tek dosya HTML)
 
 ```bash

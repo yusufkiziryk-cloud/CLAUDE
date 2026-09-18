@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-09-17, after the weekly-report work.
+Last updated: 2026-09-18, after the deployment work (Gate D).
 
 ## Where things stand
 
@@ -11,10 +11,10 @@ Last updated: 2026-09-17, after the weekly-report work.
 | Faz 2 - market data | **DONE** |
 | Faz 3 - strategy, risk, order correctness | **DONE** - risk layer and order lifecycle both adversarially tested |
 | Faz 4 - honest research report | **DONE** - verdict `INSUFFICIENT_EVIDENCE` |
-| Faz 5 - monitoring and handover | **PARTIAL** - watchdog, weekly report and runbook done; the 4-8 week observation cannot be run here |
+| Faz 5 - monitoring and handover | **DONE** (code) - watchdog, weekly report, dashboard, deployment units; the 4-8 week observation itself cannot be run here |
 | Faz 6 - live readiness assessment | **DONE** - live remains blocked |
 
-Tests: **301 passing** offline, **305** including public-endpoint tests.
+Tests: **330 passing** offline, **334** including public-endpoint tests.
 
 ## Decisions made, and why
 
@@ -150,14 +150,38 @@ recovery, with the external watchdog reporting all nine checks green.
    job (trading was unaffected) and hid the bug; the warning it logged is how
    it surfaced.
 
+## What the deployment work added (Gate D)
+
+- `scripts/backup.py` - snapshots live SQLite through `Connection.backup()`
+  rather than `cp`, and `--verify` restores the result into a temp directory
+  and checks integrity, hashes and row counts. A backup nobody has restored is
+  a hope; the test suite also proves the check *can* fail by corrupting one.
+- `scripts/deadman.py` - off-box heartbeat **gated on the health report**. A
+  heartbeat that fires unconditionally monitors the timer, not the bot. Here a
+  CRITICAL check means silence, and silence is what makes the external service
+  alert. The ping URL is treated as a capability: never committed, never
+  logged unmasked, https only.
+- `deploy/*.service` + `*.timer` - hardened systemd units for the bot
+  (dry-run only, through `safe-run.py`), the watchdog (read-only paths), the
+  dead-man, a nightly verified backup and a weekly report. All verified with
+  `systemd-analyze verify`.
+- `deploy/README.md` - step-by-step for the operator, with a **drill** after
+  each step: kill the bot and confirm the watchdog catches it; stop the
+  heartbeat and confirm the alert actually reaches you; restore a backup for
+  real.
+
+`systemd-analyze verify` caught one real error: `StartLimitIntervalSec` in
+`[Service]` is silently ignored, which would have produced an unbounded
+restart loop with no warning. It belongs in `[Unit]`.
+
 ## The exact next step
 
 The remaining work is **not code**. It is running the bot for 4-8 weeks on a
 machine that stays up, collecting 5m data forward the whole time, and
-generating a weekly report each week.
+generating a weekly report each week. `deploy/README.md` is the procedure.
 
-This environment cannot do that: the container is ephemeral and total
-observed runtime is minutes. Everything else in Faz 5 is delivered.
+This environment cannot do that: the container is ephemeral and total observed
+runtime is minutes.
 
 Reproduction:
 

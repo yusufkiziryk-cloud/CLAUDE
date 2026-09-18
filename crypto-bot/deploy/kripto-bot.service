@@ -1,0 +1,77 @@
+# Dry-run trading loop.
+#
+# There is no live variant of this unit and one must not be added: the
+# ExecStart below goes through scripts/safe-run.py, which refuses to start
+# unless the effective configuration is a keyless dry run.
+#
+# Install:
+#   sudo cp deploy/*.service deploy/*.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now kripto-bot.service
+#
+# Edit User/Group/WorkingDirectory to match your machine before installing.
+
+[Unit]
+Description=Kripto bot (dry-run)
+Documentation=file:///opt/kripto-bot/docs/RUNBOOK.md
+After=network-online.target time-sync.target
+Wants=network-online.target
+
+# Give up after 5 failed starts in 10 minutes rather than crash-looping.
+# These two belong in [Unit], not [Service] - systemd ignores them silently
+# in [Service] and you get an unbounded restart loop with no warning.
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=kripto
+Group=kripto
+WorkingDirectory=/opt/kripto-bot
+
+ExecStart=/opt/kripto-bot/.venv/bin/python scripts/safe-run.py trade \
+    --config config/config.dry.json
+
+# Restart with a real backoff, and give up rather than crash-loop for ever.
+# The bot re-enters RECONCILING on every start and takes no entries until its
+# records agree, so a restart can never resume trading on stale assumptions.
+Restart=on-failure
+RestartSec=30
+
+# Stopping is a real stop: no open position is protected once the loop ends,
+# because Hyperliquid spot has no exchange-side stop. Give it time to finish
+# the iteration it is in rather than killing it mid-write.
+KillSignal=SIGINT
+TimeoutStopSec=120
+
+# --- hardening -------------------------------------------------------------
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+# The only writable paths. Everything else is read-only to this unit.
+ReadWritePaths=/opt/kripto-bot/user_data /opt/kripto-bot/reports /opt/kripto-bot/backups
+
+LimitNOFILE=4096
+MemoryMax=2G
+CPUQuota=200%
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kripto-bot
+
+[Install]
+WantedBy=multi-user.target

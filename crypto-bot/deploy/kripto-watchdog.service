@@ -1,0 +1,38 @@
+# In-host health observer. Read-only by construction: it opens the state file
+# with SQLite mode=ro, so it cannot write even if asked to. It carries no
+# credential and places no orders.
+#
+# It cannot tell you the host died - it dies with it. That is what
+# kripto-deadman.service is for.
+
+[Unit]
+Description=Kripto bot watchdog (read-only)
+After=kripto-bot.service
+BindsTo=kripto-bot.service
+
+[Service]
+Type=simple
+User=kripto
+Group=kripto
+WorkingDirectory=/opt/kripto-bot
+
+ExecStart=/opt/kripto-bot/.venv/bin/python scripts/watchdog.py \
+    --state user_data/dryrun/risk_state.sqlite --interval 60
+
+Restart=always
+RestartSec=15
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+CapabilityBoundingSet=
+# No write access at all: the observer must not be able to change what it observes.
+ReadOnlyPaths=/opt/kripto-bot
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kripto-watchdog
+
+[Install]
+WantedBy=multi-user.target
