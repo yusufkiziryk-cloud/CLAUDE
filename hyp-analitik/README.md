@@ -17,7 +17,8 @@ lisanslı planlar.
 
 ```bash
 node --test                  # katsayı motoru (13) + lisans (4) + bordro motoru (8)
-node tools/derle.js          # app/sablon.html + src/* + kurallar/ → hyp-analitik.html
+node tools/derle.js          # app/sablon.html + src/* + kurallar/ + marka/ → hyp-analitik.html
+python3 tools/logo-uret.py   # marka/*.svg + site logoları (yalnızca logo değişince)
 node tools/derle.js --artifact /tmp/onizleme.html   # sarmalayıcısız önizleme
 node tools/lisans/anahtar-uret.js uretim            # satıcı anahtar çifti (bir kez)
 node tools/lisans/lisans-uret.js --plan SAAS_STANDARD --ad "Dr. X" --bitis 2027-09-04 --kid uretim

@@ -40,8 +40,10 @@ hyp-analitik/
 ├── src/lisans.js              # lisans doğrulama (ECDSA P-256, WebCrypto)
 ├── kurallar/2026-kurallar.json# tarih-sürümlü kural verisi (oran/tarife/katsayı)
 ├── test/                      # node --test (motor 13, lisans 4, bordro 8)
-├── tools/derle.js             # şablon + motorlar + kurallar + lisans → hyp-analitik.html
+├── tools/derle.js             # şablon + motorlar + kurallar + lisans + logo → hyp-analitik.html
 ├── tools/lisans/              # anahtar-uret.js, lisans-uret.js, dev.acik.json
+├── tools/logo-uret.py         # marka/*.svg üretici (yazı tipinden bağımsız logo)
+├── marka/                     # logo (orijinal JPG + SVG'ler); README'de renk/kullanım kuralı
 ├── eklenti/                   # Chrome MV3: SİNA Pozitif Performans → JSON
 ├── site/                      # tanıtım + gizlilik (GitHub Pages'e uygun)
 ├── config/planlar.json        # plan/paket tanımları

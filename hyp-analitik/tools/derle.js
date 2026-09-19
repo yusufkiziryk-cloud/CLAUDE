@@ -9,6 +9,8 @@
  *   /*__BORDRO__*\/   → src/bordro-motoru.js (export'lar soyulmuş)
  *   __KURALLAR__      → kurallar/2026-kurallar.json
  *   __ACIK_ANAHTAR__  → tools/lisans/<kid>.acik.json (varsayılan: dev)
+ *   <!--__LOGO__-->   → marka/logo-yatay.svg (satır içi SVG)
+ *   __SIMGE_URI__     → marka/simge.svg (data: URI, sekme simgesi)
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -22,6 +24,7 @@ const soy = (kaynak) => readFileSync(join(kok, kaynak), 'utf8')
   .replace(/^export\s+(const|function|async function|let)\s/gm, '$1 ')
   .replace(/^export\s*\{[^}]*\};?\s*$/gm, '');
 
+const svg = (kaynak) => readFileSync(join(kok, 'marka', kaynak), 'utf8').replace(/<\?xml[^>]*>\s*/, '').trim();
 const anahtarYolu = join(kok, 'tools', 'lisans', `${kid}.acik.json`);
 const acikAnahtar = existsSync(anahtarYolu) ? readFileSync(anahtarYolu, 'utf8').trim() : 'null';
 
@@ -31,6 +34,8 @@ let html = readFileSync(join(kok, 'app', 'sablon.html'), 'utf8')
   .replace('/*__BORDRO__*/', () => soy('src/bordro-motoru.js'))
   .replace('__KURALLAR__', () => readFileSync(join(kok, 'kurallar', '2026-kurallar.json'), 'utf8').trim())
   .replace('__ACIK_ANAHTAR__', () => acikAnahtar)
+  .replace('<!--__LOGO__-->', () => svg('logo-yatay.svg'))
+  .replace('__SIMGE_URI__', () => 'data:image/svg+xml,' + encodeURIComponent(svg('simge.svg')))
   .replace('__DERLEME_ZAMANI__', () => new Date().toISOString().slice(0, 10));
 
 const artifactYolu = arg('artifact');
