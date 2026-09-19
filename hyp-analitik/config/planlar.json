@@ -1,0 +1,61 @@
+{
+  "_aciklama": "Plan tanımları. Fiyatları SİZ doldurun (null = panelde 'iletişime geçin' görünür). Bu dosya public config'tir; secret koymayın.",
+  "planlar": {
+    "DEMO": {
+      "ad": "Ücretsiz Deneme",
+      "fiyat": null,
+      "para_birimi": "TRY",
+      "donem": "sinirsiz",
+      "hesap_siniri": 3,
+      "cihaz_siniri": null,
+      "offline_indirme": false,
+      "satilabilir": false,
+      "ozellikler": ["veri_okuma", "yedekleme", "geri_yukleme", "filigranli_cikti"]
+    },
+    "OFFLINE_INDIVIDUAL": {
+      "ad": "Çevrimdışı Bireysel (yıllık)",
+      "fiyat": null,
+      "para_birimi": "TRY",
+      "donem": "yillik",
+      "hesap_siniri": null,
+      "cihaz_siniri": null,
+      "offline_indirme": true,
+      "satilabilir": true,
+      "ozellikler": ["veri_okuma", "yedekleme", "geri_yukleme", "sinirsiz_hesap", "temiz_cikti", "tam_disa_aktarim", "offline_indirme"]
+    },
+    "SAAS_STANDARD": {
+      "ad": "Online Standart (yıllık)",
+      "fiyat": null,
+      "para_birimi": "TRY",
+      "donem": "yillik",
+      "hesap_siniri": null,
+      "cihaz_siniri": 3,
+      "offline_indirme": false,
+      "satilabilir": true,
+      "ozellikler": ["veri_okuma", "yedekleme", "geri_yukleme", "sinirsiz_hesap", "temiz_cikti", "tam_disa_aktarim"]
+    },
+    "HYBRID_PRO": {
+      "ad": "Hibrit Pro (yıllık)",
+      "fiyat": null,
+      "para_birimi": "TRY",
+      "donem": "yillik",
+      "hesap_siniri": null,
+      "cihaz_siniri": 5,
+      "offline_indirme": true,
+      "satilabilir": true,
+      "ozellikler": ["veri_okuma", "yedekleme", "geri_yukleme", "sinirsiz_hesap", "temiz_cikti", "tam_disa_aktarim", "offline_indirme"]
+    },
+    "INSTITUTIONAL": {
+      "ad": "Kurumsal (özel teklif)",
+      "fiyat": null,
+      "para_birimi": "TRY",
+      "donem": "yillik",
+      "hesap_siniri": null,
+      "cihaz_siniri": 10,
+      "offline_indirme": true,
+      "satilabilir": true,
+      "ozellikler": ["veri_okuma", "yedekleme", "geri_yukleme", "sinirsiz_hesap", "temiz_cikti", "tam_disa_aktarim", "offline_indirme", "coklu_kullanici"]
+    }
+  },
+  "varsayilan_plan": "SAAS_STANDARD"
+}
