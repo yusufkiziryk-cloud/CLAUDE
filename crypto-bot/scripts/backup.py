@@ -68,13 +68,27 @@ def snapshot_database(source: Path, target: Path) -> None:
         src.close()
 
 
+def user_tables(path: Path) -> tuple[str, ...]:
+    """Every table in the file, so verification covers ALL of them - not a
+    fixed list that silently omits the ones added since (audit finding)."""
+    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        rows = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' "
+            "ORDER BY name"
+        ).fetchall()
+    finally:
+        conn.close()
+    return tuple(r[0] for r in rows)
+
+
 def table_counts(path: Path, tables: tuple[str, ...]) -> dict[str, int | None]:
     conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
     counts: dict[str, int | None] = {}
     try:
         for table in tables:
             try:
-                counts[table] = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+                counts[table] = conn.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
             except sqlite3.Error:
                 counts[table] = None  # table absent - reported, not hidden
     finally:
@@ -85,6 +99,12 @@ def table_counts(path: Path, tables: tuple[str, ...]) -> dict[str, int | None]:
 def take_backup(args) -> Path:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out = Path(args.out) / stamp
+    suffix = 0
+    while out.exists():
+        # Two runs inside one second (a manual run right after the timer)
+        # must not crash on the directory name; they get their own.
+        suffix += 1
+        out = Path(args.out) / f"{stamp}-{suffix}"
     out.mkdir(parents=True, exist_ok=False)
 
     manifest: dict = {
@@ -102,13 +122,22 @@ def take_backup(args) -> Path:
             print(f"  {name:28} ABSENT (nothing to back up yet)")
             continue
         target = out / name
+        # Row counts are read from the SOURCE, before and after the snapshot,
+        # so that verification compares the restored copy against the live
+        # database rather than against itself (audit finding). If the source
+        # changed during the copy the two readings differ and are both kept.
+        all_tables = tuple(sorted(set(tables) | set(user_tables(source))))
+        counts_before = table_counts(source, all_tables)
         snapshot_database(source, target)
-        counts = table_counts(target, tables)
+        counts_after = table_counts(source, all_tables)
+        counts = counts_after
         manifest["databases"][name] = {
             "status": "OK",
             "hash": file_hash(target),
             "bytes": target.stat().st_size,
             "row_counts": counts,
+            "source_row_counts_before_snapshot": counts_before,
+            "source_changed_during_snapshot": counts_before != counts_after,
         }
         print(f"  {name:28} {target.stat().st_size:>9,} B  {counts}")
 
@@ -158,6 +187,10 @@ def verify_backup(backup_dir: Path) -> bool:
             conn = sqlite3.connect(str(target))
             try:
                 integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
+            except sqlite3.Error as exc:
+                # A file damaged badly enough that even integrity_check cannot
+                # run is a failed backup, not a crashed verifier (T18).
+                integrity = f"unreadable: {exc}"
             finally:
                 conn.close()
             if integrity != "ok":
@@ -165,9 +198,25 @@ def verify_backup(backup_dir: Path) -> bool:
                 ok = False
                 continue
 
-            counts = table_counts(target, tuple(info["row_counts"]))
-            if counts != info["row_counts"]:
-                print(f"FAIL: {name} row counts changed: {info['row_counts']} -> {counts}")
+            try:
+                counts = table_counts(target, tuple(info["row_counts"]))
+            except sqlite3.Error as exc:
+                print(f"FAIL: {name} could not be read after restore: {exc}")
+                ok = False
+                continue
+            expected = info["row_counts"]
+            before = info.get("source_row_counts_before_snapshot", expected)
+            # A snapshot taken while the bot was writing may legitimately sit
+            # anywhere between the two source readings, never outside them.
+            drift = {}
+            for table, want in expected.items():
+                have = counts.get(table)
+                low = min(before.get(table) or 0, want or 0)
+                high = max(before.get(table) or 0, want or 0)
+                if have is None or not (low <= have <= high):
+                    drift[table] = (before.get(table), want, have)
+            if drift:
+                print(f"FAIL: {name} row counts differ from the source (before, at, restored): {drift}")
                 ok = False
                 continue
 
@@ -189,6 +238,71 @@ def rotate(root: Path, keep: int) -> None:
         print(f"  rotated out: {old.name}")
 
 
+def restore_backup(backup_dir: Path, state_dir: Path) -> bool:
+    """Put a verified backup back in place, WAL-safely.
+
+    The databases run in WAL mode. Copying a .sqlite over the old one while a
+    stale -wal file is left behind makes SQLite replay that WAL onto the
+    restored file at the next open - the restore silently never happened
+    (audit finding). So: refuse while a bot holds the writer lock, set the
+    current files aside, remove -wal/-shm, copy, and check integrity.
+    """
+    if not verify_backup(backup_dir):
+        print("refusing to restore a backup that does not verify")
+        return False
+    state_dir.mkdir(parents=True, exist_ok=True)
+    live_state = state_dir / "risk_state.sqlite"
+    if live_state.is_file():
+        try:
+            conn = sqlite3.connect(f"file:{live_state}?mode=ro", uri=True)
+            row = conn.execute("SELECT host, pid FROM writer_lock WHERE id=1").fetchone()
+            conn.close()
+        except sqlite3.Error:
+            row = None
+        if row is not None:
+            import os
+            import socket
+
+            host, pid = row
+            alive = host == socket.gethostname() and pid and _pid_alive(int(pid))
+            if alive:
+                print(f"refusing: bot pid {pid} holds the writer lock; stop it first")
+                return False
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    for name in DATABASES:
+        source = backup_dir / name
+        if not source.is_file():
+            continue
+        target = state_dir / name
+        for suffix in ("", "-wal", "-shm", "-journal"):
+            existing = Path(str(target) + suffix)
+            if existing.exists():
+                existing.rename(Path(f"{existing}.pre-restore-{stamp}"))
+        shutil.copy2(source, target)
+        conn = sqlite3.connect(str(target))
+        try:
+            integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
+        finally:
+            conn.close()
+        if integrity != "ok":
+            print(f"FAIL: restored {name} integrity_check returned {integrity!r}")
+            return False
+        print(f"  {name:28} restored, integrity=ok (previous files kept as *.pre-restore-{stamp})")
+    return True
+
+
+def _pid_alive(pid: int) -> bool:
+    import os
+
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--state-dir", default=str(REPO_ROOT / "user_data" / "dryrun"))
@@ -197,6 +311,8 @@ def parse_args(argv=None):
     parser.add_argument("--keep", type=int, default=14, help="0 keeps everything")
     parser.add_argument("--verify", action="store_true", help="restore the new backup and check it")
     parser.add_argument("--verify-only", default=None, metavar="DIR")
+    parser.add_argument("--restore", default=None, metavar="DIR",
+                        help="restore this backup into --state-dir (bot must be stopped)")
     return parser.parse_args(argv)
 
 
@@ -207,21 +323,29 @@ def main(argv=None) -> int:
     if args.verify_only:
         print(f"verifying {args.verify_only}")
         return 0 if verify_backup(Path(args.verify_only)) else 1
+    if args.restore:
+        print(f"restoring {args.restore} into {args.state_dir}")
+        return 0 if restore_backup(Path(args.restore), Path(args.state_dir)) else 1
 
     print("backing up ...")
     out = take_backup(args)
-    rotate(Path(args.out), args.keep)
     print(f"written: {out}")
 
     if args.verify:
         print("\nrestoring it back to check ...")
         if not verify_backup(out):
             print("\nBACKUP VERIFICATION FAILED - do not rely on this backup")
+            # Nothing is rotated out: a failed backup must not displace the
+            # last good one (audit finding: rotation ran first and could
+            # delete the only verified backup).
             return 1
         print("\nverified: this backup restores cleanly")
     else:
         print("\nNOT VERIFIED. Run with --verify at least weekly; an unrestored "
               "backup is a hope, not a backup.")
+    # Rotate only once the new backup exists - and, with --verify, only once
+    # it has restored cleanly.
+    rotate(Path(args.out), args.keep)
     return 0
 
 

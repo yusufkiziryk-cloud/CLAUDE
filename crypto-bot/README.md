@@ -13,8 +13,9 @@ botu. Freqtrade 2026.8 üzerine kurulu; risk katmanı ayrı ve saf Python.
 
 | Soru | Cevap |
 |---|---|
-| Yazılım çalışıyor mu? | Evet. 301 test geçiyor; backtest ve dry-run uçtan uca koşuyor. |
-| Strateji kârlı mı? | **Hayır, kanıt yok.** Son 12 ayda -%5.33, 12 işlem. Karar: `INSUFFICIENT_EVIDENCE`. |
+| Yazılım çalışıyor mu? | Evet. 466 test geçiyor; temiz klondan kurulum ve backtest yeniden üretimi doğrulandı (`scripts/cleanroom-verify.sh`). |
+| Strateji kârlı mı? | **Hayır, kanıt yok.** Son 12 ayda -%6.64, 16 işlem, PF 0.16, piyasa değeriyle %10.5 düşüş. Beş kriterin beşi de başarısız. Karar: `INSUFFICIENT_EVIDENCE` (`scripts/eligibility.py`). |
+| Denetlendi mi? | Evet. 19 Eylül'de 10 bağımsız düşmanca inceleme 56 kusur buldu; 55'i regresyon testiyle düzeltildi, 1'i ölçümle çürütüldü — [docs/AUDIT_2026-09-19.md](docs/AUDIT_2026-09-19.md). |
 | Canlıya hazır mı? | **Hayır.** 6 ayrı canlı engeli var. |
 | Gerçek para riski var mı? | Yok. Anahtar yok, emir yok, fon hareketi kodu yok. |
 
@@ -23,9 +24,14 @@ botu. Freqtrade 2026.8 üzerine kurulu; risk katmanı ayrı ve saf Python.
 ```bash
 cd crypto-bot
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python -m pytest -m "not network"   # ~4 saniye
+.venv/bin/pip install -r requirements.lock.txt   # yeniden üretim için kilit; requirements.txt de çalışır
+.venv/bin/python -m pytest -m "not network"      # ~10 saniye, 466 test
 ```
+
+Sıfırdan doğrulamak için: `scripts/cleanroom-verify.sh --data-from
+user_data/data/hyperliquid --backtest` boş bir dizine klonlar, kurar, test
+eder ve backtest'i `reports/faz4/expected_backtest.json` ile karşılaştırır.
+Kalıcı bir sunucuya tek komutla kurmak için `deploy/install.sh`.
 
 Python 3.11 veya üzeri gerekir. Freqtrade sürümü bilerek sabitlenmiştir:
 güvenlik kontrollerimiz freqtrade'in iç davranışlarını okur, sürüm sessizce
@@ -95,8 +101,10 @@ yazdığı backtest arşivi, risk durumundaki kayıtlı giriş kararları ve ver
 manifesti. Kaynak yoksa uydurmaz, "yok" yazar.
 
 İçerik: equity eğrisi (al-tut ve nakit ile karşılaştırmalı), giriş kararları ve
-ret nedenleri, veri kapsamı, 12 işlemin tamamı, sağlık kontrolleri ve canlıya
-geçişi engelleyen 6 madde.
+ret nedenleri, veri kapsamı, işlemlerin tamamı, sağlık kontrolleri ve canlıya
+geçişi engelleyen 6 madde. Başlıktaki maksimum düşüş **piyasa değeriyle**
+hesaplanır (kapalı işlem bazlı rakam yanında gösterilir); bir önceki sürüm
+%11'lik bir düşüşün üstünde %8.2 yazıyordu.
 
 ## Haftalık rapor
 
@@ -173,11 +181,14 @@ pozisyonun hiçbir koruması kalmaz.
    **UBTC** (Unit Bitcoin) — köprü ihraçlı bir sarmalayıcı. ETH ve SOL de
    öyle, ve üçü de **aynı ihraççıdan**. Bu yüzden tek risk kümesi sayılırlar.
    ccxt bu farkı isimlendirmede gizliyor.
-3. **Stratejinin pozitif beklentisi kanıtlanmadı.** 12 işlem, tek rejim,
-   dokunulmamış holdout yok.
+3. **Stratejinin pozitif beklentisi kanıtlanmadı.** 16 işlem, tek rejim,
+   dokunulmamış holdout yok; kendi düşüş kilidi Nisan 2026'da devreye girip
+   dönemin son beş ayında girişleri kapattı.
 4. **Toplam gözlenen çalışma süresi dakikalarla ölçülüyor**, gereken 4-8 hafta.
-   Taşıma ve dosya sistemi hata enjeksiyonu (T17/T18) yapılmadı; dry-run'da
-   borsa tarafı uzlaştırma yapısal olarak test edilemiyor.
+   Hata enjeksiyonu (T17/T18) sahte borsa ve sahte dosya sistemi hatalarına
+   karşı yapıldı, gerçek 429 veya gerçek dolu diske karşı değil; dry-run'da
+   borsa tarafı uzlaştırma yapısal olarak test edilemiyor; dış bakiye
+   değişikliği için dedektör yok.
 5. **Docker bu ortamda hiç ayağa kaldırılmadı** (daemon yok).
 
 ## Belgeler
@@ -194,6 +205,7 @@ pozisyonun hiçbir koruması kalmaz.
 | [docs/LIVE_READINESS.md](docs/LIVE_READINESS.md) | canlı engelleri |
 | [docs/GO_LIVE_CHECKLIST.md](docs/GO_LIVE_CHECKLIST.md) | **elle uygulanacak canlıya geçiş kontrol listesi** |
 | [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md) | son durum ve sıradaki adım |
+| [docs/AUDIT_2026-09-19.md](docs/AUDIT_2026-09-19.md) | düşmanca denetimin bulguları ve her birini sabitleyen test |
 
 ## Kapsam dışı
 

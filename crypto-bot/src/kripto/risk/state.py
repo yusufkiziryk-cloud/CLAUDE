@@ -154,6 +154,19 @@ class RiskStateError(RuntimeError):
     pass
 
 
+def _pid_alive(pid: int) -> bool:
+    """Is a process with this pid running on this host?"""
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
 def utc_day_start(now: datetime) -> datetime:
     return now.astimezone(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -236,6 +249,16 @@ CREATE TABLE IF NOT EXISTS writer_lock (
     acquired_at TEXT NOT NULL,
     heartbeat_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS pending_entries (
+    intent_id TEXT PRIMARY KEY,
+    pair TEXT NOT NULL,
+    amount_base TEXT NOT NULL,
+    entry_price TEXT NOT NULL,
+    stop_price TEXT NOT NULL,
+    atr TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_pending_pair ON pending_entries(pair, created_at);
 CREATE INDEX IF NOT EXISTS idx_res_state ON reservations(state);
 CREATE INDEX IF NOT EXISTS idx_locks_cleared ON locks(cleared_at);
 """
@@ -258,6 +281,7 @@ class RiskStore:
         self._conn.execute("PRAGMA foreign_keys=ON")
         self._conn.executescript(_SCHEMA)
         self._ensure_version()
+        self._tx_depth = 0
 
     def close(self) -> None:
         self._conn.close()
@@ -272,12 +296,37 @@ class RiskStore:
 
     @contextmanager
     def _tx(self) -> Iterator[sqlite3.Connection]:
+        """One ``BEGIN IMMEDIATE`` per outermost call; nested calls join it.
+
+        Re-entrancy is what lets an order-state change and its budget
+        release commit TOGETHER (``OrderLedger._apply``) instead of as two
+        transactions with a crash window between them - the audit found the
+        second transaction could fail and leave a terminal order holding
+        budget forever.
+        """
+        if self._tx_depth > 0:
+            self._tx_depth += 1
+            try:
+                yield self._conn
+            finally:
+                self._tx_depth -= 1
+            return
+
         self._conn.execute("BEGIN IMMEDIATE")
+        self._tx_depth = 1
         try:
             yield self._conn
         except BaseException:
-            self._conn.execute("ROLLBACK")
+            self._tx_depth = 0
+            # SQLite rolls back on its own for SQLITE_FULL, IOERR and friends.
+            # An explicit ROLLBACK after that raises "no transaction is
+            # active" from inside this handler and would REPLACE the real
+            # error (found by T18 disk-full injection). Roll back only what
+            # is still open; the original exception propagates either way.
+            if self._conn.in_transaction:
+                self._conn.execute("ROLLBACK")
             raise
+        self._tx_depth = 0
         self._conn.execute("COMMIT")
 
     def _ensure_version(self) -> None:
@@ -561,7 +610,17 @@ class RiskStore:
 
                 last_beat = datetime.fromisoformat(row["heartbeat_at"])
                 age = (now - last_beat).total_seconds()
-                if age < lease_seconds:
+                if row["host"] == host and not _pid_alive(int(row["pid"])):
+                    # A crashed process on THIS host cannot be a second writer.
+                    # Without this, a systemd restart 30s after a crash was
+                    # refused for the rest of the 300s lease, and five such
+                    # refusals hit StartLimitBurst - the bot stayed down.
+                    logger.warning(
+                        "taking over a writer lock left by pid %s on this host, which "
+                        "is no longer running (last heartbeat %.0fs ago)",
+                        row["pid"], age,
+                    )
+                elif age < lease_seconds:
                     return False, (
                         f"another instance holds the writer lock: owner={row['owner']} "
                         f"host={row['host']} pid={row['pid']}, last heartbeat {age:.0f}s ago. "
@@ -719,12 +778,22 @@ class RiskStore:
             )
         return True, "reserved"
 
-    def record_partial_fill(self, intent_id: str, filled_base: Decimal, now: datetime) -> None:
+    def record_partial_fill(
+        self, intent_id: str, filled_base: Decimal, now: datetime, *, complete: bool = False
+    ) -> None:
         """Move the filled share of an intent from reservation into position.
 
         The unfilled remainder stays reserved. It is released only when the
         exchange has CONFIRMED the cancellation, never when a cancel request
         was merely sent.
+
+        ``complete=True`` says the framework reports the entry order DONE:
+        the reservation becomes FILLED even if the filled amount is one
+        exchange step below what was reserved. Precision truncation on the
+        order amount is not an unfilled remainder, and treating it as one
+        left reservations PENDING forever (audit finding: after three such
+        entries the bot refused every further entry for the life of the
+        state file).
         """
         with self._tx() as conn:
             row = conn.execute(
@@ -747,13 +816,15 @@ class RiskStore:
                 )
             state = (
                 ReservationState.FILLED
-                if new_filled >= amount
+                if new_filled >= amount or complete
                 else ReservationState.PARTIALLY_FILLED
             )
             conn.execute(
                 "UPDATE reservations SET filled_base=?, state=?, updated_at=? WHERE intent_id=?",
                 (str(new_filled), state.value, now.isoformat(), intent_id),
             )
+            if state is ReservationState.FILLED:
+                conn.execute("DELETE FROM pending_entries WHERE intent_id=?", (intent_id,))
 
     def release(self, intent_id: str, reason: str, now: datetime) -> None:
         """Release an intent's remaining budget after a CONFIRMED resolution."""
@@ -763,6 +834,77 @@ class RiskStore:
                 "WHERE intent_id=?",
                 (ReservationState.RELEASED.value, now.isoformat(), reason, intent_id),
             )
+            conn.execute("DELETE FROM pending_entries WHERE intent_id=?", (intent_id,))
+
+    # -- approved entries awaiting a fill -----------------------------------
+
+    def put_pending_entry(
+        self,
+        *,
+        intent_id: str,
+        pair: str,
+        amount_base: Decimal,
+        entry_price: Decimal,
+        stop_price: Decimal,
+        atr: Decimal,
+        now: datetime,
+    ) -> None:
+        """Persist an approved entry's stop BEFORE the order goes out.
+
+        The strategy used to keep this in a process-level dict, so a restart
+        between order send and fill lost the approved stop and the position
+        ran on the -15% backstop. Durable here, keyed by pair as well as
+        intent, it survives the restart and is found by ``order_filled``
+        even when the intent stamp differs between callbacks.
+        """
+        with self._tx() as conn:
+            conn.execute(
+                "INSERT INTO pending_entries(intent_id, pair, amount_base, entry_price, "
+                "stop_price, atr, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) "
+                "ON CONFLICT(intent_id) DO UPDATE SET pair=excluded.pair, "
+                "amount_base=excluded.amount_base, entry_price=excluded.entry_price, "
+                "stop_price=excluded.stop_price, atr=excluded.atr, created_at=excluded.created_at",
+                (
+                    intent_id, pair, str(amount_base), str(entry_price), str(stop_price),
+                    str(atr), now.isoformat(),
+                ),
+            )
+
+    def get_pending_entry(self, pair: str) -> dict | None:
+        """The newest approved-but-unfilled entry for a pair, or None."""
+        row = self._conn.execute(
+            "SELECT * FROM pending_entries WHERE pair=? ORDER BY created_at DESC LIMIT 1",
+            (pair,),
+        ).fetchone()
+        return self._pending_row(row) if row else None
+
+    def get_pending_entry_by_intent(self, intent_id: str) -> dict | None:
+        row = self._conn.execute(
+            "SELECT * FROM pending_entries WHERE intent_id=?", (intent_id,)
+        ).fetchone()
+        return self._pending_row(row) if row else None
+
+    def pending_entries(self) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM pending_entries ORDER BY created_at"
+        ).fetchall()
+        return [self._pending_row(r) for r in rows]
+
+    def delete_pending_entry(self, intent_id: str) -> None:
+        with self._tx() as conn:
+            conn.execute("DELETE FROM pending_entries WHERE intent_id=?", (intent_id,))
+
+    @staticmethod
+    def _pending_row(row: sqlite3.Row) -> dict:
+        return {
+            "intent_id": row["intent_id"],
+            "pair": row["pair"],
+            "amount": dec(row["amount_base"]),
+            "entry_price": dec(row["entry_price"]),
+            "stop_price": dec(row["stop_price"]),
+            "atr": dec(row["atr"]),
+            "created_at": datetime.fromisoformat(row["created_at"]),
+        }
 
     def mark_unknown(self, intent_id: str, reason: str, now: datetime) -> None:
         """An order whose outcome could not be determined.

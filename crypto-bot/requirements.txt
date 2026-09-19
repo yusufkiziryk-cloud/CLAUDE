@@ -7,3 +7,8 @@
 # into a no-op; tests/test_capabilities.py fails loudly if that happens.
 freqtrade==2026.8
 PyYAML==6.0.3
+
+# The test suite is part of the install verification (deploy/README.md D1:
+# "330 tests must pass"), so the test runner is a runtime requirement here,
+# not a developer extra. Missing it was found by the clean-room install.
+pytest==9.1.1

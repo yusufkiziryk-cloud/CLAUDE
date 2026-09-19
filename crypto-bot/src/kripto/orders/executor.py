@@ -160,12 +160,27 @@ class OrderExecutor:
 
         filled = dec(str(found.get("filled", 0)))
         status = str(found.get("status", "")).lower()
+        amount = dec(str(found.get("amount", record.amount)))
+
+        if (
+            status == "rejected"
+            and filled <= ZERO
+            and record.state in (OrderState.UNKNOWN, OrderState.SUBMITTED)
+        ):
+            # Definitively refused, never live. Releases the budget.
+            self.ledger.mark_rejected(intent_id, "resolved: venue reports rejected", now)
+            return ExecutionResult(Outcome.REJECTED, intent_id, "resolved: rejected by the venue")
+
         self.ledger.mark_accepted(intent_id, str(found["id"]), now)
         if filled > ZERO:
-            self.ledger.mark_filled(intent_id, filled, now, event_id=f"resolve:{found['id']}")
-        if status in ("canceled", "cancelled") and filled < dec(str(found.get("amount", 0))):
+            # The event id carries the filled amount: a later resolution that
+            # sees MORE filled is a new event, not a redelivery of this one.
+            self.ledger.mark_filled(
+                intent_id, filled, now, event_id=f"resolve:{found['id']}:{filled}"
+            )
+        if status in ("canceled", "cancelled", "expired", "rejected") and filled < amount:
             self.ledger.mark_cancel_confirmed(intent_id, now)
-            return ExecutionResult(Outcome.CANCELLED, intent_id, "resolved: cancelled")
+            return ExecutionResult(Outcome.CANCELLED, intent_id, f"resolved: {status}")
         if status == "closed" or filled >= record.amount:
             return ExecutionResult(Outcome.FILLED, intent_id, "resolved: filled")
         return ExecutionResult(
@@ -227,6 +242,11 @@ class OrderExecutor:
         """
         alerts: list[str] = []
         worst_allowed = mul(reference_price, dec(1) - max_slippage)
+        # What is still to be sold. Every attempt re-prices ONLY this
+        # remainder: whatever an earlier attempt sold stays sold, so the chase
+        # can never sell more than the position (audit finding: the full
+        # amount was re-sent after a partial fill, up to 3x the position).
+        remaining = amount
 
         for attempt in range(1, self.max_reprice_attempts + 1):
             market_price = dec(price_feed())
@@ -237,11 +257,11 @@ class OrderExecutor:
             intent_id = f"{intent_prefix}|exit|{attempt}"
             client_order_id = intent_id.replace("|", "-")
             self.ledger.record_intent(
-                intent_id=intent_id, pair=pair, side="sell", amount=amount,
+                intent_id=intent_id, pair=pair, side="sell", amount=remaining,
                 price=limit, client_order_id=client_order_id, now=now,
             )
             result = self.submit(
-                intent_id=intent_id, pair=pair, side="sell", amount=amount, price=limit,
+                intent_id=intent_id, pair=pair, side="sell", amount=remaining, price=limit,
                 client_order_id=client_order_id, now=now,
             )
             if result.outcome is Outcome.UNKNOWN:
@@ -262,17 +282,40 @@ class OrderExecutor:
                 f"(market {market_price}, floor {worst_allowed})"
             )
             if record and not record.state.is_terminal:
-                self.cancel(intent_id, now)
+                cancelled = self.cancel(intent_id, now)
+                if cancelled.outcome is Outcome.UNKNOWN:
+                    # The sell may still be resting. Sending another one on
+                    # top of it is how a position gets sold twice; the
+                    # UNKNOWN-blocks-resubmission rule applies to the
+                    # POSITION here, not just to the intent id.
+                    cancelled.alerts = alerts + [
+                        f"attempt {attempt}: cancel not confirmed; a sell for {remaining} "
+                        "may still be live. NOT retried automatically - resolve it before "
+                        "any further exit is attempted."
+                    ]
+                    cancelled.attempts = attempt
+                    return cancelled
+                record = self.ledger.get(intent_id)
+
+            sold = record.filled_amount if record else ZERO
+            remaining -= sold
+            if remaining <= ZERO:
+                return ExecutionResult(
+                    Outcome.FILLED, intent_id,
+                    f"exited across {attempt} attempt(s), last at limit {limit}",
+                    attempts=attempt, alerts=alerts,
+                )
 
         alerts.append(
             f"EMERGENCY EXIT NOT FILLED after {self.max_reprice_attempts} attempts. "
-            f"Price floor {worst_allowed} was not reachable. The position is STILL OPEN. "
+            f"Price floor {worst_allowed} was not reachable. Sold {amount - remaining} of "
+            f"{amount}; {remaining} is STILL OPEN. "
             "No further automatic repricing will happen - an operator must decide."
         )
         return ExecutionResult(
             Outcome.NOT_FILLED_ALERT,
             f"{intent_prefix}|exit",
-            "bounded repricing exhausted; position still open",
+            f"bounded repricing exhausted; {remaining} of {amount} still open",
             attempts=self.max_reprice_attempts,
             alerts=alerts,
         )

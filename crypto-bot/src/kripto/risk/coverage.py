@@ -84,6 +84,38 @@ COVERAGE: dict[str, dict[RunPath, Coverage]] = {
         RunPath.REPLAY: Coverage.MODELLED,
         RunPath.DRY_RUN: Coverage.MODELLED,
     },
+    "liquidity_gate": {
+        # Spread and depth come from a live L2 book. A backtest has no book,
+        # so the gate is declared absent there rather than faked as passing.
+        RunPath.BACKTEST: Coverage.NOT_MODELLED,
+        RunPath.REPLAY: Coverage.NOT_MODELLED,
+        RunPath.DRY_RUN: Coverage.MODELLED,
+    },
+    "consecutive_stop_lock": {
+        # Fed by order_filled on exit, which freqtrade calls on every path.
+        RunPath.BACKTEST: Coverage.MODELLED,
+        RunPath.REPLAY: Coverage.MODELLED,
+        RunPath.DRY_RUN: Coverage.MODELLED,
+    },
+    "pair_cooldown": {
+        RunPath.BACKTEST: Coverage.MODELLED,
+        RunPath.REPLAY: Coverage.MODELLED,
+        RunPath.DRY_RUN: Coverage.MODELLED,
+    },
+    "approval_persistence_across_restart": {
+        # A backtest never restarts mid-fill; the durable approval record is
+        # exercised only where a process can die between send and fill.
+        RunPath.BACKTEST: Coverage.NOT_MODELLED,
+        RunPath.REPLAY: Coverage.NOT_MODELLED,
+        RunPath.DRY_RUN: Coverage.MODELLED,
+    },
+    "abandoned_reservation_sweep": {
+        # freqtrade abandons entries (timeout, refused stake) only outside
+        # backtesting, where every approved entry fills at the candle.
+        RunPath.BACKTEST: Coverage.NOT_MODELLED,
+        RunPath.REPLAY: Coverage.NOT_MODELLED,
+        RunPath.DRY_RUN: Coverage.MODELLED,
+    },
 }
 
 # Features every path must agree on. These are the pure-policy decisions; if

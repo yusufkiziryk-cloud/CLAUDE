@@ -33,6 +33,11 @@ from kripto.redact import install_redaction  # noqa: E402
 # ccxt renames @142 to "BTC/USDC"; the token actually traded there is UBTC,
 # a Unit-bridge wrapper. Pinning the id is what keeps that honest.
 TARGET_MARKET_IDS = ["@142", "@151", "@156"]
+# The token each pinned id is EXPECTED to carry. Hyperliquid can list new
+# markets and ccxt maps names by token, not by id; if an id ever pointed at a
+# different token the collector would quietly describe a different market
+# under the same file name (audit finding). So the token is asserted.
+EXPECTED_BASE_TOKENS = {"@142": "UBTC", "@151": "UETH", "@156": "USOL"}
 
 DEFAULT_TIMEFRAMES = ["4h", "1h", "5m"]
 
@@ -69,6 +74,15 @@ def main(argv=None) -> int:
             print(f"  !! market {market_id} not found - skipping", file=sys.stderr)
             continue
         context = contexts.get(market_id, {})
+        expected_token = EXPECTED_BASE_TOKENS.get(market_id)
+        if expected_token is not None and market.base_token != expected_token:
+            print(
+                f"  !! market {market_id} now carries token {market.base_token}, expected "
+                f"{expected_token}. Refusing to collect: the id no longer means what the "
+                "research assumes. Re-verify the market before changing EXPECTED_BASE_TOKENS.",
+                file=sys.stderr,
+            )
+            return 1
         pair = market.display_symbol
         selected[market_id] = {
             "market_id": market_id,

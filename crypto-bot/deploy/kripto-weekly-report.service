@@ -14,7 +14,9 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 CapabilityBoundingSet=
-ReadWritePaths=/opt/kripto-bot/reports
+# Same WAL-reader reasoning as kripto-backup.service.
+ReadWritePaths=-/opt/kripto-bot/reports
+ReadWritePaths=/opt/kripto-bot/user_data
 
 StandardOutput=journal
 StandardError=journal

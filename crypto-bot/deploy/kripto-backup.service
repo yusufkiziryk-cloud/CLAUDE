@@ -17,7 +17,13 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 CapabilityBoundingSet=
-ReadWritePaths=/opt/kripto-bot/backups
+# backups/ may not exist yet ("-" = optional). user_data is writable because a
+# read-only WAL database can only be opened when its -wal/-shm files can be
+# created; after the bot closes cleanly they are gone, and a read-only mount
+# made the nightly backup fail exactly while the bot was stopped (audit
+# finding). The script itself still opens the source with mode=ro.
+ReadWritePaths=-/opt/kripto-bot/backups
+ReadWritePaths=/opt/kripto-bot/user_data
 
 StandardOutput=journal
 StandardError=journal

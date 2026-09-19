@@ -245,7 +245,10 @@ def test_locks_raised_in_the_period_are_reported(store):
     assert locks[0]["kind"] == "DAILY_LOSS"
 
 
-def test_a_missing_trade_database_yields_zero_trades_not_a_crash(store, policy, tmp_path):
+def test_a_missing_trade_database_is_an_error_not_zero_trades(store, policy, tmp_path):
+    """An unreadable ledger must never render as a quiet week (audit
+    finding). It is reported, the report is marked incomplete, and no
+    conclusion is drawn."""
     report = build_report(
         store=store,
         db_url=f"sqlite:///{tmp_path / 'does-not-exist.sqlite'}",
@@ -257,7 +260,9 @@ def test_a_missing_trade_database_yields_zero_trades_not_a_crash(store, policy, 
     )
 
     assert report.trades.closed == 0
-    assert report.assessment is Assessment.OBSERVATION_IN_PROGRESS
+    assert report.trades.error is not None
+    assert not (tmp_path / "does-not-exist.sqlite").exists()
+    assert report.assessment is Assessment.INSUFFICIENT_EVIDENCE
 
 
 def test_report_writes_markdown_and_json_side_by_side(tmp_path):

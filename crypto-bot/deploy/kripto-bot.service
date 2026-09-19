@@ -43,6 +43,9 @@ RestartSec=30
 # the iteration it is in rather than killing it mid-write.
 KillSignal=SIGINT
 TimeoutStopSec=120
+# safe-run.py turns SIGINT into exit status 130; without this every
+# deliberate `systemctl stop` showed the unit as failed.
+SuccessExitStatus=130
 
 # --- hardening -------------------------------------------------------------
 NoNewPrivileges=true
@@ -62,8 +65,12 @@ SystemCallErrorNumber=EPERM
 CapabilityBoundingSet=
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 
-# The only writable paths. Everything else is read-only to this unit.
-ReadWritePaths=/opt/kripto-bot/user_data /opt/kripto-bot/reports /opt/kripto-bot/backups
+# The only writable paths. Everything else is read-only to this unit. The
+# leading "-" makes a missing directory a non-error (reports/ and backups/ do
+# not exist on a fresh clone; without "-" the unit failed namespace setup).
+ReadWritePaths=/opt/kripto-bot/user_data
+ReadWritePaths=-/opt/kripto-bot/reports
+ReadWritePaths=-/opt/kripto-bot/backups
 
 LimitNOFILE=4096
 MemoryMax=2G

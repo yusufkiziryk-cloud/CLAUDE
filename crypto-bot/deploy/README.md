@@ -64,7 +64,7 @@ Tamamını klonlamak 109 MB `.git` ve 16.000 dosya indirir; botun ihtiyacı olan
 89 dosya. Kısmi klon kullanın:
 
 ```bash
-sudo -u kripto -s
+sudo -u kripto -H bash        # sistem kullanıcısının kabuğu nologin'dir; -s çalışmaz
 cd /opt/kripto-bot
 
 git init -q .
@@ -82,20 +82,37 @@ mv crypto-bot/* crypto-bot/.[!.]* . 2>/dev/null; rmdir crypto-bot
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python -m pytest -m "not network"      # 330 test geçmeli
+.venv/bin/pip install -r requirements.lock.txt    # tam sürüm kilidi (88 paket)
+.venv/bin/python -m pytest -m "not network"       # tüm testler geçmeli
 .venv/bin/python scripts/collect-data.py          # ilk veri
 exit
 ```
 
-Tam sürüm kilidi isterseniz `requirements.lock.txt` kullanın — 88 paket,
-hepsi sabitlenmiş.
+`requirements.txt` yalnızca doğrudan bağımlılıkları sabitler; onunla kurunca
+pip, ccxt/pandas için o gün yayında olan sürümü çeker (19 Eylül'de ccxt 4.5.81
+ve pandas 3.0.6 geldi, testler yine geçti). **Aynı sonucu yeniden üretmek
+istiyorsanız kilit dosyasını kullanın**; `scripts/cleanroom-verify.sh` ve
+`deploy/install.sh` bunu yapar.
 
 **Doğrulama:** testler geçti ve `reports/data_manifest.json` oluştu.
 
-### D1'de neyin doğrulandığı, neyin doğrulanmadığı
+### Tek komutla: `deploy/install.sh`
 
-Bu adımın tamamını çalıştıramadım. Ne ölçüldü, ne ölçülemedi:
+D1 + D2 + D6'nın kurulum kısmını (paketler, kullanıcı, kısmi klon, venv,
+kilitli kurulum, testler, birimler, zamanlayıcılar) tek betik yapar; her adımı
+`VERIFIED / FAILED / SKIPPED` diye raporlar ve tekrar çalıştırılması güvenlidir:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/yusufkiziryk-cloud/CLAUDE/claude/new-session-uqw4yn/crypto-bot/deploy/install.sh -o install.sh
+sudo bash install.sh --ref claude/new-session-uqw4yn            # kur, botu başlatma
+sudo bash install.sh --ref claude/new-session-uqw4yn --start    # kur ve dry-run botu + watchdog'u başlat
+```
+
+Yapmadığı şeyler, bilerek: anahtar yazmaz, canlı yapılandırma üretmez (depoda
+yok), hiçbir servise kaydolmaz ve **tatbikatları sizin yerinize yapmaz** —
+D2/D3/D6 tatbikatları sizin gözünüzle yapılır. Sonunda kalan işleri listeler.
+
+### D1'de neyin doğrulandığı, neyin doğrulanmadığı
 
 | Ne | Durum |
 |---|---|
@@ -103,13 +120,15 @@ Bu adımın tamamını çalıştıramadım. Ne ölçüldü, ne ölçülemedi:
 | Tam klonun maliyeti | `VERIFIED` — 109 MB `.git`, 16.081 dosya |
 | `mv crypto-bot/* crypto-bot/.[!.]* .` adımı | `VERIFIED` — nokta dosyalar dahil doğru taşınıyor |
 | TA-Lib wheel'den geliyor, C kütüphanesi gerekmiyor | `VERIFIED` — paket `ta_lib.libs/` içindeki kendi `.so`'suna bağlı, sistemde `libta_lib` yok |
-| **Temiz venv'e sıfırdan `pip install`** | **`BLOCKED`** — PyPI bu oturumda tutarlı biçimde HTTP 503 döndü |
-| **330 testin temiz klonda geçmesi** | **`NOT_RUN`** — kurulum tamamlanamadı |
+| Temiz venv'e sıfırdan `pip install` | `VERIFIED` (19 Eylül) — taze kısmi klon, `requirements.txt` ile: freqtrade 2026.8, ccxt 4.5.81, pandas 3.0.6, TA-Lib 0.7.1; ilk denemede **pytest eksikti** (kilit dosyasında vardı, requirements.txt'de yoktu) — düzeltildi |
+| Testlerin temiz klonda geçmesi | `VERIFIED` — 330/330 (veri kopyalanınca; verisiz 324 + 6 veri-bağımlı atlama) |
+| `scripts/cleanroom-verify.sh` uçtan uca (klon → kilitli kurulum → testler → `--cache none` backtest → referansla karşılaştırma) | `VERIFIED` — `REPRODUCED` |
+| `deploy/install.sh` yetkisiz deneme (`--skip-apt --skip-user --skip-systemd`) | `VERIFIED` — klon, venv, kilitli kurulum, testler |
+| `deploy/install.sh` apt + kullanıcı + systemd adımları | `NOT_RUN` — bu ortamda root/systemd yok; `systemd-analyze verify` birim dosyalarında yalnızca "yol yok" uyarısı verdi (beklenen) |
+| Watchdog biriminin `ReadOnlyPaths=/opt/kripto-bot` altında WAL `-shm` dosyasını salt okunur açabilmesi | `UNVERIFIED` — SQLite 3.22+ salt okunur `-shm` ile okuyabilir; bu makinede salt okunur bağlama yapılamadı. İlk kurulumda `journalctl -u kripto-watchdog` çıktısında "unable to open database" görürseniz bana yazın |
 
-Kurulum bu oturumun başında bir kez başarıyla yapıldı (freqtrade 2026.8,
-ccxt 4.5.78, 330 test yeşil) — ama o zaten var olan bir venv'di, temiz klon
-değil. **Temiz ortamda kurulum yolu hâlâ sizin makinenizde doğrulanacak.**
-Patlarsa çıktıyı bana gönderin; görmeden tahmin yürütmeyeceğim.
+Kurulum yolu artık temiz ortamda ölçüldü; kalan iki satır **sizin makinenizde**
+doğrulanacak. Patlarsa çıktıyı bana gönderin; görmeden tahmin yürütmeyeceğim.
 
 ---
 
@@ -265,12 +284,17 @@ Gerçek bir felaket tatbikatı yapmak isterseniz (önerilir):
 
 ```bash
 sudo systemctl stop kripto-bot
-sudo -u kripto cp -a /opt/kripto-bot/user_data/dryrun /tmp/dryrun.bak
-sudo -u kripto cp /opt/kripto-bot/backups/<TARIH>/*.sqlite \
-                  /opt/kripto-bot/user_data/dryrun/
+sudo -u kripto /opt/kripto-bot/.venv/bin/python /opt/kripto-bot/scripts/backup.py \
+     --restore /opt/kripto-bot/backups/<TARIH> --state-dir /opt/kripto-bot/user_data/dryrun
 sudo systemctl start kripto-bot
 sudo journalctl -u kripto-bot -n 30    # RECONCILING -> READY görmelisiniz
 ```
+
+`--restore` botun çalışmadığını doğrular, mevcut dosyaları `*.pre-restore`
+olarak kenara alır, **`-wal`/`-shm` dosyalarını siler** ve geri yüklenen
+dosyada `integrity_check` çalıştırır. `cp` ile elle geri yüklemeyin: veritabanı
+WAL modundadır ve eski bir `-wal` dosyası bir sonraki açılışta geri yüklenen
+dosyanın üzerine oynatılır — geri yükleme sessizce hiç olmamış olur.
 
 **Doğrulama:** Bot yedekten dönen durumla normal başladı.
 

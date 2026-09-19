@@ -333,13 +333,48 @@ def test_t24_the_watchdog_connection_cannot_write(state):
 
 
 def test_t24_running_the_watchdog_does_not_modify_the_state(state, policy):
+    """Compared on CONTENT through a fresh connection, not on the main file's
+    bytes: under WAL a committed write lands in the -wal file and leaves the
+    main file byte-identical, so the old byte comparison could not see a
+    writing watchdog at all (audit finding)."""
     store, recorder, path = state
     make_healthy(recorder)
-    before = path.read_bytes()
+
+    def dump() -> str:
+        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        try:
+            return "\n".join(conn.iterdump())
+        finally:
+            conn.close()
+
+    wal = path.with_name(path.name + "-wal")
+    before = dump()
+    wal_before = wal.stat().st_size if wal.exists() else 0
 
     Watchdog(path, policy).run(now=NOW)
 
-    assert path.read_bytes() == before
+    assert dump() == before
+    assert (wal.stat().st_size if wal.exists() else 0) == wal_before
+
+
+def test_t24_the_content_comparison_would_catch_a_writing_observer(state, policy):
+    """The guard above must be able to fail: a write through another
+    connection changes the dump even though the main file is unchanged."""
+    store, recorder, path = state
+    make_healthy(recorder)
+
+    def dump() -> str:
+        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        try:
+            return "\n".join(conn.iterdump())
+        finally:
+            conn.close()
+
+    before_bytes = path.read_bytes()
+    before = dump()
+    store.set_state(BotState.STOPPED, "a writing observer", NOW)
+    assert path.read_bytes() == before_bytes, "WAL keeps the main file unchanged - the old check was blind"
+    assert dump() != before
 
 
 # --------------------------------------------------------------------------

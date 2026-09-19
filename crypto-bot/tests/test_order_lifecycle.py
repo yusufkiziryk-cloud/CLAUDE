@@ -506,19 +506,28 @@ def test_t16_emergency_exit_never_prices_below_the_slippage_floor(ledger, venue)
 
 
 def test_t16_emergency_exit_succeeds_when_the_price_is_reachable(ledger, venue):
+    """The market trades at the limit right after the sell rests. (The
+    earlier version ticked BEFORE the sell existed, so nothing ever filled
+    and the assertion accepted NOT_FILLED_ALERT - audit finding.)"""
     executor = OrderExecutor(ledger, venue, max_reprice_attempts=3)
+    original = venue.create_order
 
-    def feed():
-        # The market is right at the reference; the first limit is touchable.
+    def create_then_get_hit(*args, **kwargs):
+        response = original(*args, **kwargs)
         venue.tick("100")
-        return dec("100")
+        return response
+
+    venue.create_order = create_then_get_hit
 
     result = executor.emergency_exit(
         intent_prefix="t16c", pair=PAIR, amount=dec("1"), reference_price=dec("100"),
-        max_slippage=dec("0.01"), now=NOW, price_feed=feed,
+        max_slippage=dec("0.01"), now=NOW, price_feed=lambda: dec("100"),
     )
 
-    assert result.outcome in (Outcome.FILLED, Outcome.NOT_FILLED_ALERT)
+    assert result.outcome is Outcome.FILLED
+    assert result.attempts == 1
+    assert ledger.get(result.intent_id).state is OrderState.FILLED
+    assert sum(o.filled for o in venue.orders.values() if o.side == "sell") == dec("1")
 
 
 def test_t16_a_price_gap_leaves_the_stop_untouched(venue):

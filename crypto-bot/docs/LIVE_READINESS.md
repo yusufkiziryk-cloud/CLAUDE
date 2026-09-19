@@ -18,8 +18,8 @@ Each gate is assessed separately. All must pass; none substitutes for another.
 
 | # | Gate | Status |
 |---|---|---|
-| 1 | Software builds and runs from a clean environment | **PARTIAL** |
-| 2 | Critical safety and risk tests verified | **PARTIAL** |
+| 1 | Software builds and runs from a clean environment | **PASS** (2026-09-19: fresh clone, cold install, 330/330 tests, backtest reproduced by `scripts/cleanroom-verify.sh`; Docker path still `NOT_RUN`) |
+| 2 | Critical safety and risk tests verified | **PARTIAL** - 25 of 26 matrix rows `VERIFIED` after the audit; T14's external-balance-change half has no detector |
 | 3 | Exchange capabilities and data verified | **PARTIAL** |
 | 4 | Sufficient out-of-sample evidence for the strategy | **FAIL** |
 | 5 | Dry-run observation completed (4-8 weeks) | **NOT STARTED** |
@@ -58,25 +58,30 @@ etc.
 ### LIVE_BLOCKER 3 - no evidence of positive expectancy
 
 See [the research report](../reports/faz4/RESEARCH_REPORT.md). Verdict
-`INSUFFICIENT_EVIDENCE`; on the evidence available the strategy fails four of
-five pre-set criteria. 12 closed trades, one market regime, no untouched
-hold-out.
+`INSUFFICIENT_EVIDENCE`; on the evidence available the strategy fails all
+five pre-set criteria (16 closed trades, -6.64%, PF 0.16, 10.48%
+mark-to-market drawdown, negative at 2x cost). One market regime, no
+untouched hold-out. The earlier 12-trade figure was an artefact of a
+bookkeeping defect the audit found; the corrected run is worse, not better.
 
-### LIVE_BLOCKER 4 - monitoring exists but has never been observed running (much reduced)
+### LIVE_BLOCKER 4 - monitoring exists but has never been observed running for long (reduced again)
 
-The order lifecycle and the monitoring layer are both built and tested. A
+The order lifecycle and the monitoring layer are built and tested. A
 stateful fake venue exercises cancel/fill races, lost responses, crash
 recovery, duplicated and reordered events, bounded emergency repricing and
-single-writer enforcement (T08-T11, T16, T22). The watchdog closes T24 and,
-with reconciliation wired into the loop, T14. All of it was mutation-tested,
-and an end-to-end dry run took the bot from `RECONCILING` through
-reconciliation to `READY` with every external check green.
+single-writer enforcement (T08-T11, T16, T22); transport faults (429, 5xx,
+disconnect) and filesystem faults (ENOSPC, SQLite full, corrupt files) are
+now injected too (T17, T18). The 2026-09-19 audit then found and fixed 55
+defects at the seams between these layers - several of which would have
+stopped the dry run within its first three trades
+([`AUDIT_2026-09-19.md`](AUDIT_2026-09-19.md)).
 
 What remains:
 
-- **No transport or filesystem fault injection (T17, T18).** Low disk is
-  alarmed on; it has not been induced. The order path's retry behaviour under
-  429/5xx has not been exercised.
+- **The fixed integration has not run for weeks.** The defects were found
+  by review and pinned by tests, not by observation; the observation period
+  is what will show whether the seams now hold.
+- **External balance change has no detector** (T14 `PARTIAL`).
 - **Venue-side reconciliation is `PARTIAL`.** In a dry run nothing was ever
   sent, so the loop reconciles our bookkeeping against freqtrade's simulated
   ledger. Reconciling against a real venue is untested by construction.

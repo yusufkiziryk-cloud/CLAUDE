@@ -7,7 +7,9 @@ Usage:
     python scripts/safe-run.py backtesting --timerange 20250401-20260301
 
 Everything after the subcommand is passed through to freqtrade unchanged,
-except that ``--dry-run`` is always appended for trade runs.
+except that ``--dry-run`` is always appended for trade runs, ``--cache none``
+for backtesting, and ``--config config/config.dry.json`` whenever no
+configuration was given (so the audited files ARE the files freqtrade runs).
 
 This script cannot start live trading. There is no flag for it. Going live
 is a manual operator procedure documented in docs/LIVE_READINESS.md, and it
@@ -43,25 +45,45 @@ TRADING_COMMANDS = {"trade"}
 # day and silently REUSES them when the strategy file is unchanged - printing
 # a full result table with no hint that nothing ran. Every change outside the
 # strategy file (the risk layer, the policy, the data) is then invisible, and
-# a "reproduced identically" claim becomes a cache hit. So these commands
-# default to --cache none; pass --cache explicitly to opt back in.
-UNCACHED_COMMANDS = {"backtesting", "lookahead-analysis", "recursive-analysis"}
+# a "reproduced identically" claim becomes a cache hit. So backtesting
+# defaults to --cache none; pass --cache explicitly to opt back in.
+# lookahead-analysis and recursive-analysis have NO --cache option in
+# freqtrade 2026.8 and force backtest_cache="none" internally
+# (freqtrade/optimize/analysis/*_helpers.py); passing the flag made argparse
+# reject the whole command (audit finding).
+UNCACHED_COMMANDS = {"backtesting"}
+INTERNALLY_UNCACHED = {"lookahead-analysis", "recursive-analysis"}
+
+# Commands this launcher refuses. `new-config` writes ./config.json, and a
+# ./config.json is exactly the file freqtrade picks up when no --config is
+# given - a landmine next to the safe configuration.
+BLOCKED_COMMANDS = {"new-config"}
 
 
-def extract_config_paths(argv: list[str]) -> list[str]:
-    """Collect every -c/--config argument, in the order freqtrade sees them."""
-    paths: list[str] = []
-    index = 0
-    while index < len(argv):
-        arg = argv[index]
-        if arg in ("-c", "--config"):
-            if index + 1 < len(argv):
-                paths.append(argv[index + 1])
-                index += 1
-        elif arg.startswith("--config="):
-            paths.append(arg.split("=", 1)[1])
-        index += 1
-    return paths or [str(DEFAULT_CONFIG)]
+def resolve_configs(argv: list[str]) -> tuple[list[str], list[str]]:
+    """Return (config paths freqtrade will use, argv to forward).
+
+    Parsed with freqtrade's OWN argument parser, so every spelling it accepts
+    (-c X, -cX, --config X, --config=X, --conf X, ...) is seen here too. When
+    the user gave no configuration, the shipped dry-run config is injected
+    into the forwarded argv: without that, the audit ran on
+    config/config.dry.json while freqtrade quietly loaded ./config.json or
+    user_data/config.json (audit finding). The audited files and the
+    effective files must be the same files.
+
+    Raises SystemExit(2) on arguments freqtrade rejects.
+    """
+    from freqtrade.commands import Arguments
+
+    arguments = Arguments(argv)
+    arguments.get_parsed_arg()  # builds the parser and validates the argv
+    raw = arguments.parser.parse_args(argv)
+    user_configs = list(getattr(raw, "config", None) or [])
+    forwarded = list(argv)
+    if "config" in vars(raw) and not user_configs:
+        forwarded.extend(["--config", str(DEFAULT_CONFIG)])
+        user_configs = [str(DEFAULT_CONFIG)]
+    return user_configs, forwarded
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -73,7 +95,19 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     command = args[0]
-    config_paths = extract_config_paths(args)
+    if command in BLOCKED_COMMANDS:
+        print(
+            f"'{command}' is not available through the safe launcher. The bot runs from "
+            "config/config.dry.json; do not create a second configuration file.",
+            file=sys.stderr,
+        )
+        return 2
+
+    try:
+        config_paths, forwarded = resolve_configs(args)
+    except SystemExit as exc:
+        # argparse already printed the reason. Never report success for it.
+        return int(exc.code) if isinstance(exc.code, int) and exc.code else 2
 
     # --- our own policy must be valid before anything else ----------------
     try:
@@ -105,7 +139,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     print("=" * 72)
 
-    forwarded = list(args)
     if command in TRADING_COMMANDS and "--dry-run" not in forwarded:
         # Belt and braces: freqtrade's own flag also strips exchange secrets.
         forwarded.append("--dry-run")
@@ -116,14 +149,50 @@ def main(argv: list[str] | None = None) -> int:
             "note           : --cache none applied. freqtrade would otherwise reuse "
             "today's cached result and print it as if it had just run."
         )
+    elif command in INTERNALLY_UNCACHED:
+        print("note           : freqtrade forces backtest_cache=none for this command itself.")
 
-    from freqtrade.main import main as freqtrade_main
+    return run_freqtrade(forwarded)
+
+
+def run_freqtrade(forwarded: list[str]) -> int:
+    """Run the subcommand the way freqtrade.main does, but with honest exit codes.
+
+    freqtrade's main() ends in ``finally: sys.exit(return_code)`` with
+    return_code still None after an argparse error or a ConfigurationError,
+    which turns both into exit status 0 (audit finding). Calling the
+    subcommand directly keeps every failure non-zero.
+    """
+    from freqtrade.commands import Arguments
+    from freqtrade.exceptions import ConfigurationError, FreqtradeException
+    from freqtrade.loggers import setup_logging_pre
+    from freqtrade.system import asyncio_setup, gc_set_threshold, set_mp_start_method
 
     try:
-        freqtrade_main(forwarded)
+        setup_logging_pre()
+        asyncio_setup()
+        parsed = Arguments(forwarded).get_parsed_arg()
+        if "func" not in parsed:
+            print("no freqtrade subcommand given", file=sys.stderr)
+            return 2
+        gc_set_threshold()
+        set_mp_start_method()
+        return_code = parsed["func"](parsed)
     except SystemExit as exc:
-        return int(exc.code or 0)
-    return 0
+        return int(exc.code) if isinstance(exc.code, int) else 2
+    except KeyboardInterrupt:
+        print("SIGINT received, aborting ...", file=sys.stderr)
+        return 130
+    except ConfigurationError as exc:
+        print(f"CONFIGURATION ERROR: {exc}", file=sys.stderr)
+        return 6
+    except FreqtradeException as exc:
+        print(f"freqtrade error: {exc}", file=sys.stderr)
+        return 2
+    except Exception as exc:  # noqa: BLE001
+        print(f"fatal: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 1
+    return int(return_code or 0)
 
 
 if __name__ == "__main__":

@@ -49,7 +49,15 @@ def mask(url: str) -> str:
         from urllib.parse import urlparse
 
         parsed = urlparse(url)
-        return f"{parsed.scheme}://{parsed.netloc}/***"
+        # The netloc can carry the capability itself: user:token@host, or a
+        # token as the hostname's first label (token.hc.example). Keep only
+        # the scheme and the registrable domain (audit finding).
+        host = parsed.hostname or ""
+        labels = host.split(".")
+        shown = ".".join(labels[-2:]) if len(labels) > 2 else host
+        if len(labels) > 2:
+            shown = "***." + shown
+        return f"{parsed.scheme}://{shown}/***"
     except Exception:  # noqa: BLE001
         return "***"
 

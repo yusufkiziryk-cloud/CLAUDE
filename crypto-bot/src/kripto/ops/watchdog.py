@@ -514,6 +514,21 @@ class Watchdog:
                     halt_after_seconds=to_float(ops["notification_outage_entry_halt_seconds"]),
                 )
             )
+        except sqlite3.Error as exc:
+            # The file opened but cannot be read: truncated, corrupt, or not a
+            # database at all. SQLite only discovers that on the first query,
+            # so it lands here rather than in open_readonly(). Nothing the
+            # file reports can be trusted, and the watchdog must say so
+            # rather than die (found by T18 corrupt-file injection).
+            report.checks = [
+                check_storage(
+                    free_mb=free_disk_mb(self.state_path),
+                    min_free_mb=to_float(ops["min_free_disk_mb"]),
+                    db_readable=False,
+                ),
+                Check("state_file", Level.CRITICAL, f"cannot read state: {exc}",
+                      Action.OPERATOR_REQUIRED),
+            ]
         finally:
             conn.close()
 

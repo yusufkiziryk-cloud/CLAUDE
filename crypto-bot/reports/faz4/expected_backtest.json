@@ -1,0 +1,18 @@
+{
+  "//": "Reference result for scripts/cleanroom-verify.sh --backtest. Produced by scripts/safe-run.py backtesting with --cache none on 2026-09-19 after the audit fixes, with the risk limits observed on every candle (as the live loop does). Earlier figures (12 trades / -5.33% on 09-17; 30 trades / +1.32% with limits sampled only at entry attempts) are superseded; see RESEARCH_REPORT.md. A clean clone must re-derive these numbers, not read them.",
+  "strategy": "BaselineTrend4h",
+  "timerange": "20250901-20260901",
+  "fee": "exchange default (taker 0.070% both sides)",
+  "metrics": {
+    "total_trades": 16,
+    "profit_total": -0.06643726404,
+    "profit_factor": 0.15608486363978225,
+    "max_drawdown_account": 0.07412447289280319
+  },
+  "tolerance": {
+    "profit_total": 1e-06,
+    "profit_factor": 1e-06,
+    "max_drawdown_account": 1e-06
+  },
+  "source_archive": "backtest-result-2026-09-19_17-06-17.zip"
+}

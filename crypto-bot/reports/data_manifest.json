@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "generated_at": "2026-09-17T20:18:10.115837+00:00",
+  "generated_at": "2026-09-19T16:47:31.302700+00:00",
   "exchange": "hyperliquid",
   "source_url": "https://api.hyperliquid.xyz/info (candleSnapshot, spotMeta)",
   "//source_warning": "Every row below was fetched from the exchange named above. Data from any other venue must never be merged into these files or labelled as this exchange's history.",
   "environment": {
     "python": "3.11.15",
-    "platform": "Linux-6.18.44-fc-v33-x86_64-with-glibc2.39"
+    "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39"
   },
   "markets": {
     "@142": {
@@ -23,8 +23,8 @@
         "evm_extra_wei_decimals": -2
       },
       "size_decimals": 5,
-      "mid_price": "76546.5",
-      "day_notional_volume": "67587392.8067199588"
+      "mid_price": "81810.5",
+      "day_notional_volume": "48181182.6930099651"
     },
     "@151": {
       "market_id": "@151",
@@ -40,8 +40,8 @@
         "evm_extra_wei_decimals": 9
       },
       "size_decimals": 4,
-      "mid_price": "2451.95",
-      "day_notional_volume": "16997603.0696499981"
+      "mid_price": "2645.85",
+      "day_notional_volume": "23075407.5023800023"
     },
     "@156": {
       "market_id": "@156",
@@ -57,8 +57,8 @@
         "evm_extra_wei_decimals": 1
       },
       "size_decimals": 3,
-      "mid_price": "101.095",
-      "day_notional_volume": "7891357.310385"
+      "mid_price": "111.765",
+      "day_notional_volume": "8119836.2229100037"
     }
   },
   "coverage": [
@@ -66,103 +66,253 @@
       "pair": "BTC/USDC",
       "market_id": "@142",
       "timeframe": "4h",
-      "rows": 3552,
+      "rows": 3562,
       "first_date": "2025-02-03T00:00:00+00:00",
-      "last_date": "2026-09-17T20:00:00+00:00",
-      "span_days": 591.83,
+      "last_date": "2026-09-19T12:00:00+00:00",
+      "span_days": 593.5,
       "requests_made": 1,
       "history_truncated_by_api": false,
       "earliest_reachable": "2025-02-03T00:00:00+00:00",
       "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/BTC_USDC-4h.feather",
-      "file_hash": "sha256:7045e75654281e4b880b22d2fd5c06215a8bcb651b1758447c93ab8be82e8b28",
-      "notes": [],
+      "file_hash": "sha256:6ef43c96b40f4983e18c53900e68960fabef8ca1efffbeda9c0b4d369439cbd4",
+      "notes": [
+        "dropped 1 still-forming candle(s) from the tail"
+      ],
       "quality": {
         "pair": "BTC/USDC",
         "timeframe": "4h",
-        "rows": 3552,
+        "rows": 3562,
         "first_date": "2025-02-03 00:00:00+0000",
-        "last_date": "2026-09-17 20:00:00+0000",
+        "last_date": "2026-09-19 12:00:00+0000",
         "tradable": true,
         "gaps": [],
-        "findings": [
-          {
-            "code": "INCOMPLETE_LAST_CANDLE",
-            "severity": "WARN",
-            "message": "the last candle opening 2026-09-17 20:00:00+0000 has not closed yet at 2026-09-17T20:18:09.292611+00:00; it must be dropped before any signal is computed",
-            "rows": 1,
-            "first_date": "2026-09-17 20:00:00+0000",
-            "last_date": ""
-          }
-        ]
-      }
+        "findings": []
+      },
+      "collected_at": "2026-09-19T16:47:31.302700+00:00"
+    },
+    {
+      "pair": "BTC/USDC",
+      "market_id": "@142",
+      "timeframe": "1h",
+      "rows": 5045,
+      "first_date": "2026-02-21T11:00:00+00:00",
+      "last_date": "2026-09-19T15:00:00+00:00",
+      "span_days": 210.17,
+      "requests_made": 1,
+      "history_truncated_by_api": false,
+      "earliest_reachable": "2026-02-21T11:00:00+00:00",
+      "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/BTC_USDC-1h.feather",
+      "file_hash": "sha256:6d241e0d5a3026c9f3667794475ba791e7e5803243e0aa269292b1018001cd78",
+      "notes": [
+        "dropped 1 still-forming candle(s) from the tail"
+      ],
+      "quality": {
+        "pair": "BTC/USDC",
+        "timeframe": "1h",
+        "rows": 5045,
+        "first_date": "2026-02-21 11:00:00+0000",
+        "last_date": "2026-09-19 15:00:00+0000",
+        "tradable": true,
+        "gaps": [],
+        "findings": []
+      },
+      "collected_at": "2026-09-19T16:47:31.302700+00:00"
+    },
+    {
+      "pair": "BTC/USDC",
+      "market_id": "@142",
+      "timeframe": "5m",
+      "rows": 5560,
+      "first_date": "2026-08-31T09:25:00+00:00",
+      "last_date": "2026-09-19T16:40:00+00:00",
+      "span_days": 19.3,
+      "requests_made": 1,
+      "history_truncated_by_api": false,
+      "earliest_reachable": "2026-08-31T09:25:00+00:00",
+      "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/BTC_USDC-5m.feather",
+      "file_hash": "sha256:b44c38e4cd0dce20d503d90e91ddf04950a92fd697f284d9aea0def0a355a72f",
+      "notes": [
+        "dropped 1 still-forming candle(s) from the tail"
+      ],
+      "quality": {
+        "pair": "BTC/USDC",
+        "timeframe": "5m",
+        "rows": 5560,
+        "first_date": "2026-08-31 09:25:00+0000",
+        "last_date": "2026-09-19 16:40:00+0000",
+        "tradable": true,
+        "gaps": [],
+        "findings": []
+      },
+      "collected_at": "2026-09-19T16:47:31.302700+00:00"
     },
     {
       "pair": "ETH/USDC",
       "market_id": "@151",
       "timeframe": "4h",
-      "rows": 3243,
+      "rows": 3253,
       "first_date": "2025-03-26T12:00:00+00:00",
-      "last_date": "2026-09-17T20:00:00+00:00",
-      "span_days": 540.33,
+      "last_date": "2026-09-19T12:00:00+00:00",
+      "span_days": 542.0,
       "requests_made": 1,
       "history_truncated_by_api": false,
       "earliest_reachable": "2025-03-26T12:00:00+00:00",
       "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/ETH_USDC-4h.feather",
-      "file_hash": "sha256:0f9ee048e88d634069222e14b702b037e52e82825271411e94213034d3a29649",
-      "notes": [],
+      "file_hash": "sha256:887643c5dd7c95063a3ff9e6f8a03ca8bf4d218ef64ba688d8f772e6c791c9f5",
+      "notes": [
+        "dropped 1 still-forming candle(s) from the tail"
+      ],
       "quality": {
         "pair": "ETH/USDC",
         "timeframe": "4h",
-        "rows": 3243,
+        "rows": 3253,
         "first_date": "2025-03-26 12:00:00+0000",
-        "last_date": "2026-09-17 20:00:00+0000",
+        "last_date": "2026-09-19 12:00:00+0000",
         "tradable": true,
         "gaps": [],
-        "findings": [
-          {
-            "code": "INCOMPLETE_LAST_CANDLE",
-            "severity": "WARN",
-            "message": "the last candle opening 2026-09-17 20:00:00+0000 has not closed yet at 2026-09-17T20:18:09.566641+00:00; it must be dropped before any signal is computed",
-            "rows": 1,
-            "first_date": "2026-09-17 20:00:00+0000",
-            "last_date": ""
-          }
-        ]
-      }
+        "findings": []
+      },
+      "collected_at": "2026-09-19T16:47:31.302700+00:00"
+    },
+    {
+      "pair": "ETH/USDC",
+      "market_id": "@151",
+      "timeframe": "1h",
+      "rows": 5045,
+      "first_date": "2026-02-21T11:00:00+00:00",
+      "last_date": "2026-09-19T15:00:00+00:00",
+      "span_days": 210.17,
+      "requests_made": 1,
+      "history_truncated_by_api": false,
+      "earliest_reachable": "2026-02-21T11:00:00+00:00",
+      "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/ETH_USDC-1h.feather",
+      "file_hash": "sha256:a34931f518c2fd2c31fec614b77de700219e0c5a58be536243e8f0e9bc956118",
+      "notes": [
+        "dropped 1 still-forming candle(s) from the tail"
+      ],
+      "quality": {
+        "pair": "ETH/USDC",
+        "timeframe": "1h",
+        "rows": 5045,
+        "first_date": "2026-02-21 11:00:00+0000",
+        "last_date": "2026-09-19 15:00:00+0000",
+        "tradable": true,
+        "gaps": [],
+        "findings": []
+      },
+      "collected_at": "2026-09-19T16:47:31.302700+00:00"
+    },
+    {
+      "pair": "ETH/USDC",
+      "market_id": "@151",
+      "timeframe": "5m",
+      "rows": 5556,
+      "first_date": "2026-08-31T09:45:00+00:00",
+      "last_date": "2026-09-19T16:40:00+00:00",
+      "span_days": 19.29,
+      "requests_made": 1,
+      "history_truncated_by_api": false,
+      "earliest_reachable": "2026-08-31T09:45:00+00:00",
+      "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/ETH_USDC-5m.feather",
+      "file_hash": "sha256:7e851d26f8f297ace4091db48085a7ae9e78e3ef6d63a2336ef44ea64d07583a",
+      "notes": [
+        "dropped 1 still-forming candle(s) from the tail"
+      ],
+      "quality": {
+        "pair": "ETH/USDC",
+        "timeframe": "5m",
+        "rows": 5556,
+        "first_date": "2026-08-31 09:45:00+0000",
+        "last_date": "2026-09-19 16:40:00+0000",
+        "tradable": true,
+        "gaps": [],
+        "findings": []
+      },
+      "collected_at": "2026-09-19T16:47:31.302700+00:00"
     },
     {
       "pair": "SOL/USDC",
       "market_id": "@156",
       "timeframe": "4h",
-      "rows": 2974,
+      "rows": 2984,
       "first_date": "2025-05-10T08:00:00+00:00",
-      "last_date": "2026-09-17T20:00:00+00:00",
-      "span_days": 495.5,
+      "last_date": "2026-09-19T12:00:00+00:00",
+      "span_days": 497.17,
       "requests_made": 1,
       "history_truncated_by_api": false,
       "earliest_reachable": "2025-05-10T08:00:00+00:00",
       "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/SOL_USDC-4h.feather",
-      "file_hash": "sha256:d3d43510fc0672121aaa264f44866947bc8af4bf2e4a8d435126b6320dfd2fc6",
-      "notes": [],
+      "file_hash": "sha256:e21cee69e4769c12bb246effd3cba8f1e45b0377146fdcfad69ae0d10c61b620",
+      "notes": [
+        "dropped 1 still-forming candle(s) from the tail"
+      ],
       "quality": {
         "pair": "SOL/USDC",
         "timeframe": "4h",
-        "rows": 2974,
+        "rows": 2984,
         "first_date": "2025-05-10 08:00:00+0000",
-        "last_date": "2026-09-17 20:00:00+0000",
+        "last_date": "2026-09-19 12:00:00+0000",
         "tradable": true,
         "gaps": [],
-        "findings": [
-          {
-            "code": "INCOMPLETE_LAST_CANDLE",
-            "severity": "WARN",
-            "message": "the last candle opening 2026-09-17 20:00:00+0000 has not closed yet at 2026-09-17T20:18:09.823046+00:00; it must be dropped before any signal is computed",
-            "rows": 1,
-            "first_date": "2026-09-17 20:00:00+0000",
-            "last_date": ""
-          }
-        ]
-      }
+        "findings": []
+      },
+      "collected_at": "2026-09-19T16:47:31.302700+00:00"
+    },
+    {
+      "pair": "SOL/USDC",
+      "market_id": "@156",
+      "timeframe": "1h",
+      "rows": 5045,
+      "first_date": "2026-02-21T11:00:00+00:00",
+      "last_date": "2026-09-19T15:00:00+00:00",
+      "span_days": 210.17,
+      "requests_made": 1,
+      "history_truncated_by_api": false,
+      "earliest_reachable": "2026-02-21T11:00:00+00:00",
+      "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/SOL_USDC-1h.feather",
+      "file_hash": "sha256:d2e5513988b4db2168eb48d3937a14e52882ebe47dcaa878d240e6ebd4fe5881",
+      "notes": [
+        "dropped 1 still-forming candle(s) from the tail"
+      ],
+      "quality": {
+        "pair": "SOL/USDC",
+        "timeframe": "1h",
+        "rows": 5045,
+        "first_date": "2026-02-21 11:00:00+0000",
+        "last_date": "2026-09-19 15:00:00+0000",
+        "tradable": true,
+        "gaps": [],
+        "findings": []
+      },
+      "collected_at": "2026-09-19T16:47:31.302700+00:00"
+    },
+    {
+      "pair": "SOL/USDC",
+      "market_id": "@156",
+      "timeframe": "5m",
+      "rows": 5554,
+      "first_date": "2026-08-31T09:55:00+00:00",
+      "last_date": "2026-09-19T16:40:00+00:00",
+      "span_days": 19.28,
+      "requests_made": 1,
+      "history_truncated_by_api": false,
+      "earliest_reachable": "2026-08-31T09:55:00+00:00",
+      "file_path": "/home/user/CLAUDE/crypto-bot/user_data/data/hyperliquid/SOL_USDC-5m.feather",
+      "file_hash": "sha256:596c283137c0a43e8f19fa36e4394e3818608d1662198a1fc1beecf03facff6d",
+      "notes": [
+        "dropped 1 still-forming candle(s) from the tail"
+      ],
+      "quality": {
+        "pair": "SOL/USDC",
+        "timeframe": "5m",
+        "rows": 5554,
+        "first_date": "2026-08-31 09:55:00+0000",
+        "last_date": "2026-09-19 16:40:00+0000",
+        "tradable": true,
+        "gaps": [],
+        "findings": []
+      },
+      "collected_at": "2026-09-19T16:47:31.302700+00:00"
     }
   ],
   "collection_notes": [
@@ -170,5 +320,5 @@
     "Missing candles are recorded as gaps and are never forward-filled.",
     "4h coverage does not imply 5m coverage: the per-call cap of 5000 candles bounds short timeframes to a much shorter window."
   ],
-  "total_api_requests": 5
+  "total_api_requests": 11
 }

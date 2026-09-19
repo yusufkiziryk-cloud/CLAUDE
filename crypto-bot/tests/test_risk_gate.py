@@ -115,19 +115,39 @@ def test_clean_entry_is_accepted_and_reserves_budget(gate, store):
 
 
 def test_t06_two_signals_cannot_both_take_the_last_risk_budget(gate, store):
-    """Budget is 3% of 1000 = 30 USDC. Each trade models ~10 USDC of risk,
-    so three fit and a fourth must not."""
+    """Budget is 3% of 1000 = 30 USDC. With a 10% stop distance each entry
+    models ~10 USDC of risk on ~100 USDC of notional - far below the 25%
+    per-asset cap - so the RISK budget is what binds: three fit, a fourth
+    must not. (The earlier version used a tight stop; the asset cap bound
+    first and the risk-budget check could be deleted without failing it -
+    audit finding.)"""
     # All five are still PENDING orders, so open_positions stays 0 - the
     # reservations themselves are what must exhaust the budget.
-    accepted = []
-    for n in range(5):
-        decision = entry(gate, make_ctx(), intent_id=f"i{n}")
-        if decision.allowed:
-            accepted.append(decision)
+    accepted, refused = [], []
+    pairs = ["BTC/USDC", "ETH/USDC", "SOL/USDC", "AVAX/USDC", "LINK/USDC"]
+    for n, pair in enumerate(pairs):
+        decision = gate.evaluate_entry(
+            pair=pair, intent_id=f"i{n}", entry_price=dec("100"), stop_price=dec("90"),
+            amount_step=dec("0.0001"), min_order_amount=dec("0.0001"),
+            min_order_cost=dec("1"), ctx=make_ctx(),
+        )
+        (accepted if decision.allowed else refused).append(decision)
 
     assert len(accepted) == 3, f"expected exactly 3 entries, got {len(accepted)}"
     total_reserved = sum((d.sizing.modelled_risk_quote for d in accepted), Decimal(0))
-    assert total_reserved <= dec("30")
+    assert dec("29") < total_reserved <= dec("30"), total_reserved
+    for d in accepted:
+        assert d.sizing.notional < dec("250"), "the asset cap must not be what binds here"
+    # The fourth and fifth are refused BECAUSE of the risk budget: either
+    # outright (NO_RISK_BUDGET / RESERVATION_REFUSED) or because the sliver
+    # of budget left sizes to less than the exchange minimum, in which case
+    # the sizing result names portfolio_risk as the binding cap.
+    assert len(refused) == 2
+    for d in refused:
+        assert (
+            d.code in ("NO_RISK_BUDGET", "RESERVATION_REFUSED")
+            or d.checks.get("binding_cap") == "portfolio_risk"
+        ), (d.code, d.reason, d.checks)
 
 
 def test_t06_position_slot_limit_counts_pending_entries(gate, store):
@@ -414,10 +434,16 @@ def test_t13_consecutive_stops_lock_and_survive_restart(tmp_path, policy):
     decision = entry(gate, make_ctx(), intent_id="stops")
     assert decision.refused
     assert "CONSECUTIVE_STOPS" in decision.reason
+    # The lock consumed the count (otherwise the same three stops re-lock
+    # the bot every 24h for ever - audit finding). The LOCK is what must
+    # survive a restart, and it does: the reopened store still refuses.
+    assert store.consecutive_stops() == 0
     store.close()
 
     reopened = RiskStore(path)
-    assert reopened.consecutive_stops() == 3
+    assert [lock.kind for lock in reopened.active_locks(NOW)] == [LockKind.CONSECUTIVE_STOPS]
+    again = entry(EntryGate(reopened, policy), make_ctx(), intent_id="stops-after-restart")
+    assert again.refused and "CONSECUTIVE_STOPS" in again.reason
     reopened.close()
 
 

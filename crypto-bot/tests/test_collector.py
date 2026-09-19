@@ -69,7 +69,9 @@ class FakeClient:
 
 
 def collect(tmp_path, client, timeframe="4h"):
-    collector = Collector(client, Path(tmp_path), now=NOW)
+    # One step after NOW, so the candle that opened at NOW has closed. The
+    # collector never persists a still-forming candle (audit finding).
+    collector = Collector(client, Path(tmp_path), now=NOW + STEP)
     return collector.collect(MARKET, "BTC/USDC", timeframe)
 
 

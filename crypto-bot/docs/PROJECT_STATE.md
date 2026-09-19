@@ -1,20 +1,22 @@
 # Project state
 
-Last updated: 2026-09-18, after the deployment work (Gate D).
+Last updated: 2026-09-19, after the clean-room verification, the fault
+injection work (T17/T18), the eligibility engine (T23), the clean-room
+script (T26) and the adversarial audit. Start with the last two sections.
 
 ## Where things stand
 
 | Phase | Status |
 |---|---|
 | Faz 0 - review and plan | **DONE**, approved |
-| Faz 1 - safe skeleton | **DONE** (Docker path `NOT_RUN` - no daemon here) |
+| Faz 1 - safe skeleton | **DONE** - clean-room install and test run `VERIFIED` on 2026-09-19 (Docker path still `NOT_RUN` - no daemon here) |
 | Faz 2 - market data | **DONE** |
 | Faz 3 - strategy, risk, order correctness | **DONE** - risk layer and order lifecycle both adversarially tested |
-| Faz 4 - honest research report | **DONE** - verdict `INSUFFICIENT_EVIDENCE` |
+| Faz 4 - honest research report | **DONE**, re-derived 2026-09-19 - verdict `INSUFFICIENT_EVIDENCE`, all five criteria failing on the evidence that exists (16 trades, -6.64%, PF 0.16, 10.48% mark-to-market drawdown) |
 | Faz 5 - monitoring and handover | **DONE** (code) - watchdog, weekly report, dashboard, deployment units; the 4-8 week observation itself cannot be run here |
 | Faz 6 - live readiness assessment | **DONE** - live remains blocked |
 
-Tests: **330 passing** offline, **334** including public-endpoint tests.
+Tests: **466 passing** offline, **470** including public-endpoint tests.
 
 ## Decisions made, and why
 
@@ -111,9 +113,11 @@ recovery, with the external watchdog reporting all nine checks green.
 
 ## Open risks
 
-- **No transport or filesystem fault injection (T17, T18).** Low disk is
-  alarmed on but has never been induced; the order path's behaviour under
-  429/5xx is untested.
+- **Fault injection is against models of the faults** (a fake venue, a
+  scripted HTTP session, ENOSPC raised from the writer's own syscalls, a
+  page-capped SQLite). Real 429s and a real full disk have not been seen.
+- **External balance change has no detector** (T14 `PARTIAL`). A dry run
+  cannot see a deposit; live would need one.
 - **Venue-side reconciliation is PARTIAL.** In a dry run nothing is ever
   sent, so the loop reconciles against freqtrade's simulated ledger, not an
   exchange.
@@ -174,38 +178,98 @@ recovery, with the external watchdog reporting all nine checks green.
 `[Service]` is silently ignored, which would have produced an unbounded
 restart loop with no warning. It belongs in `[Unit]`.
 
-## Clean-room install: still not verified end to end
+## Clean-room install: verified (2026-09-19)
 
-Faz 1's acceptance criterion was "a verified installation path in a clean
-environment". Part of it is now measured, part is still open:
+Faz 1's acceptance criterion - "a verified installation path in a clean
+environment" - is now measured end to end:
 
-- `VERIFIED`: the partial-clone command (2.9 MB and ~1s, versus 109 MB and
-  16,081 files for a full clone, with the repository's 61 MB APK never
-  fetched); the directory-flattening step including dotfiles; and that
-  `ta_lib` installs from a manylinux wheel carrying its own `.so`, so no
-  TA-Lib C library or build toolchain is needed on x86_64 / Python 3.11.
-- `BLOCKED`: `pip install` into a genuinely fresh venv. PyPI returned HTTP
-  503 consistently while this was attempted.
-- `NOT_RUN`: the 330 tests against that fresh clone.
+- A fresh sparse clone at `7c03d14`, `python3 -m venv`, `pip install -r
+  requirements.txt` from a cold cache: `PIP_EXIT=0` (freqtrade 2026.8, ccxt
+  4.5.81, pandas 3.0.6, TA-Lib 0.7.1). First attempt failed on `No module
+  named pytest`: the test runner was in the lock file but not in
+  `requirements.txt`. Fixed; that is a real D1 defect the clean room found.
+- 330/330 tests in that clone once the collected data was copied in (324 +
+  6 data-dependent skips without it).
+- `scripts/cleanroom-verify.sh` (T26) automates the whole path - clone,
+  lock-file install, tests, `--cache none` backtest, comparison with
+  `reports/faz4/expected_backtest.json` - and reported `REPRODUCED`.
+- `deploy/install.sh` (D1+D2+D6 in one idempotent script) was exercised
+  unprivileged (`--skip-apt --skip-user --skip-systemd`): clone, venv,
+  lock-file install, tests `VERIFIED`. The apt/user/systemd stages are
+  `NOT_RUN` here (no root, no systemd).
 
-The suite does pass in the venv built at the start of this session, but that
-is not the same claim as "installs cleanly from scratch".
+Version drift is real: `requirements.txt` alone pulled ccxt 4.5.81 / pandas
+3.0.6 two days after the lock recorded 4.5.78 / 3.0.5. The tests passed on
+both; reproduction uses the lock.
+
+## What the fault injection work added (T17, T18, T23, T26)
+
+- `tests/test_fault_injection_t17.py` (27 tests): 429/5xx/disconnect
+  injected into order create, cancel and resolve, and into the HTTP client.
+  Every transport fault on the order path is `UNKNOWN`, never a second
+  order; the emergency exit stops at the first unknown; the client's retry
+  is bounded and read-only.
+- `tests/test_fault_injection_t18.py` (17 tests): ENOSPC at three syscalls,
+  SQLite full, a held write lock, garbage and truncated state files, damaged
+  backup snapshots. **Three real defects fell out:** `_tx` masked the real
+  error with a failing ROLLBACK; the watchdog crashed on a corrupt state
+  file instead of reporting it; `verify_backup` crashed on a malformed
+  snapshot instead of failing it.
+- `src/kripto/research/eligibility.py` + `scripts/eligibility.py`: the
+  research plan's criteria applied by code. It reproduces the report's
+  verdict from the archives and refuses to promote anything on a
+  contaminated hold-out or an exhausted experiment budget.
+- `scripts/risk-state.py`: the operator's hand for `RECOVERY_REQUIRED`,
+  operator locks and stuck reservations, with `--operator-ack` and a reason
+  written into the state.
+
+## The 2026-09-19 audit, in one paragraph
+
+Ten independent adversarial reviewers, one per subsystem, produced 56 unique
+findings; 55 were fixed with regression tests and one was refuted by
+measurement (`docs/AUDIT_2026-09-19.md`). The important ones were at the
+seams: reservations leaked on ordinary fills and locked the bot after three
+trades (which is what the 12-trade research result was); reconciliation
+flagged the bot's own first trade as foreign; approved stops lived in
+process memory and did not survive a restart; equity was cost-basis, so
+open losses never reached the limits; the consecutive-stop and pair-cooldown
+limits were never fed; the launcher audited a different file from the one
+freqtrade ran when no `--config` was given; log redaction did not reach
+freqtrade's handlers; the watchdog unit was bound to the bot and died with
+it. The research numbers were re-derived twice as the fixes landed; the
+verdict stayed `INSUFFICIENT_EVIDENCE`.
+
+## Bugs the audit and the injections found, continued
+
+9. **Reservation leak on one-step-short fills and abandoned entries** -
+   the origin of the 12-trade result.
+10. **Reconcile against an empty ledger** - `RECOVERY_REQUIRED` after the
+    first trade.
+11. **Cost-basis equity** - limits blind to open losses.
+12. **Stop counter never decayed** - three stops locked the bot for ever.
+13. **Config resolution** - audited `config.dry.json`, ran `./config.json`.
+14. **Redaction blind to child loggers and late handlers.**
+15. **Forming candle persisted as history.**
+16. **`BindsTo` killed the watchdog with the bot.**
+17. Three T18 crashes (above), and two vacuous tests that a mutation could
+    not fail.
 
 ## The exact next step
 
 The remaining work is **not code**. It is running the bot for 4-8 weeks on a
 machine that stays up, collecting 5m data forward the whole time, and
-generating a weekly report each week. `deploy/README.md` is the procedure.
+generating a weekly report each week. `deploy/install.sh` installs it;
+`deploy/README.md` is the procedure and the drills.
 
 This environment cannot do that: the container is ephemeral and total observed
-runtime is minutes.
+runtime is minutes. Two things on that machine remain `UNVERIFIED` until it
+exists: the watchdog unit reading a WAL database under `ReadOnlyPaths`, and
+the apt/user/systemd stages of `install.sh`.
 
 Reproduction:
 
 ```bash
 .venv/bin/python -m pytest -m "not network"
-.venv/bin/python scripts/collect-data.py --timeframes 4h
-.venv/bin/python scripts/safe-run.py backtesting \
-    --config config/config.dry.json --strategy BaselineTrend4h \
-    --timerange 20250901-20260901 --enable-protections --fee 0.0007
+scripts/cleanroom-verify.sh --data-from user_data/data/hyperliquid --backtest
+.venv/bin/python scripts/eligibility.py --result <1x.zip> --result-2x <2x.zip> --experiments-used 1
 ```

@@ -8,8 +8,18 @@ without saying so.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def pytest_sessionstart(session):
+    # Fixtures load config/policy.yaml and config/config.dry.json by relative
+    # path; running from the monorepo root or an IDE errored at fixture setup
+    # instead of reporting the safety results (audit finding).
+    os.chdir(ROOT)
 
 
 def pytest_configure(config):

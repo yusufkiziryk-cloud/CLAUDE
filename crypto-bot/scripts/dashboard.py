@@ -121,8 +121,8 @@ def test_matrix_tally(path: Path) -> dict[str, int]:
 
 
 def build_payload(args) -> dict:
-    archive = latest_backtest(Path(args.results))
-    if archive is None:
+    archive = Path(args.archive) if getattr(args, "archive", None) else latest_backtest(Path(args.results))
+    if archive is None or not archive.is_file():
         raise SystemExit(
             f"no backtest archive in {args.results}. Run a backtest first:\n"
             "  python scripts/safe-run.py backtesting --config config/config.dry.json "
@@ -135,6 +135,11 @@ def build_payload(args) -> dict:
         .groupby("date")["total_quote"].sum().sort_index()
     )
     equity_start, equity_end = float(totals.iloc[0]), float(totals.iloc[-1])
+    # Drawdown from the SAME mark-to-market series the chart draws. freqtrade's
+    # max_drawdown_account counts closed trades only, and understated an 11%
+    # equity dip as 8.2% right above a chart that showed it (audit finding).
+    running_peak = totals.cummax()
+    mtm_drawdown = float(((running_peak - totals) / running_peak).max()) if len(totals) else 0.0
     start = pd.Timestamp(equity[0]["d"], tz="UTC")
     end = pd.Timestamp(equity[-1]["d"], tz="UTC")
 
@@ -157,7 +162,8 @@ def build_payload(args) -> dict:
             "wins": stats["wins"],
             "losses": stats["losses"],
             "profit_factor": round(stats["profit_factor"], 2),
-            "max_dd_pct": round(stats.get("max_drawdown_account", 0) * 100, 2),
+            "max_dd_pct": round(mtm_drawdown * 100, 2),
+            "closed_trade_max_dd_pct": round(stats.get("max_drawdown_account", 0) * 100, 2),
             "expectancy": round(stats.get("expectancy", 0), 2),
             "start_equity": round(equity_start, 2),
             "end_equity": round(equity_end, 2),
@@ -187,6 +193,8 @@ def build_payload(args) -> dict:
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", default=str(REPO_ROOT / "user_data" / "backtest_results"))
+    parser.add_argument("--archive", default=None,
+                        help="a specific backtest zip; default: the newest in --results (which may be a cost-stress run)")
     parser.add_argument("--state", default=str(REPO_ROOT / "user_data" / "backtest" / "risk_state.sqlite"))
     parser.add_argument("--datadir", default=str(REPO_ROOT / "user_data" / "data" / "hyperliquid"))
     parser.add_argument("--manifest", default=str(REPO_ROOT / "reports" / "data_manifest.json"))

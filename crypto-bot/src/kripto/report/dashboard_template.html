@@ -229,7 +229,7 @@
     <div class="verdict">
       <div class="k">Araştırma kararı</div>
       <div class="v v-crit"><span class="dot d-crit"></span>INSUFFICIENT_EVIDENCE</div>
-      <div class="n">5 eşiğin 4'ü başarısız. Eşik gevşetilmedi.</div>
+      <div class="n" id="verdict-note">Eşik gevşetilmedi.</div>
     </div>
     <div class="verdict">
       <div class="k">Test matrisi</div>
@@ -238,13 +238,13 @@
     </div>
   </div>
 
-  <div class="thesis">
+  <div class="thesis" id="thesis">
     <p><strong>Strateji al-tut'u geniş farkla geçti ve yine de para kaybetti.</strong>
-       Dönem sert bir ayı piyasasıydı: sepet %39,7 düştü, strateji %5,3.
-       Düşüş farkı bir büyüklük mertebesi.</p>
-    <p>Ama ayı piyasasında uzun benchmark'ı geçmek edge kanıtı değildir — çoğunlukla
-       nakitte duran her şey bunu yapar. 12 işlem, tek rejim ve dokunulmamış holdout
-       olmaması, hiçbir sonuca varmaya yetmiyor.</p>
+       <span id="thesis-numbers"></span></p>
+    <p>Ayı piyasasında uzun benchmark'ı geçmek edge kanıtı değildir — çoğunlukla
+       nakitte duran her şey bunu yapar. <span id="thesis-trades"></span> tek rejim ve
+       dokunulmamış holdout olmaması, hiçbir sonuca varmaya yetmiyor. Kendi düşüş
+       kilidi devreye girdiğinde girişler dönemin sonuna kadar kapandı.</p>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -277,8 +277,9 @@
     </div>
     <div>
       <h2>Veri kapsamı</h2>
-      <p class="sub">4h'de bir yıldan fazla geçmiş var; 5m yalnızca 17 gün.
-        Mum içi gerçekleşme doğrulaması bu yüzden <span class="tag">NOT_MODELED</span>.</p>
+      <p class="sub">4h'de bir yıldan fazla geçmiş var; 5m yalnızca birkaç hafta (ileriye
+        doğru birikir). Mum içi gerçekleşme doğrulaması bu yüzden
+        <span class="tag">NOT_MODELED</span>.</p>
       <div class="card">
         <div class="chart-head"><div class="legend" id="cov-legend"></div></div>
         <div class="chart" id="cov-chart"><div class="tip" id="cov-tip"></div></div>
@@ -289,7 +290,7 @@
   <!-- ---------------- trades ---------------- -->
   <section>
     <h2>İşlemler</h2>
-    <p class="sub">Backtest'in ürettiği 12 kapalı işlemin tamamı. 2 kazanç, 10 kayıp.</p>
+    <p class="sub" id="trades-sub"></p>
     <div class="card scroll">
       <table id="trades">
         <thead>
@@ -359,16 +360,20 @@
         <li>
           <div>
             <h3>Pozitif beklenti kanıtı yok</h3>
-            <p>12 kapalı işlem (alt sınır 50), tek rejim, dokunulmamış holdout yok.
-              Üç varlık aynı köprüden olduğu için gözlemler bağımsız da değil.</p>
+            <p><span id="blocker-trades"></span> kapalı işlem (alt sınır 50), tek rejim,
+              dokunulmamış holdout yok. Beş kriterin beşi de başarısız. Üç varlık aynı
+              köprüden olduğu için gözlemler bağımsız da değil.</p>
           </div>
         </li>
         <li>
           <div>
-            <h3>Taşıma ve dosya sistemi hata enjeksiyonu yapılmadı</h3>
-            <p>Disk dolması alarm üretiyor ama hiç tetiklenmedi; emir yolunun 429/5xx
-              altındaki davranışı sınanmadı. Dry-run'da borsa tarafı uzlaştırma
-              yapısal olarak test edilemiyor.</p>
+            <h3>Düzeltilmiş entegrasyon haftalarca hiç çalışmadı</h3>
+            <p>19 Eylül denetimi katmanlar arasındaki dikişlerde 55 kusur buldu ve
+              düzeltti; birkaçı ilk üç işlemde dry-run'ı durdururdu. Düzeltmeler
+              incelemeyle bulundu, testle sabitlendi — gözlemle değil. Hata
+              enjeksiyonu (429/5xx, dolu disk) sahte borsa ve sahte dosya sistemine
+              karşı yapıldı; dry-run'da borsa tarafı uzlaştırma yapısal olarak
+              test edilemiyor.</p>
           </div>
         </li>
         <li>
@@ -412,15 +417,32 @@ function renderStats() {
       s: fmt(h.start_equity, 0) + ' → ' + fmt(h.end_equity) + ' USDC',
       cls: h.return_pct >= 0 ? 'pos' : 'neg' },
     { k: 'Kapalı işlem', v: String(h.trades), s: h.wins + ' kazanç · ' + h.losses + ' kayıp' },
-    { k: 'Profit factor', v: fmt(h.profit_factor), s: 'eşik 1,10 — başarısız', cls: 'neg' },
-    { k: 'Maks. düşüş', v: fmt(h.max_dd_pct) + '%', s: 'eşik %10 — geçti', cls: 'pos' },
-    { k: 'İşlem başına', v: fmt(h.expectancy) + ' USDC', s: 'beklenti', cls: 'neg' },
+    { k: 'Profit factor', v: fmt(h.profit_factor),
+      s: 'eşik 1,10 — ' + (h.profit_factor >= 1.10 ? 'geçti' : 'başarısız'),
+      cls: h.profit_factor >= 1.10 ? 'pos' : 'neg' },
+    { k: 'Maks. düşüş (piyasa değeri)', v: fmt(h.max_dd_pct) + '%',
+      s: 'eşik %10 — ' + (h.max_dd_pct <= 10 ? 'geçti' : 'AŞILDI') + ' · kapalı işlem bazlı ' + fmt(h.closed_trade_max_dd_pct) + '%',
+      cls: h.max_dd_pct <= 10 ? 'pos' : 'neg' },
+    { k: 'İşlem başına', v: fmt(h.expectancy) + ' USDC', s: 'beklenti',
+      cls: h.expectancy >= 0 ? 'pos' : 'neg' },
   ];
   $('#stats').innerHTML = tiles.map(t =>
     `<div class="stat"><div class="k">${t.k}</div>
      <div class="v ${t.cls || ''}">${t.v}</div><div class="s">${t.s}</div></div>`).join('');
 
   $('#tm-verified').textContent = DATA.test_matrix.VERIFIED || 0;
+  const b = DATA.benchmarks || {};
+  const lastOf = k => (b[k] && b[k].length) ? b[k][b[k].length - 1].v - 100 : null;
+  const bench = ['BTC', 'ETH', 'SOL'].map(lastOf).filter(v => v !== null);
+  const basket = bench.length ? bench.reduce((a, c) => a + c, 0) / bench.length : null;
+  $('#thesis-numbers').textContent =
+    (basket !== null ? 'Dönem sert bir ayı piyasasıydı: eşit ağırlıklı sepet %' + fmt(Math.abs(basket), 1) + ' düştü, strateji %' + fmt(Math.abs(h.return_pct), 1) + (h.return_pct < 0 ? ' kaybetti.' : ' kazandı.') : '')
+    + ' Piyasa değeriyle maksimum düşüş %' + fmt(h.max_dd_pct, 1) + '.';
+  $('#thesis-trades').textContent = h.trades + ' işlem,';
+  $('#trades-sub').textContent = "Backtest'in ürettiği " + h.trades + ' kapalı işlemin tamamı. ' + h.wins + ' kazanç, ' + h.losses + ' kayıp.';
+  $('#blocker-trades').textContent = String(h.trades);
+  const fails = [h.return_pct <= 0, h.profit_factor < 1.10, h.max_dd_pct > 10, h.trades < 50].filter(Boolean).length;
+  $('#verdict-note').textContent = '5 eşiğin en az ' + fails + "'i başarısız (2x maliyet ayrıca). Eşik gevşetilmedi.";
   $('#tm-partial').textContent = DATA.test_matrix.PARTIAL || 0;
   $('#eq-period').textContent = DATA.period.start + ' → ' + DATA.period.end;
   $('#provenance').textContent = 'üretim: ' + DATA.generated;

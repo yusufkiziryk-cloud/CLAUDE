@@ -27,3 +27,13 @@ reports/dashboard.html
 !.env.example
 *.key
 *.pem
+# Operator overlays that carry a token (Telegram, notifications) live next to
+# the tracked configs; name them *.local.json and they can never be committed.
+config/*.local.json
+config/*telegram*
+config/*notify*
+config/*secret*
+# freqtrade picks up ./config.json when no --config is given; a stray copy
+# here is a landmine next to the safe configuration.
+config.json
+user_data/config.json

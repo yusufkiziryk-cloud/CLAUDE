@@ -79,6 +79,11 @@ def main(argv=None) -> int:
     )
 
     policy = load_policy(args.policy)
+    if not Path(args.state).is_file():
+        # RiskStore would create an empty state file here, and an empty
+        # state reads as 'no locks, no decisions' - a false clean bill.
+        print(f"risk state not found at {args.state}; refusing to report on nothing", file=sys.stderr)
+        return 2
     store = RiskStore(args.state)
     try:
         report = build_report(

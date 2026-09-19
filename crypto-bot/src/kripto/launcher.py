@@ -18,6 +18,7 @@ docs/LIVE_READINESS.md, and this repository does not automate it.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -31,16 +32,49 @@ from .redact import redact
 
 # Exchange credential fields. Any of these being non-empty in a development
 # session means a real secret has entered a process that must never hold one.
+# Matched by NORMALISED name (lower case, letters only) at ANY depth of the
+# exchange section: freqtrade deep-merges exchange.ccxt_config /
+# ccxt_sync_config / ccxt_async_config straight into the ccxt constructor, so
+# a privateKey placed there is a live signing key even in a dry run, and
+# freqtrade's --dry-run credential stripping does not touch it (audit finding).
 SECRET_CONFIG_KEYS = (
     "key",
     "secret",
     "password",
+    "passphrase",
     "uid",
     "privateKey",
     "private_key",
     "walletAddress",
     "wallet_address",
+    "apiKey",
+    "api_key",
+    "apiSecret",
+    "api_secret",
+    "accountId",
+    "account_id",
+    "token",
+    "authorization",
 )
+_SECRET_NAMES = frozenset(re.sub(r"[^a-z]", "", k.lower()) for k in SECRET_CONFIG_KEYS)
+_SECRET_SUFFIXES = ("key", "secret", "password", "passphrase", "token")
+
+
+def _looks_like_credential(name: str) -> bool:
+    normalised = re.sub(r"[^a-z]", "", str(name).lower())
+    return normalised in _SECRET_NAMES or normalised.endswith(_SECRET_SUFFIXES)
+
+
+def find_credentials(mapping: Mapping[str, Any], prefix: str = "exchange") -> list[str]:
+    """Dotted paths of every populated credential-looking field, at any depth."""
+    found: list[str] = []
+    for key, value in mapping.items():
+        path = f"{prefix}.{key}"
+        if isinstance(value, Mapping):
+            found.extend(find_credentials(value, path))
+        elif _looks_like_credential(key) and isinstance(value, str) and value.strip():
+            found.append(path)
+    return found
 
 
 class LiveModeRejected(RuntimeError):
@@ -139,13 +173,12 @@ def audit_config(
     # --- 3. no exchange credentials at all --------------------------------
     exchange = config.get("exchange")
     if isinstance(exchange, Mapping):
-        for key in SECRET_CONFIG_KEYS:
-            value = exchange.get(key)
-            if isinstance(value, str) and value.strip():
-                audit.violations.append(
-                    f"exchange.{key} is populated. A keyless dry run must leave every "
-                    "credential field empty; remove it from the config file."
-                )
+        for path in find_credentials(exchange):
+            audit.violations.append(
+                f"{path} is populated. A keyless dry run must leave every "
+                "credential field empty, at any depth of the exchange section; "
+                "remove it from the config file."
+            )
     else:
         audit.violations.append("exchange section is missing from the effective configuration.")
 

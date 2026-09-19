@@ -6,10 +6,11 @@
 # and silence is what makes the external service alert you.
 #
 # The URL is a capability, not a setting. Put it in a file only this user can
-# read, outside the repository:
-#   install -m 600 /dev/null /etc/kripto/deadman.url
+# read, outside the repository (install sets owner AND mode first; tee keeps
+# the mode of an existing file, so the result is 0600 kripto:kripto):
+#   sudo install -m 600 -o kripto -g kripto /dev/null /etc/kripto/deadman.url
 #   printf '%s' 'https://...' | sudo tee /etc/kripto/deadman.url >/dev/null
-#   sudo chown kripto:kripto /etc/kripto/deadman.url
+#   sudo chmod 600 /etc/kripto/deadman.url
 
 [Unit]
 Description=Kripto bot dead-man heartbeat

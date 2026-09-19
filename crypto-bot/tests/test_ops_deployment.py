@@ -291,11 +291,22 @@ def test_deployment_units_exist():
 
 @pytest.mark.parametrize("unit", UNITS, ids=lambda p: p.name)
 def test_no_unit_can_enable_live_trading(unit):
-    text = unit.read_text()
+    """Every way a unit could reach live: an environment override (inline or
+    via EnvironmentFile), a config that is not the shipped dry-run one, or a
+    trade ExecStart that bypasses the safe launcher."""
+    import re
 
-    assert "dry_run" not in text.lower() or "dry-run" in text.lower()
-    assert "--dry-run false" not in text
-    assert "FREQTRADE__DRY_RUN" not in text
+    text = unit.read_text()
+    directives = [line for line in text.splitlines() if line.strip() and not line.lstrip().startswith("#")]
+    body = "\n".join(directives)
+
+    assert "FREQTRADE__" not in body.upper(), "no freqtrade environment override in a unit"
+    assert "EnvironmentFile" not in body, "no indirect environment file"
+    for match in re.finditer(r"--config[= ]+(\S+)", body):
+        assert match.group(1) in ("config/config.dry.json", "config/proxy-overlay.json"), match.group(0)
+    if re.search(r"ExecStart=.*\btrade\b", body):
+        assert "scripts/safe-run.py" in body, "trade must go through the safe launcher"
+    assert "freqtrade trade" not in body and "/bin/freqtrade" not in body
 
 
 def test_the_bot_unit_starts_through_the_safe_launcher():

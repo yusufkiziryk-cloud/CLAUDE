@@ -33,8 +33,11 @@ oku. Bu dosyayı büyütme.
 ## Komutlar
 
 ```bash
-.venv/bin/python -m pytest -m "not network"        # hızlı test (330)
+.venv/bin/python -m pytest -m "not network"        # hızlı test (460+)
 .venv/bin/python -m pytest                         # + kamu uç testleri
+scripts/cleanroom-verify.sh --data-from user_data/data/hyperliquid --backtest  # T26: temiz klondan yeniden üret
+.venv/bin/python scripts/eligibility.py --result <1x.zip> --result-2x <2x.zip> --experiments-used N  # T23 kararı
+.venv/bin/python scripts/risk-state.py show --state user_data/dryrun/risk_state.sqlite   # operatör aracı
 .venv/bin/python scripts/collect-data.py           # veri topla (artımlı)
 .venv/bin/python scripts/watchdog.py --state user_data/dryrun/risk_state.sqlite
 .venv/bin/python scripts/weekly-report.py --weeks 1
@@ -47,7 +50,10 @@ oku. Bu dosyayı büyütme.
 ```
 
 TLS sonlandıran vekil arkasında: sona `--config config/proxy-overlay.json`.
-`scripts/safe-run.py` tek giriş noktasıdır ve canlıyı reddeder.
+`scripts/safe-run.py` tek giriş noktasıdır ve canlıyı reddeder. Yapılandırmayı
+freqtrade'in kendi ayrıştırıcısıyla çözer (`--conf`, `-cX` dahil), `--config`
+verilmemişse `config/config.dry.json`'ı **kendisi ekler** (denetlenen dosya =
+çalışan dosya) ve argparse/yapılandırma hatalarında sıfır dönmez.
 
 ## Mimari özeti
 
@@ -98,7 +104,17 @@ yalnızca dry-run başlatır; canlı varyantı yoktur ve eklenmemelidir.
 
 Tek yazar: `store.acquire_writer_lock()`. Bu kilit yalnızca **bu makinedeki**
 ikinci süreci engeller; başka bir hosttan aynı hesaba bağlanmayı engelleyemez.
-V1 bu yüzden tek host ile sınırlıdır.
+V1 bu yüzden tek host ile sınırlıdır. Sahip adı süreç başına benzersizdir
+(host:pid), kira her döngüde yenilenir, aynı hosttaki ölü pid'in kilidi hemen
+devralınır. Kilidi kaybetmek `RECOVERY_REQUIRED` demektir.
+
+Onay kaydı kalıcıdır: `custom_stake_amount` onayladığı stop/ATR/miktarı
+`pending_entries` tablosuna **emir çıkmadan** yazar; `confirm_trade_entry` ve
+`order_filled` onayı **pair ile** bulur (duvar saati damgasıyla değil).
+freqtrade'in geri çağrısız terk ettiği girişlerin rezervasyonu (timeout, ret,
+hata) giriş zaman aşımı geçince süpürülür. Uzlaştırma, dry-run'da freqtrade
+pozisyonlarını **onay kayıtlarına** karşı denetler; boş emir defterine karşı
+değil. Denetim (2026-09-19): `docs/AUDIT_2026-09-19.md`.
 
 ## Dikkat edilecek doğrulanmış davranışlar
 
@@ -116,6 +132,14 @@ V1 bu yüzden tek host ile sınırlıdır.
 - `freqtrade download-data` bu borsada çalışmaz → `scripts/collect-data.py`.
 - `lookahead-analysis` `dry_run_wallet`'ı 1e9 yapar → gerçek risk politikasını
   test etmez. Durumlu stratejide yanlış pozitif verir.
+- Backtest'te `dp.get_analyzed_dataframe` son satırı **kapanmış** mumdur
+  (freqtrade 2026.8; `DiagClosed` tanılamasıyla doğrulandı: `now=20:00` iken
+  son satır `16:00`). Strateji yine de `_closed_candles` ile bunu **zorlar**;
+  denetimin "backtest ileriye bakıyor" bulgusu bu kanıtla REDDEDİLDİ.
+- Equity piyasa değeriyle hesaplanır (book mid → ticker → son kapanış+yaş);
+  maliyet bazlı toplam açık zararı limitlerden gizliyordu.
+- Ardışık stop kilidi sayacı **tüketir**; yoksa aynı üç stop 24 saatte bir
+  sonsuza dek kilitler. Pair cooldown yalnızca o pair'i engeller.
 - **Freqtrade backtest sonuçlarını bir gün boyunca ÖNBELLEKLER** ve strateji
   dosyası değişmediyse sessizce yeniden kullanır — tam sonuç tablosunu basar,
   hiçbir uyarı vermez. Cache anahtarı strateji dosyasının DIŞINDAKİ

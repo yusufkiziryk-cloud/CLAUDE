@@ -29,6 +29,10 @@ from .state import (
 
 logger = logging.getLogger(__name__)
 
+# Relative tolerance for float round-trip noise on the final order amount.
+# 1e-9 is ~1e7 float ulps and ~1e-5 of the smallest exchange amount step.
+FLOAT_NOISE_TOLERANCE = dec("0.000000001")
+
 
 @dataclass
 class EntryDecision:
@@ -81,11 +85,23 @@ class EntryGate:
         )
         return day, week
 
+    def observe(self, ctx: GateContext) -> list[str]:
+        """Run the period/drawdown bookkeeping WITHOUT an entry signal.
+
+        The strategy calls this from ``bot_loop_start`` on every loop. It is
+        what opens the day's and week's baseline at the first loop after
+        00:00 UTC (not at the first entry attempt hours later, with equity
+        already reduced), records the equity peak between signals, and raises
+        a lock the moment an OPEN position breaches a limit.
+        """
+        return self.evaluate_locks(ctx)
+
     def evaluate_locks(self, ctx: GateContext) -> list[str]:
         """Apply period and drawdown limits, creating locks where breached.
 
-        Called on every loop, including when no signal fired, so that a limit
-        breached by an OPEN position is caught without waiting for a close.
+        Reached on every loop through ``observe`` and again inside each
+        entry evaluation, so that a limit breached by an OPEN position is
+        caught without waiting for a close or for the next signal.
         """
         messages: list[str] = []
         risk = self.policy.risk
@@ -154,6 +170,12 @@ class EntryGate:
                     ctx.now,
                     expires_at=ctx.now + timedelta(hours=hours),
                 )
+                # The lock IS the consequence of those stops. The count
+                # restarts here so that, once the lock has run its course,
+                # trading resumes on a fresh count. Without this the same
+                # three stops re-created the 24h lock every time it expired
+                # and the bot never entered again (audit finding).
+                self.store.reset_stop_counter(ctx.now)
             messages.append("CONSECUTIVE_STOPS")
 
         return messages
@@ -386,7 +408,13 @@ class EntryGate:
         if reservation is None:
             return False, f"no reservation for intent {intent_id}; refusing to place an order"
 
-        if final_amount > reservation.amount_base:
+        # freqtrade recomputes amount = float(stake) / rate, which lands one
+        # float ulp above the reserved Decimal about one time in six. That is
+        # rounding noise, not an enlargement; refusing it produced spurious
+        # 'framework enlarged the order' vetoes (audit finding). Anything a
+        # real exchange step or the +30% minimum bump could produce is many
+        # orders of magnitude above this tolerance.
+        if final_amount > mul(reservation.amount_base, dec(1) + FLOAT_NOISE_TOLERANCE):
             return False, (
                 f"final amount {final_amount} exceeds the reserved amount "
                 f"{reservation.amount_base}: the framework enlarged the order. Refusing."

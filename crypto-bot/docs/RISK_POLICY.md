@@ -96,7 +96,10 @@ Loss budget spent in a period:
 equity. This is a **loss budget**, not a time-weighted return.
 
 - Computed from open **and** closed results, so an unrealised loss trips the
-  limit without waiting for a close.
+  limit without waiting for a close. Open positions are valued at the
+  current book mid, not at cost; the gate is run every loop (not only when a
+  signal fires) so the day's baseline is the equity at 00:00 UTC and a breach
+  by an open position locks entries within one loop.
 - The baseline is written once and never overwritten, so a restart mid-period
   cannot adopt the already-reduced balance as a new baseline and erase the
   day's loss.
@@ -107,6 +110,21 @@ equity. This is a **loss budget**, not a time-weighted return.
 - No external cash flow is expected while running. If one is detected,
   entries stop and operator reconciliation is required. No code in this
   repository can move funds.
+
+## Consecutive stops and per-pair cooldown
+
+- Every fully exited trade feeds the counter: a stop-type exit
+  (`stop_loss`, `trailing_stop_loss`, `liquidation`, `emergency_exit`)
+  increments it, any other exit resets it to zero.
+- When the counter reaches `consecutive_stop_count` a `CONSECUTIVE_STOPS`
+  lock is raised for `consecutive_stop_cooldown_hours` **and the counter is
+  consumed**. The lock is the consequence of those stops; once it has run
+  its course trading resumes on a fresh count. (Before the 2026-09-19 audit
+  the count never decayed and the same three stops re-locked the bot every
+  24h for ever.)
+- Every exit also raises a `PAIR_COOLDOWN` lock on that pair for
+  `pair_cooldown_candles` candles. It is pair-scoped: it refuses that pair
+  and nothing else, and it never keeps the whole bot in `ENTRY_PAUSED`.
 
 ## Entry locks do not stop exits
 

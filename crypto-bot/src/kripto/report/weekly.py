@@ -63,6 +63,11 @@ class TradeStats:
     losses: int = 0
     exit_reasons: dict[str, int] = field(default_factory=dict)
     per_pair: dict[str, Decimal] = field(default_factory=dict)
+    closed_pnls: list[tuple[datetime, Decimal]] = field(default_factory=list)
+    error: str | None = None
+    """Set when the trade records could NOT be read. An unreadable ledger
+    is not zero trades (audit finding: a mistyped path rendered as 'no
+    trades this week - that is a result')."""
 
     @property
     def profit_factor(self) -> Decimal | None:
@@ -97,6 +102,13 @@ class WeeklyReport:
     equity_end: Decimal | None = None
     peak_equity: Decimal | None = None
     max_drawdown: Decimal | None = None
+    """Worst peak-to-trough drop along the CLOSED-trade equity path inside
+    the period, measured against the higher of the all-time peak and the
+    period's starting equity. Open positions are not valued here."""
+    drawdown_lock_raised: bool = False
+    """The bot's own MAX_DRAWDOWN lock fired inside the period. That lock is
+    computed mark-to-market every loop, so it is the one drawdown signal
+    that DOES see open positions."""
 
     benchmarks: dict[str, dict[str, float]] = field(default_factory=dict)
     decisions_accepted: int = 0
@@ -145,7 +157,9 @@ class WeeklyReport:
                 "end": num(self.equity_end),
                 "peak": num(self.peak_equity),
                 "max_drawdown": num(self.max_drawdown),
+                "drawdown_lock_raised": self.drawdown_lock_raised,
             },
+            "trade_records_error": self.trades.error,
             "benchmarks": self.benchmarks,
             "decisions": {
                 "accepted": self.decisions_accepted,
@@ -170,15 +184,39 @@ class WeeklyReport:
 # --------------------------------------------------------------------------
 
 
+def sqlite_path(db_url: str) -> Path | None:
+    """The file behind a sqlite:/// URL, or None for other databases."""
+    prefix = "sqlite:///"
+    if not db_url.startswith(prefix):
+        return None
+    tail = db_url[len(prefix):]
+    if not tail or tail.startswith(":memory:"):
+        return None
+    return Path(tail)
+
+
 def collect_trades(db_url: str, start: datetime, end: datetime) -> TradeStats:
-    """Read freqtrade's own trade records. It owns them; we only read."""
+    """Read freqtrade's own trade records. It owns them; we only read.
+
+    A ledger that cannot be read is reported as an ERROR, never as a quiet
+    week. ``init_db`` would also CREATE an empty database at a mistyped path,
+    so the file's existence is checked first.
+    """
     stats = TradeStats()
+    path = sqlite_path(db_url)
+    if path is not None and not path.is_file():
+        stats.error = (
+            f"trade database not found at {path}. Not read as 'no trades': the "
+            "records could not be seen at all."
+        )
+        return stats
     try:
         from freqtrade.persistence import Trade, init_db
 
         init_db(db_url)
         all_trades = Trade.get_trades_proxy()
-    except Exception:  # noqa: BLE001 - a missing DB is a valid "no trades yet"
+    except Exception as exc:  # noqa: BLE001
+        stats.error = f"trade records could not be read ({type(exc).__name__}: {exc})"
         return stats
 
     for trade in all_trades:
@@ -199,6 +237,7 @@ def collect_trades(db_url: str, start: datetime, end: datetime) -> TradeStats:
         stats.closed += 1
         pnl = dec(str(trade.close_profit_abs or 0))
         stats.realised_pnl += pnl
+        stats.closed_pnls.append((closed_at, pnl))
         if pnl >= ZERO:
             stats.wins += 1
             stats.gross_profit += pnl
@@ -289,6 +328,20 @@ def assess(report: WeeklyReport) -> tuple[Assessment, list[str]]:
     """
     reasons: list[str] = []
 
+    if report.trades.error:
+        reasons.append(
+            f"trade records unavailable: {report.trades.error}. No conclusion can be "
+            "drawn from a ledger that could not be read."
+        )
+        return Assessment.INSUFFICIENT_EVIDENCE, reasons
+
+    if report.drawdown_lock_raised:
+        reasons.append(
+            "the bot's own MAX_DRAWDOWN lock fired inside this period: equity fell more "
+            "than the limit from its peak, measured mark-to-market by the running bot. "
+            "That is a failed criterion regardless of where equity ended the week."
+        )
+
     if report.observed_days < REQUIRED_OBSERVATION_DAYS:
         reasons.append(
             f"only {report.observed_days:.1f} of {REQUIRED_OBSERVATION_DAYS} required "
@@ -302,6 +355,9 @@ def assess(report: WeeklyReport) -> tuple[Assessment, list[str]]:
             "floor; time elapsed is not the same as evidence gathered"
         )
         return Assessment.INSUFFICIENT_EVIDENCE, reasons
+
+    if report.drawdown_lock_raised:
+        return Assessment.REJECTED, reasons
 
     factor = report.trades.profit_factor
     if report.trades.realised_pnl <= ZERO:
@@ -338,6 +394,10 @@ def build_report(
     observation_started: datetime | None = None,
 ) -> WeeklyReport:
     now = datetime.now(timezone.utc)
+    # The equity baseline is a DAY row, so the period must begin where the
+    # baseline does. A period starting at 06:00 against a 00:00 baseline
+    # dropped every trade closed in between from equity_end (audit finding).
+    start = start.replace(hour=0, minute=0, second=0, microsecond=0)
     report = WeeklyReport(
         period_start=start, period_end=end, mode=mode, generated_at=now
     )
@@ -368,14 +428,28 @@ def build_report(
     report.benchmarks = benchmarks or {}
 
     report.peak_equity = store.get_peak_equity()
-    day_start = start.replace(hour=0, minute=0, second=0, microsecond=0)
-    baseline = store.get_period("day", day_start)
+    baseline = store.get_period("day", start)
     report.equity_start = baseline.starting_equity if baseline else None
     if report.equity_start is not None:
         report.equity_end = report.equity_start + report.trades.realised_pnl
-    if report.peak_equity and report.equity_end is not None and report.peak_equity > ZERO:
-        drop = div(report.peak_equity - report.equity_end, report.peak_equity)
-        report.max_drawdown = drop if drop > ZERO else ZERO
+        # Drawdown along the PATH of closed trades, not just the end-of-period
+        # drop: a 14% dip that recovered by Sunday is still a 14% dip (audit
+        # finding). Measured against the higher of the all-time peak and the
+        # starting equity.
+        peak = max(report.peak_equity or ZERO, report.equity_start)
+        equity = report.equity_start
+        worst = ZERO
+        for _, pnl in sorted(report.trades.closed_pnls, key=lambda item: item[0]):
+            equity += pnl
+            if equity > peak:
+                peak = equity
+            drop = div(peak - equity, peak) if peak > ZERO else ZERO
+            if drop > worst:
+                worst = drop
+        report.max_drawdown = worst
+    report.drawdown_lock_raised = any(
+        str(lock.get("kind")) == "MAX_DRAWDOWN" for lock in report.locks
+    )
 
     report.limitations = [
         f"{path.value}: NOT_MODELED -> {', '.join(not_modelled(path))}"
@@ -438,7 +512,11 @@ def render_markdown(report: WeeklyReport) -> str:
 
     lines.append("## Trading")
     lines.append("")
-    if t.closed == 0 and t.open == 0:
+    if t.error:
+        lines.append(f"**REPORT INCOMPLETE - trade records could not be read:** {t.error}")
+        lines.append("")
+        lines.append("The figures below are NOT 'no trades'; they are 'not seen'.")
+    elif t.closed == 0 and t.open == 0:
         lines.append(
             "**No trades were opened or closed in this period.** That is a result, not a "
             "gap in the report - see the refusal reasons below for why."
@@ -479,8 +557,11 @@ def render_markdown(report: WeeklyReport) -> str:
     lines.append(f"| Equity at period end | {_fmt(report.equity_end)} |")
     lines.append(f"| Peak equity (all time) | {_fmt(report.peak_equity)} |")
     lines.append(
-        f"| Drawdown from peak | "
+        f"| Max drawdown in period (closed-trade path) | "
         f"{'not available' if report.max_drawdown is None else f'{report.max_drawdown:.2%}'} |"
+    )
+    lines.append(
+        f"| MAX_DRAWDOWN lock fired (mark-to-market) | {'YES' if report.drawdown_lock_raised else 'no'} |"
     )
     lines.append("")
 

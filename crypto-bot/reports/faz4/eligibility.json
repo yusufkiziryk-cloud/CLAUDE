@@ -1,0 +1,53 @@
+{
+  "verdict": "INSUFFICIENT_EVIDENCE",
+  "criteria": [
+    {
+      "number": 1,
+      "name": "OOS net return",
+      "threshold": "> 0.00%",
+      "measured": "-6.64%",
+      "outcome": "FAIL"
+    },
+    {
+      "number": 2,
+      "name": "Net profit factor",
+      "threshold": ">= 1.10",
+      "measured": "0.16",
+      "outcome": "FAIL"
+    },
+    {
+      "number": 3,
+      "name": "Max drawdown",
+      "threshold": "<= 10.00%",
+      "measured": "10.48%",
+      "outcome": "FAIL"
+    },
+    {
+      "number": 4,
+      "name": "Net result at 2x modelled cost",
+      "threshold": "> 0.00%",
+      "measured": "-7.29%",
+      "outcome": "FAIL"
+    },
+    {
+      "number": 5,
+      "name": "Closed OOS trades (review floor)",
+      "threshold": ">= 50",
+      "measured": "16",
+      "outcome": "FAIL"
+    }
+  ],
+  "reasons": [
+    "16 closed trades is below the 50 review floor; no conclusion in either direction is available",
+    "criterion 1 (OOS net return) fails on the evidence that exists: -6.64% vs > 0.00%",
+    "criterion 2 (Net profit factor) fails on the evidence that exists: 0.16 vs >= 1.10",
+    "criterion 3 (Max drawdown) fails on the evidence that exists: 10.48% vs <= 10.00%",
+    "criterion 4 (Net result at 2x modelled cost) fails on the evidence that exists: -7.29% vs > 0.00%"
+  ],
+  "sources": {
+    "base": "backtest-result-2026-09-19_17-06-17.zip",
+    "double_cost": "backtest-result-2026-09-19_17-05-39.zip"
+  },
+  "holdout_untouched": false,
+  "experiments_used": 1
+}

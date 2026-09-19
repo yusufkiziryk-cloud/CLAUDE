@@ -181,9 +181,41 @@ stop an unmanaged position has no protection at all.
    for a human. It does **not** guess at positions.
 4. Period baselines, the peak-equity watermark, locks and the stop counter
    all survive the restart. A restart cannot erase a day's loss.
+5. A crashed process on the same host does not hold the writer lease: the
+   restarted process checks the recorded pid and takes over at once, so a
+   systemd restart 30s after a crash is not refused.
+6. The previous process's last heartbeat is not judged on the first loop;
+   after ten minutes of downtime the bot no longer talks itself into
+   `RECOVERY_REQUIRED`. The external watchdog still reports the gap.
 
 An unrecognised position or a manually placed order is never adopted,
 cancelled or closed automatically. Entries stop and the operator is told.
+
+### Operator tool: `scripts/risk-state.py`
+
+`RECOVERY_REQUIRED`, the drawdown lock and the operator lock exist so that
+the bot does not clear them itself. This is the hand that does, with a trail:
+
+```bash
+.venv/bin/python scripts/risk-state.py show --state user_data/dryrun/risk_state.sqlite
+.venv/bin/python scripts/risk-state.py set READY --state ... \
+    --reason "reviewed: the ETH position is the bot's own, approval re-bound" --operator-ack
+.venv/bin/python scripts/risk-state.py clear-lock <lock_id> --state ... --reason "..." --operator-ack
+.venv/bin/python scripts/risk-state.py release <intent_id> --state ... --reason "..." --operator-ack
+```
+
+Every change needs `--operator-ack` and a reason, both are written into the
+state. The tool refuses to change anything while a bot process on this host
+holds the writer lock unless `--while-running` is given; a state change is
+safe while running (the bot re-reads it every loop), a lock or reservation
+change is your call. It cannot start live trading, place orders or touch
+keys.
+
+Before clearing `RECOVERY_REQUIRED`, read the reason the bot recorded
+(`show` prints it) and resolve it: an open position with no approval record
+is either freqtrade trading the proposed stake because sizing raised (check
+the log for "risk sizing failed") or lost bookkeeping; a lost writer lock
+means a second process was writing to the same state.
 
 ## Outage
 
@@ -202,9 +234,16 @@ The bot runs with no Telegram token and no chat id. There is deliberately no
 token whenever the block exists, even when disabled, so an empty block would
 force a placeholder secret into a committed file.
 
-To enable, create an uncommitted overlay and pass it after the main config.
-Never commit it. Remote buy/sell, force-entry and any go-live command stay
-disabled.
+To enable, create `config/telegram.local.json` (the `*.local.json` pattern
+is git-ignored, so it cannot be committed by `git add -A`) and pass it after
+the main config:
+
+```bash
+.venv/bin/python scripts/safe-run.py trade --config config/config.dry.json \
+    --config config/telegram.local.json
+```
+
+Remote buy/sell, force-entry and any go-live command stay disabled.
 
 ## Secrets
 

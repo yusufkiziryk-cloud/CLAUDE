@@ -22,7 +22,7 @@ from typing import Iterable
 import pandas as pd
 
 from .hyperliquid_client import MAX_CANDLES_PER_CALL, HyperliquidInfoClient, SpotMarket
-from .quality import QualityReport, check_candles, timeframe_delta
+from .quality import drop_incomplete_candle, QualityReport, check_candles, timeframe_delta
 from .store import atomic_write, file_hash, merge_candles, pair_to_filename, read_candles
 
 logger = logging.getLogger(__name__)
@@ -144,6 +144,29 @@ class Collector:
         raw = self.client.candles(market.market_id, timeframe, start_ms, now_ms)
         frame = candles_to_frame(raw)
         truncated = self.client.response_is_truncated(raw)
+        # The window ends at "now", so the last candle returned is the one
+        # still FORMING. It is dropped before anything is merged: persisting
+        # it made a partial OHLCV row look like settled history, and a later
+        # tail fetch that did not reach back to it froze it there for good
+        # (audit finding).
+        forming_dropped = 0
+        if not frame.empty:
+            before = len(frame)
+            frame = drop_incomplete_candle(frame, timeframe, now=now)
+            forming_dropped = before - len(frame)
+
+        if not is_first_collection and not frame.empty and existing is not None:
+            last_open = existing["date"].iloc[-1]
+            if frame["date"].iloc[0] > last_open:
+                # The tail fetch did not reach back to what is on disk, so the
+                # stored last candle could not be re-verified. Drop it rather
+                # than trust a row that may have been written while forming;
+                # the gap check below will report the hole.
+                existing = existing.loc[existing["date"] < last_open].reset_index(drop=True)
+                result.notes.append(
+                    f"tail fetch started after the stored last candle {last_open.isoformat()}; "
+                    "that candle was dropped because it could not be re-verified"
+                )
 
         # --- probe backwards: does earlier history exist? -----------------
         # The docs say only the most recent 5000 candles are available. That is
@@ -194,8 +217,19 @@ class Collector:
         result.first_date = first.isoformat()
         result.last_date = last.isoformat()
         result.span_days = (last - first).total_seconds() / 86400.0
-        result.history_truncated_by_api = truncated
+        # A capped FIRST collection says history was cut at the API's window.
+        # A capped TAIL fetch says nothing about history; it means a hole in
+        # the middle, which the gap check reports (audit finding: the old
+        # code reported it as a history boundary).
+        result.history_truncated_by_api = truncated if is_first_collection else False
         result.earliest_reachable = first.isoformat()
+        if truncated and not is_first_collection:
+            result.notes.append(
+                "tail fetch hit the per-call cap: candles between the stored history and "
+                "the fetched window are missing (see GAPS), not a history boundary"
+            )
+        if forming_dropped:
+            result.notes.append(f"dropped {forming_dropped} still-forming candle(s) from the tail")
         result.requests_made = self.client.request_count - start_requests
 
         if report.fatal:

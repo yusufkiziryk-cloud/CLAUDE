@@ -8,7 +8,10 @@
 [Unit]
 Description=Kripto bot watchdog (read-only)
 After=kripto-bot.service
-BindsTo=kripto-bot.service
+# Deliberately NO BindsTo=/Requires= on the bot: the observer exists for the
+# case where the bot is down, and a binding would stop it at exactly that
+# moment (audit finding: the D2 drill could never show loop_heartbeat
+# CRITICAL because the watchdog was torn down with the bot).
 
 [Service]
 Type=simple

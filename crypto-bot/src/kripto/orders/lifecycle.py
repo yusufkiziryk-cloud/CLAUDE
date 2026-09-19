@@ -365,6 +365,28 @@ class OrderLedger:
             current_filled = dec(row["filled_amount"])
             amount = dec(row["amount"])
 
+            if current.is_terminal:
+                # Terminal states are immune to late events: the row is NOT
+                # mutated, not even filled_amount. The event is still
+                # recorded (applied=0) and shouted about, because a fill
+                # arriving on a CANCELLED order means the venue and our
+                # record disagree and a human has to look.
+                skip_reason = (
+                    f"late {kind or 'event'} on terminal order ({current.value}); record "
+                    "left unchanged - operator attention required"
+                )
+                if event_id is not None:
+                    conn.execute(
+                        "INSERT INTO order_events(event_id, intent_id, kind, payload, "
+                        "received_at, applied, skip_reason) VALUES (?, ?, ?, ?, ?, 0, ?)",
+                        (
+                            event_id, intent_id, kind, json.dumps(payload or {}, default=str),
+                            now.isoformat(), skip_reason,
+                        ),
+                    )
+                logger.error("order event for %s NOT applied: %s", intent_id, skip_reason)
+                return self.get(intent_id)  # type: ignore[return-value]
+
             skip_reason = ""
             target = new_state
             next_filled = current_filled
@@ -383,13 +405,7 @@ class OrderLedger:
                 else:
                     next_filled = filled_amount
 
-            if current.is_terminal:
-                skip_reason = skip_reason or (
-                    f"order already terminal in {current.value}; refusing transition to "
-                    f"{target.value}"
-                )
-                target = current
-            elif target is not current and target not in _ALLOWED[current]:
+            if target is not current and target not in _ALLOWED[current]:
                 skip_reason = skip_reason or (
                     f"illegal transition {current.value} -> {target.value}"
                 )
@@ -424,8 +440,10 @@ class OrderLedger:
                     exchange_order_id, error, intent_id,
                 ),
             )
+            # Same transaction (RiskStore._tx is re-entrant): the order state
+            # and its budget effect commit together or not at all.
+            self._sync_reservation(intent_id, now)
 
-        self._sync_reservation(intent_id, now)
         return self.get(intent_id)  # type: ignore[return-value]
 
     def _sync_reservation(self, intent_id: str, now: datetime) -> None:
@@ -556,6 +574,19 @@ class OrderLedger:
             venue_filled = fills_by_order.get(str(record.exchange_order_id), ZERO)
             if venue_filled > ZERO:
                 self.mark_filled(record.intent_id, venue_filled, now)
+                if (
+                    venue_filled < record.amount
+                    and history_complete
+                    and record.state is not OrderState.UNKNOWN
+                ):
+                    # Partly filled and no longer at the venue: the rest is
+                    # gone. Leaving it PARTIALLY_FILLED would keep the
+                    # remainder reserved for ever.
+                    self.mark_cancel_confirmed(record.intent_id, now)
+                    result.notes.append(
+                        f"{record.intent_id}: filled {venue_filled} of {record.amount} and "
+                        "gone from the venue; remainder treated as cancelled"
+                    )
                 result.resolved.append(record.intent_id)
                 continue
 

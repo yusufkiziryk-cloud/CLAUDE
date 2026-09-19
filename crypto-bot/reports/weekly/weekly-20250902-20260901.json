@@ -2,10 +2,10 @@
   "period": {
     "start": "2025-09-02T00:00:00+00:00",
     "end": "2026-09-01T00:00:00+00:00",
-    "days": 7.0
+    "days": 364.0
   },
-  "mode": "backtest-replay",
-  "generated_at": "2026-09-17T21:46:21.761339+00:00",
+  "mode": "dry-run",
+  "generated_at": "2026-09-19T17:02:58.960339+00:00",
   "versions": {
     "freqtrade": "2026.8",
     "ccxt": "4.5.78",
@@ -32,9 +32,11 @@
   "equity": {
     "start": null,
     "end": null,
-    "peak": "991.8499859631",
-    "max_drawdown": null
+    "peak": null,
+    "max_drawdown": null,
+    "drawdown_lock_raised": false
   },
+  "trade_records_error": null,
   "benchmarks": {
     "buy & hold BTC_USDC": {
       "first": 107545.0,
@@ -65,13 +67,9 @@
     }
   },
   "decisions": {
-    "accepted": 12,
-    "refused": 25,
-    "refusal_reasons": {
-      "NO_RISK_BUDGET": 1,
-      "ASSET_CAP_REACHED": 18,
-      "RESERVATION_REFUSED": 6
-    }
+    "accepted": 0,
+    "refused": 0,
+    "refusal_reasons": {}
   },
   "locks": [],
   "data_gaps": [],
@@ -82,17 +80,17 @@
     "notifications_failing_since": null
   },
   "limitations": [
-    "backtest: NOT_MODELED -> cancel_fill_race, exchange_side_stop, intra_candle_fill_order, order_lifecycle_states, reconciliation_on_restart, single_writer_enforcement, slippage",
-    "replay: NOT_MODELED -> exchange_side_stop",
+    "backtest: NOT_MODELED -> abandoned_reservation_sweep, approval_persistence_across_restart, cancel_fill_race, exchange_side_stop, intra_candle_fill_order, liquidity_gate, order_lifecycle_states, reconciliation_on_restart, single_writer_enforcement, slippage",
+    "replay: NOT_MODELED -> abandoned_reservation_sweep, approval_persistence_across_restart, exchange_side_stop, liquidity_gate",
     "dry_run: NOT_MODELED -> cancel_fill_race, exchange_side_stop, intra_candle_fill_order",
     "Open-position PnL is reported as zero: valuing it needs a current price, which a report generated after the fact does not have."
   ],
   "assessment": {
-    "verdict": "OBSERVATION_IN_PROGRESS",
+    "verdict": "INSUFFICIENT_EVIDENCE",
     "reasons": [
-      "only 7.0 of 28 required observation days have elapsed; no conclusion is available yet"
+      "0 closed trades is below the 50 review floor; time elapsed is not the same as evidence gathered"
     ],
-    "observed_days": 7.0,
+    "observed_days": 364.0,
     "required_days": 28
   }
 }
